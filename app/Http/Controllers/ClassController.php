@@ -8,7 +8,7 @@ use App\Models\Setting;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\User;
-use App\Services\BackupService;
+use App\Services\DatabaseBackupService;
 use App\Services\SchoolService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -200,7 +200,7 @@ class ClassController extends Controller
                         return back()->with('danger', 'Nothing to graduate - there are no students in this class.');
                     }
 
-                    BackupService::createBackup("before_class_teacher_graduate_{$myClass->id}");
+                    DatabaseBackupService::safetyBackup("before_class_teacher_graduate_{$myClass->id}");
 
                     Student::where('class_id', $myClass->id)->where('active', 1)->update([
                         'active' => 0,
@@ -227,7 +227,7 @@ class ClassController extends Controller
                     return back()->with('danger', 'Nothing to move - please check the class you selected.');
                 }
 
-                BackupService::createBackup("before_class_teacher_promote_{$myClass->id}_to_{$target->id}");
+                DatabaseBackupService::safetyBackup("before_class_teacher_promote_{$myClass->id}_to_{$target->id}");
 
                 Student::where('class_id', $myClass->id)->where('active', 1)->update([
                     'class_id' => $target->id,
@@ -298,7 +298,7 @@ class ClassController extends Controller
             }
 
             $summary = [];
-            BackupService::createBackup("before_promote_{$currentAcademicYear}_to_{$newAcademicYear}");
+            DatabaseBackupService::safetyBackup("before_promote_{$currentAcademicYear}_to_{$newAcademicYear}");
 
             foreach ($sourceClasses as $item) {
                 $cls = $item['cls'];

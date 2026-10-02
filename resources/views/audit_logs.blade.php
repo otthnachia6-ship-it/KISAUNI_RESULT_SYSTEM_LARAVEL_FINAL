@@ -14,7 +14,7 @@ $action_labels = [
     'DELETE_STUDENT' => 'Removed a student', 'DELETE_SUBJECT' => 'Deleted a subject',
     'DELETE_USER' => 'Deleted a user account', 'DOWNLOAD_BACKUP' => 'Downloaded a backup',
     'EDIT_STUDENT' => 'Edited a student', 'EDIT_USER' => 'Edited a user account',
-    'ENTER_MARKS' => 'Entered marks', 'LOGIN' => 'Logged in', 'LOGOUT' => 'Logged out',
+    'ENTER_MARKS' => 'Entered marks', 'LOGIN' => 'Logged in', 'PASSWORD_HASH_UPGRADED' => 'Password migrated from the old system', 'LOGOUT' => 'Logged out',
     'PASSWORD_RESET_REQUESTED' => 'Requested a password reset', 'PROMOTE_CLASS' => 'Promoted a class',
     'PROMOTE_GRADUATE' => 'Graduated a class', 'PROMOTE_MY_CLASS' => 'Promoted own class',
     'PROMOTE_MY_CLASS_GRADUATE' => 'Graduated own class', 'PURGE_STUDENT' => 'Permanently deleted a student',

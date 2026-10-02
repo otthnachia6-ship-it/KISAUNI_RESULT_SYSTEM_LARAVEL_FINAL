@@ -552,7 +552,9 @@ class SchoolService
         foreach ($classes as $cls) {
             $ca = static::computeClassAnalytics($cls->id, $examId);
             if ($ca['student_count'] > 0) {
-                $entries[] = array_merge(['cls' => $cls->toArray()], $ca);
+                // Keep the Eloquent model (not toArray()): it supports both $e['cls']['id']
+                // (controllers) and $e['cls']->name (Blade views).
+                $entries[] = array_merge(['cls' => $cls], $ca);
             }
         }
 
@@ -699,5 +701,82 @@ class SchoolService
         $computed = hash_pbkdf2($algo, $password, $salt, $iterations, $hexLength, false);
 
         return hash_equals(strtolower($hexHash), strtolower($computed));
+    }
+
+    /**
+     * Decide what the Performance Analytics page should say when there is little
+     * or no data, so each situation gets its own accurate message.
+     *
+     * Returns ['empty' => null|['title','message'], 'notices' => string[]].
+     * 'empty' is set when there is nothing to chart; 'notices' are gentle
+     * warnings shown above results that are only partly complete.
+     */
+    public static function analyticsEmptyState(?Examination $exam, ?SchoolClass $cls, string $scope, ?array $analytics): array
+    {
+        $result = ['empty' => null, 'notices' => []];
+        $examLabel = $exam ? "{$exam->exam_type} {$exam->academic_year}" : 'the selected examination';
+        $withMarks = (int) ($analytics['student_count'] ?? 0);
+
+        if ($scope === 'class' && $cls) {
+            $enrolled = (int) DB::table('students')->where('class_id', $cls->id)->where('active', 1)->count();
+
+            if ($withMarks === 0) {
+                $anyMarkRows = DB::table('marks')->where('exam_id', $exam->id)->where('class_id', $cls->id)->exists();
+                if ($enrolled === 0 && !$anyMarkRows) {
+                    $result['empty'] = [
+                        'title' => 'No students found',
+                        'message' => "No students found in {$cls->name}. Please add students to this class or select another class.",
+                    ];
+                } else {
+                    $result['empty'] = [
+                        'title' => 'No marks entered yet',
+                        'message' => "No marks have been entered for {$examLabel} in {$cls->name} yet"
+                            . ($enrolled > 0 ? " ({$enrolled} student(s) enrolled)." : '.')
+                            . ' Analytics will appear once marks are recorded.',
+                    ];
+                }
+                return $result;
+            }
+
+            if ($enrolled > $withMarks) {
+                $result['notices'][] = "Only {$withMarks} of {$enrolled} students in {$cls->name} have marks for this examination, so the figures below cover those students only.";
+            }
+
+            $withStats = array_column($analytics['subject_stats'] ?? [], 'name');
+            $classSubjects = DB::table('subjects as sub')
+                ->join('class_subjects as cs', 'cs.subject_id', '=', 'sub.id')
+                ->where('cs.class_id', $cls->id)
+                ->orderBy('sub.name')
+                ->pluck('sub.name')
+                ->toArray();
+            $missing = array_values(array_diff($classSubjects, $withStats));
+            if (!empty($missing)) {
+                $result['notices'][] = 'No marks entered yet for: ' . implode(', ', $missing) . '.';
+            }
+            return $result;
+        }
+
+        // School-wide
+        $activeStudents = (int) DB::table('students')->where('active', 1)->count();
+        if ($withMarks === 0) {
+            $anyMarkRows = DB::table('marks')->where('exam_id', $exam->id)->whereNotNull('score')->exists();
+            if ($activeStudents === 0 && !$anyMarkRows) {
+                $result['empty'] = [
+                    'title' => 'No students registered',
+                    'message' => 'No students have been registered in the school yet. Please add students before viewing analytics.',
+                ];
+            } else {
+                $result['empty'] = [
+                    'title' => 'No marks entered yet',
+                    'message' => "No marks have been entered for {$examLabel} yet. Analytics will appear once teachers record marks.",
+                ];
+            }
+            return $result;
+        }
+
+        if ($activeStudents > $withMarks) {
+            $result['notices'][] = "Only {$withMarks} of {$activeStudents} active students have marks for this examination, so the figures below cover those students only.";
+        }
+        return $result;
     }
 }

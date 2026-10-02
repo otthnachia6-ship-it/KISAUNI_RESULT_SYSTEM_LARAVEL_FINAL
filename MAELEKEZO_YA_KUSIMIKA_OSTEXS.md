@@ -54,7 +54,7 @@ Mfumo huu umehama kikamilifu kutoka Python/Flask/SQLite kwenda **PHP/Laravel/MyS
    ```env
    APP_NAME="Result Management System"
    APP_ENV=production
-   APP_KEY=base64:LRsfpI2j2ksDiOpSJIjIR9yg6khP5q6aS/DCmf6vdlw=
+   APP_KEY=
    APP_DEBUG=false
    APP_URL=https://ostexs.com
 

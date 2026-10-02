@@ -15,24 +15,6 @@
     @endif
 </div>
 
-@if($session_user->role === $ROLE_HEADMASTER)
-    @if(is_null($offsite_days))
-    <div class="alert alert-warning">
-        <i class="bi bi-cloud-arrow-down me-1"></i>
-        <strong>You have never downloaded a backup off this server.</strong>
-        If PythonAnywhere ever has a problem with your account, both the live data and every
-        automatic backup live in the same place and could be affected together.
-        <a href="{{ route('settings_page') }}#backups" class="alert-link">Download one now &rarr;</a>
-    </div>
-    @elseif($offsite_days >= 30)
-    <div class="alert alert-warning">
-        <i class="bi bi-cloud-arrow-down me-1"></i>
-        It has been <strong>{{ $offsite_days }} days</strong> since you last downloaded a backup off this
-        server. <a href="{{ route('settings_page') }}#backups" class="alert-link">Download a fresh one &rarr;</a>
-    </div>
-    @endif
-@endif
-
 @if($my_class)
 <div class="alert alert-success">
     <i class="bi bi-door-open me-1"></i>

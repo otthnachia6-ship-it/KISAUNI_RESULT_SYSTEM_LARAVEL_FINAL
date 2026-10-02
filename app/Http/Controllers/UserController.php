@@ -59,7 +59,7 @@ class UserController extends Controller
 
         $classId = ($role === SchoolService::ROLE_CLASS_TEACHER) ? ($request->input('class_id') ?: null) : null;
 
-        if (User::where('username', $username)->exists()) {
+        if (User::usernameTaken($username)) {
             return back()->withInput()->with('danger', 'This username is already taken.');
         }
 
@@ -130,7 +130,7 @@ class UserController extends Controller
             return back()->withInput()->with('danger', 'Username cannot be empty.');
         }
 
-        $duplicate = User::where('username', $username)->where('id', '!=', $id)->exists();
+        $duplicate = User::usernameTaken($username, (int) $id);
         if ($duplicate) {
             return back()->withInput()->with('danger', 'This username is already taken by another user.');
         }

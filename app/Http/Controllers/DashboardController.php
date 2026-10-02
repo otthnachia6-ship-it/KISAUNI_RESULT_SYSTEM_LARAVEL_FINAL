@@ -11,7 +11,6 @@ use App\Models\Setting;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\User;
-use App\Services\BackupService;
 use App\Services\SchoolService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -108,9 +107,6 @@ class DashboardController extends Controller
             AuditLog::orderBy('id', 'desc')->limit(8)->get()
         );
 
-        $offsiteDays = ($user && $user->role === SchoolService::ROLE_HEADMASTER)
-            ? BackupService::daysSinceLastOffsiteDownload()
-            : null;
 
         return view('dashboard', [
             'stats' => $stats,
@@ -118,7 +114,6 @@ class DashboardController extends Controller
             'my_class_students' => $myClassStudents,
             'recent_logs' => $recentLogs,
             'returned_results' => $returnedResults,
-            'offsite_days' => $offsiteDays,
             'class_breakdown' => $classBreakdown,
             'status_breakdown' => $statusBreakdown,
             'current_academic_year' => $currentAcademicYear,

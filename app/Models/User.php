@@ -42,6 +42,39 @@ class User extends Authenticatable
         'failed_login_attempts' => 'integer',
     ];
 
+    /**
+     * Exact-case username lookup - the single source of truth for finding an
+     * account by username. "damtu" and "DAMTU" are two different teachers.
+     *
+     * The column uses utf8mb4_bin on MySQL/MariaDB (see the
+     * make_users_username_case_sensitive migration), so the query is already
+     * exact there. The strict PHP comparison below keeps the rule intact even
+     * if the column is ever changed back to a case-insensitive collation:
+     * a case-variant can never be returned for a different account.
+     */
+    public static function findByUsername(?string $username): ?self
+    {
+        if ($username === null || $username === '') {
+            return null;
+        }
+
+        return static::where('username', $username)
+            ->orderBy('id')
+            ->get()
+            ->first(fn (self $u) => $u->username === $username);
+    }
+
+    /**
+     * True when another account (not $exceptId) already uses exactly this username.
+     */
+    public static function usernameTaken(string $username, ?int $exceptId = null): bool
+    {
+        return static::where('username', $username)
+            ->when($exceptId !== null, fn ($q) => $q->where('id', '!=', $exceptId))
+            ->get()
+            ->contains(fn (self $u) => $u->username === $username);
+    }
+
     public function isHeadmaster(): bool
     {
         return $this->role === 'headmaster';

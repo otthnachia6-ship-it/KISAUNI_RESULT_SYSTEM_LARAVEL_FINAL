@@ -41,14 +41,49 @@ class AnalyticsController extends Controller
 
         $analytics = null;
         $trend = [];
+        $emptyState = null;
+        $notices = [];
 
-        if ($examId && $classId) {
+        // Expected "nothing to show" situations are handled explicitly and
+        // never with a blanket try/catch, so genuine bugs still surface
+        // (and get logged) as real errors.
+        $exam = $examId ? $exams->firstWhere('id', $examId) : null;
+
+        if ($exams->isEmpty()) {
+            $emptyState = [
+                'title' => 'No examinations',
+                'message' => 'No examinations have been created yet. Please ask the Headmaster to create an examination first.',
+            ];
+        } elseif (!$exam) {
+            $emptyState = [
+                'title' => 'Examination not found',
+                'message' => 'The selected examination could not be found. Please choose another examination from the list.',
+            ];
+        } elseif ($viewScope === 'class') {
             $cls = SchoolClass::find($classId);
-            $analytics = SchoolService::computeClassAnalytics($classId, $examId);
-            $trend = SchoolService::computeTrend($classId);
-        } elseif ($examId && $viewScope === 'school') {
+            if (!$cls) {
+                $emptyState = [
+                    'title' => 'Class not found',
+                    'message' => 'The selected class could not be found. Please choose another class.',
+                ];
+                $classId = null;
+            } else {
+                $analytics = SchoolService::computeClassAnalytics($classId, $examId);
+                $trend = SchoolService::computeTrend($classId);
+            }
+        } else {
             $analytics = SchoolService::computeSchoolAnalytics($examId);
             $trend = SchoolService::computeTrend(null);
+        }
+
+        if ($exam && !$emptyState) {
+            $state = SchoolService::analyticsEmptyState($exam, $cls, $viewScope, $analytics);
+            $emptyState = $state['empty'];
+            $notices = $state['notices'];
+        }
+
+        if ($emptyState) {
+            $trend = [];
         }
 
         return view('analytics', [
@@ -60,6 +95,8 @@ class AnalyticsController extends Controller
             'analytics' => $analytics,
             'view_scope' => $viewScope,
             'trend' => $trend,
+            'empty_state' => $emptyState,
+            'notices' => $notices,
         ]);
     }
 }

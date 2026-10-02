@@ -35,3 +35,10 @@ storage/app/uploads/*
 storage/app/reports/*
 !storage/app/reports/.gitkeep
 _deployment_archive/
+
+# Phase 4: never commit Flask data, database files or backups
+/kisauni.db
+*.db
+*.sql.gz
+/kisauni_backups/
+/storage/backups/

@@ -12,6 +12,9 @@
 
 <form method="GET" action="{{ route('performance_analytics') }}" class="mb-3 d-flex flex-wrap gap-2">
     <select name="exam_id" class="form-select form-select-sm" style="max-width:260px;" onchange="this.form.submit()">
+        @if($exams->isNotEmpty() && !$exams->contains('id', $exam_id))
+        <option value="" selected disabled>Select examination...</option>
+        @endif
         @foreach($exams as $e)
         <option value="{{ $e->id }}" @if($e->id == $exam_id) selected @endif>{{ $e->exam_type }} - {{ $e->academic_year }}</option>
         @endforeach
@@ -27,10 +30,25 @@
     @endif
 </form>
 
-@if(empty($analytics) || empty($analytics['student_count']))
-<p class="text-muted">No marks recorded yet for this selection.</p>
+@if(!empty($empty_state))
+<div class="alert alert-info d-flex align-items-start gap-2" role="status">
+    <i class="bi bi-info-circle fs-5"></i>
+    <div>
+        <strong>{{ $empty_state['title'] }}</strong>
+        <div>{{ $empty_state['message'] }}</div>
+    </div>
+</div>
+
+@elseif(empty($analytics) || empty($analytics['student_count']))
+<div class="alert alert-info d-flex align-items-start gap-2" role="status">
+    <i class="bi bi-info-circle fs-5"></i>
+    <div>There is not enough data to generate analytics for this selection.</div>
+</div>
 
 @else
+@foreach(($notices ?? []) as $notice)
+<div class="alert alert-warning py-2 mb-2" role="status"><i class="bi bi-exclamation-triangle me-1"></i>{{ $notice }}</div>
+@endforeach
 <div class="row g-3 mb-3">
     <div class="col-md-4">
         <div class="card p-3 h-100 text-center">

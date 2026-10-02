@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SchoolClass;
 use App\Models\User;
+use App\Services\LegacyPasswordService;
 use App\Services\SchoolService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -38,7 +39,8 @@ class AuthController extends Controller
         $username = trim($request->input('username', ''));
         $password = (string) $request->input('password', '');
 
-        $user = User::where('username', $username)->first();
+        // Exact-case lookup (damtu and DAMTU are different accounts).
+        $user = User::findByUsername($username);
 
         // 1. Brute-force lockout check
         if ($user && $user->locked_until) {
@@ -46,7 +48,7 @@ class AuthController extends Controller
             $now = SchoolService::now();
             if ($now->lt($lockedUntil)) {
                 // absolute:true keeps this positive under Carbon 3's new
-                // signed diffIn*() behaviour (see BackupService for details).
+                // signed diffIn*() behaviour.
                 $minutesLeft = max(1, (int) ceil($lockedUntil->diffInSeconds($now, true) / 60));
                 return back()->with('danger', "Too many failed attempts. This account is locked - try again in about {$minutesLeft} minute(s).");
             }
@@ -57,24 +59,31 @@ class AuthController extends Controller
         // 2. Password verification
         $passwordOk = false;
         $legacyHashUnverifiable = false;
+        $legacyBusy = false;
+        $upgradedLegacyHash = false;
         if ($user) {
-            if (Hash::check($password, $user->password) || password_verify($password, $user->password)) {
-                $passwordOk = true;
-            } elseif (str_starts_with($user->password, 'scrypt:') || str_starts_with($user->password, 'pbkdf2:')) {
-                // Legacy Werkzeug (Python/Flask) hash - verified in pure PHP,
-                // no external interpreter needed (shared hosting/cPanel safe).
-                $legacyResult = SchoolService::verifyLegacyWerkzeugHash($password, $user->password);
-                if ($legacyResult === true) {
+            if (LegacyPasswordService::isLegacyHash($user->password)) {
+                // Old Flask (Werkzeug) hash: verify it, then upgrade to Laravel's own hash.
+                // Never Hash::check() a non-bcrypt string, and never log the hash.
+                $legacy = LegacyPasswordService::verify($password, $user->password);
+                if ($legacy === LegacyPasswordService::OK) {
                     $passwordOk = true;
-                    // Upgrade legacy hash to modern bcrypt
                     $user->update(['password' => Hash::make($password)]);
-                } elseif ($legacyResult === null) {
-                    // Unsupported legacy scheme (e.g. scrypt) - cannot be verified
-                    // in pure PHP. Don't count this as a wrong-password attempt;
-                    // send them to get their password reset instead.
+                    $upgradedLegacyHash = true;
+                } elseif ($legacy === LegacyPasswordService::BUSY) {
+                    $legacyBusy = true;
+                } elseif ($legacy === LegacyPasswordService::UNVERIFIABLE) {
+                    // Cannot be checked on this server (feature off / too heavy / unknown
+                    // variant). Not a wrong-password attempt: do not count it.
                     $legacyHashUnverifiable = true;
                 }
+            } elseif (LegacyPasswordService::isNativeHash($user->password)) {
+                $passwordOk = Hash::check($password, $user->password) || password_verify($password, $user->password);
             }
+        }
+
+        if ($legacyBusy) {
+            return back()->with('danger', 'The server is busy checking other sign-ins. Please wait a few seconds and try again.');
         }
 
         if ($legacyHashUnverifiable) {
@@ -119,6 +128,9 @@ class AuthController extends Controller
         Auth::login($user, false);
         session(['last_activity' => SchoolService::now()->timestamp]);
 
+        if ($upgradedLegacyHash) {
+            SchoolService::logAction($user, 'PASSWORD_HASH_UPGRADED', "{$user->username} password migrated from the old system format");
+        }
         SchoolService::logAction($user, 'LOGIN', "{$user->username} logged in");
 
         if ($user->must_change_password) {
@@ -155,7 +167,7 @@ class AuthController extends Controller
 
         $username = trim($request->input('username', ''));
         if ($username) {
-            $user = User::where('username', $username)->first();
+            $user = User::findByUsername($username);
             if ($user && $user->active) {
                 SchoolService::logAction(
                     $user,
@@ -201,7 +213,7 @@ class AuthController extends Controller
             return back()->with('danger', 'Username cannot be empty.');
         }
 
-        $duplicate = User::where('username', $newUsername)->where('id', '!=', $user->id)->exists();
+        $duplicate = User::usernameTaken($newUsername, $user->id);
         if ($duplicate) {
             return back()->with('danger', 'That username is already taken by another account. Choose a different one.');
         }

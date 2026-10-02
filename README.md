@@ -71,7 +71,7 @@ Ensure the database settings reflect your MySQL database on OSTEXS.COM:
 ```env
 APP_NAME="Result Management System"
 APP_ENV=production
-APP_KEY=base64:LRsfpI2j2ksDiOpSJIjIR9yg6khP5q6aS/DCmf6vdlw=
+APP_KEY=
 APP_DEBUG=false
 APP_URL=https://ostexs.com
 

@@ -94,13 +94,8 @@ Route::middleware(['auth', 'no_cache'])->group(function () {
         Route::get('/results/review/{exam_id}/{class_id}/download', [ResultController::class, 'reviewDownload'])->name('review_results_download');
         Route::get('/headmaster/overview', [ResultController::class, 'headmasterOverview'])->name('headmaster_overview');
 
-        // Settings & Backups
+        // Settings
         Route::match(['get', 'post'], '/settings', [SettingController::class, 'settings'])->name('settings_page');
-        Route::post('/settings/backup/create', [SettingController::class, 'createBackup'])->name('create_backup_route');
-        Route::get('/settings/backup/download/{filename}', [SettingController::class, 'downloadBackup'])->name('download_backup');
-        Route::post('/settings/backup/restore/{filename}', [SettingController::class, 'restoreBackup'])->name('restore_backup_route');
-        Route::post('/settings/backup/upload-restore', [SettingController::class, 'uploadRestoreBackup'])->name('upload_restore_backup_route');
-        Route::post('/settings/backup/delete/{filename}', [SettingController::class, 'deleteBackup'])->name('delete_backup_route');
 
         // Audit Logs
         Route::get('/audit-logs', [AuditLogController::class, 'auditLogs'])->name('audit_logs');

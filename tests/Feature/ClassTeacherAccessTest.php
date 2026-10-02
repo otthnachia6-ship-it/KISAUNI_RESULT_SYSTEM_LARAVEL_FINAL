@@ -96,7 +96,7 @@ class ClassTeacherAccessTest extends TestCase
         foreach (['/audit-logs', '/settings', '/classes', '/results', '/headmaster/overview', "/results/review/$e/$c", '/users'] as $uri) {
             $this->assertNotSame(200, $this->ok('GET', $uri), "teacher could open $uri");
         }
-        foreach (["/students/purge/{$this->studentA->id}", "/students/restore/{$this->studentA->id}", '/settings/backup/create',
+        foreach (["/students/purge/{$this->studentA->id}", "/students/restore/{$this->studentA->id}",
                   "/results/review/$e/$c"] as $uri) {
             $this->assertNotSame(200, $this->ok('POST', $uri, ['action' => 'approve']), "teacher POST $uri");
         }
