@@ -45,7 +45,7 @@
             <tr>
                 <td class="fw-semibold">{{ $s->name }}</td>
                 @foreach($classes as $c)
-                @php $isMapped = isset($mapping_set[$c->id . '-' . $s->id]); @endphp
+                @php $isMapped = isset($mapping_set[$c->id][$s->id]); @endphp
                 <td class="text-center">
                     @if($session_user->role === $ROLE_HEADMASTER)
                     <form method="POST" action="{{ route('subjects') }}" class="d-inline-block">

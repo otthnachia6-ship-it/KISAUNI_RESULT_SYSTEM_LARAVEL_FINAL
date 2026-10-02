@@ -21,8 +21,8 @@
         <div class="card p-3 h-100">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <div>
-                    <h6 class="mb-0">{{ ucwords(strtolower($h['exam']->exam_type)) }}</h6>
-                    <span class="text-muted small">Academic Year {{ $h['exam']->academic_year }}</span>
+                    <h6 class="mb-0">{{ ucwords(strtolower($h['exam']['exam_type'])) }}</h6>
+                    <span class="text-muted small">Academic Year {{ $h['exam']['academic_year'] }}</span>
                 </div>
                 <span class="grade-badge grade-{{ $h['result']['grade'] }}">{{ $h['result']['grade'] }}</span>
             </div>
@@ -31,7 +31,7 @@
                 <tr><td class="text-muted">Average</td><td class="text-end fw-semibold">{{ $h['result']['average'] }}</td></tr>
                 <tr><td class="text-muted">Position</td><td class="text-end fw-semibold">{{ $h['result']['position'] }} of {{ $h['total_students'] }}</td></tr>
             </table>
-            <a href="{{ route('student_report', ['student_id' => $student->id, 'exam_id' => $h['exam']->id]) }}" class="btn btn-sm btn-outline-success w-100">
+            <a href="{{ route('student_report', ['student_id' => $student->id, 'exam_id' => $h['exam']['id']]) }}" class="btn btn-sm btn-outline-success w-100">
                 <i class="bi bi-file-earmark-text me-1"></i>View Full Report
             </a>
         </div>
