@@ -1079,3 +1079,27 @@ html[data-theme="dark"] .modal-backdrop { opacity: .6; }
     html[data-theme="dark"] .report-sheet,
     html[data-theme="dark"] .kps-sheet { background: #fff !important; color: #000 !important; }
 }
+
+/* ---------- Phone fit: never let a page become wider than the screen ----------
+   When anything is wider than the phone, mobile Chrome shrinks the whole page and leaves
+   an empty strip on the right. These rules keep the top bar, charts and the result
+   report inside the screen width. They only apply on small screens (not print). */
+main { overflow-x: clip; }
+@media (max-width: 575.98px) {
+    .topbar { gap: .5rem; padding: .55rem .6rem; }
+    .topbar > .fw-semibold { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .topbar .text-end { max-width: 96px; min-width: 0; }
+    .topbar .text-end > .fw-semibold { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .78rem !important; }
+    .topbar .role-pill { font-size: .62rem; padding: .08rem .4rem; }
+    canvas { max-width: 100%; }
+    .kps-sheet { padding: 12px 10px; }
+    .kps-header-top { gap: 8px; }
+    .kps-info-box { min-width: 0; }
+    .kps-table th, .kps-table td { padding: 6px 3px; font-size: .76rem; }
+    .kps-table th { font-size: .66rem; letter-spacing: 0; }
+    .kps-table th[style*="width"] { width: auto !important; }
+    /* page title + action buttons rows (Students, Users, Marks, ...): let buttons drop below the title */
+    .d-flex.justify-content-between.align-items-center.mb-3 { flex-wrap: wrap; gap: .5rem; }
+    .d-flex.justify-content-between.align-items-center.mb-3 > div:not(.page-header) { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .d-flex.justify-content-between.align-items-center.mb-3 > div:not(.page-header) > .btn { margin-right: 0 !important; }
+}
