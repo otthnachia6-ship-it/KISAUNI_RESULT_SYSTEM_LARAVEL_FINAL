@@ -19,11 +19,13 @@
                 <h6 class="mb-0">{{ $row['cls']->name }}</h6>
                 <span class="badge status-badge-{{ $row['status'] }}">{{ strtoupper($STATUS_LABELS[$row['status']] ?? $row['status']) }}</span>
             </div>
+            <div class="table-responsive">
             <table class="table table-sm mb-0">
                 <tr><td class="text-muted">Students</td><td class="text-end fw-semibold">{{ $row['student_count'] }}</td></tr>
                 <tr><td class="text-muted">Class Average</td><td class="text-end fw-semibold">{{ !is_null($row['class_average']) ? $row['class_average'] : '-' }}</td></tr>
                 <tr><td class="text-muted">Top Student</td><td class="text-end fw-semibold">{{ $row['top_student'] ?: '-' }}</td></tr>
             </table>
+            </div>
             <a href="{{ route('performance_analytics', ['exam_id' => $exam_id, 'class_id' => $row['cls']->id]) }}" class="btn btn-sm btn-outline-primary w-100 mt-2">
                 <i class="bi bi-graph-up-arrow me-1"></i>Subject Analytics
             </a>

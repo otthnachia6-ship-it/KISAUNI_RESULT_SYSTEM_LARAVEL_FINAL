@@ -24,6 +24,7 @@
         </div>
         <div class="mb-3">
             <label class="form-label">Grading System (fixed)</label>
+            <div class="table-responsive">
             <table class="table table-sm">
                 <tr><td><span class="grade-badge grade-A">A</span></td><td>81 - 100</td></tr>
                 <tr><td><span class="grade-badge grade-B">B</span></td><td>61 - 80</td></tr>
@@ -31,6 +32,7 @@
                 <tr><td><span class="grade-badge grade-D">D</span></td><td>21 - 40</td></tr>
                 <tr><td><span class="grade-badge grade-E">E</span></td><td>0 - 20.9</td></tr>
             </table>
+            </div>
             <small class="text-muted">To change the grading bands, contact your system administrator (config/school.php).</small>
         </div>
         <button class="btn btn-success">Save Settings</button>

@@ -32,12 +32,14 @@
     </form>
     @endif
 
+    <div class="table-responsive">
     <table class="table table-sm">
         <tr><th>Username</th><td>{{ $user->username }}</td></tr>
         @if($cls)<tr><th>Assigned Class</th><td>{{ $cls->name }}</td></tr>@endif
         <tr><th>Status</th><td>{{ $user->active ? 'Active' : 'Deactivated' }}</td></tr>
         <tr><th>Joined</th><td>{{ $user->created_at }}</td></tr>
     </table>
+    </div>
     <a href="{{ route('change_password') }}" class="btn btn-outline-success btn-sm">Change Password</a>
 </div>
 @endsection

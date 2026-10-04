@@ -26,6 +26,7 @@ $action_labels = [
 ];
 @endphp
 <div class="card">
+    <div class="table-responsive">
     <table class="table table-sm align-middle mb-0">
         <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
         <tbody>
@@ -47,5 +48,6 @@ $action_labels = [
         @endforelse
         </tbody>
     </table>
+    </div>
 </div>
 @endsection

@@ -30,6 +30,7 @@
 @endif
 
 <div class="card">
+    <div class="table-responsive">
     <table class="table align-middle mb-0">
         <thead><tr><th>#</th><th>Examination Type</th><th>Academic Year</th>@if($session_user->role === $ROLE_HEADMASTER)<th class="text-end">Action</th>@endif</tr></thead>
         <tbody>
@@ -53,5 +54,6 @@
         @endforelse
         </tbody>
     </table>
+    </div>
 </div>
 @endsection

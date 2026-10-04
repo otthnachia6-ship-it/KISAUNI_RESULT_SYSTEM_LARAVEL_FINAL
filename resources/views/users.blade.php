@@ -6,12 +6,13 @@
     <a href="{{ route('add_user') }}" class="btn btn-success"><i class="bi bi-person-plus me-1"></i>Add User</a>
 </div>
 <div class="card">
-    <table class="table align-middle mb-0">
+    <div class="table-responsive">
+    <table class="table align-middle mb-0 table-stack">
         <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Class</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
         <tbody>
         @foreach($users as $u)
         <tr>
-            <td class="fw-semibold">
+            <td class="fw-semibold stack-head">
                 <div class="d-flex align-items-center gap-2">
                     @php
                         $photo = $user_photo_url($u->photo_path);
@@ -26,8 +27,8 @@
                     <span>{{ $u->full_name }}</span>
                 </div>
             </td>
-            <td>{{ $u->username }}</td>
-            <td>
+            <td data-label="Username">{{ $u->username }}</td>
+            <td data-label="Role">
                 @if($u->role === 'headmaster')
                     @if($u->title === 'Administrator')
                     <span class="badge" style="background:#6f42c1;">Administrator</span>
@@ -38,12 +39,12 @@
                 <span class="badge bg-info text-dark">Class Teacher</span>
                 @endif
             </td>
-            <td>{{ $u->class_name ?: '-' }}</td>
-            <td>
+            <td data-label="Class">{{ $u->class_name ?: '-' }}</td>
+            <td data-label="Status">
                 @if($u->active)<span class="badge bg-success">Active</span>@else<span class="badge bg-secondary">Deactivated</span>@endif
                 @if($u->must_change_password)<span class="badge bg-warning text-dark">Temp Password</span>@endif
             </td>
-            <td class="text-end">
+            <td class="text-end stack-actions">
                 <a href="{{ route('edit_user', ['user_id' => $u->id]) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
                 @if($u->role !== 'headmaster')
                 <form method="POST" action="{{ route('toggle_user', ['user_id' => $u->id]) }}" class="d-inline">
@@ -67,5 +68,6 @@
         @endforeach
         </tbody>
     </table>
+    </div>
 </div>
 @endsection

@@ -69,19 +69,19 @@
         </span>
     </div>
     <div class="table-responsive">
-        <table class="table table-sm mb-0 align-middle">
-            <thead><tr><th>#</th><th>Reg No</th><th>Full Name</th><th>Gender</th><th class="text-end no-print">Actions</th></tr></thead>
+        <table class="table table-sm mb-0 align-middle table-stack">
+            <thead><tr><th class="d-none d-sm-table-cell">#</th><th>Reg No</th><th>Full Name</th><th>Gender</th><th class="text-end no-print">Actions</th></tr></thead>
             <tbody>
             @foreach($list as $s)
             <tr>
-                <td>{{ $loop->iteration }}</td>
-                <td>{{ $s->reg_no }}</td>
-                <td>{{ $s->full_name }}</td>
-                <td>
+                <td class="d-none d-sm-table-cell">{{ $loop->iteration }}</td>
+                <td data-label="Reg No">{{ $s->reg_no }}</td>
+                <td class="fw-semibold stack-head">{{ $s->full_name }}</td>
+                <td data-label="Gender">
                     <span class="badge badge-gender-{{ $s->gender }}">{{ $s->gender }}</span>
                     @if(!$s->gender_confirmed)<i class="bi bi-exclamation-triangle text-warning ms-1" title="Not confirmed"></i>@endif
                 </td>
-                <td class="text-end no-print">
+                <td class="text-end no-print stack-actions">
                     @if($show_removed)
                         <a href="{{ route('student_history', ['student_id' => $s->id]) }}" class="btn btn-sm btn-outline-info" title="History"><i class="bi bi-clock-history"></i></a>
                         <form method="POST" action="{{ route('restore_student', ['student_id' => $s->id]) }}" class="d-inline"

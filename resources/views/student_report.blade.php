@@ -31,6 +31,7 @@
         </div>
     </div>
 
+    <div class="table-responsive">
     <table class="kps-table">
         <thead>
         <tr>
@@ -68,7 +69,9 @@
         @endforeach
         </tbody>
     </table>
+    </div>
 
+    <div class="table-responsive">
     <table class="kps-table" style="margin-bottom:14px;">
         <thead>
         <tr>
@@ -89,6 +92,7 @@
         </tr>
         </tbody>
     </table>
+    </div>
 
     <div class="kps-remarks">
         <div class="k">Teacher's Comment:</div>

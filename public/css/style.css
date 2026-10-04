@@ -1103,3 +1103,28 @@ main { overflow-x: clip; }
     .d-flex.justify-content-between.align-items-center.mb-3 > div:not(.page-header) { display: flex; flex-wrap: wrap; gap: .4rem; }
     .d-flex.justify-content-between.align-items-center.mb-3 > div:not(.page-header) > .btn { margin-right: 0 !important; }
 }
+
+/* ---------- Phone lists: show each row as a small card instead of a wide table ----------
+   Wide tables (Users, Review & Approval, Students) were cut off on the right and users had
+   to scroll sideways to see Status / Submitted / Actions. On phones every row is stacked
+   with its column name, so nothing is hidden. Tablets and computers keep the normal table. */
+@media (max-width: 575.98px) {
+    .table-stack thead { display: none; }
+    .table-stack, .table-stack tbody, .table-stack tr { display: block; width: 100%; }
+    .table-stack tr { padding: .6rem .85rem; border-bottom: 1px solid #e5e7eb; }
+    .table-stack tbody tr:last-child { border-bottom: 0; }
+    .table-stack td {
+        display: flex; justify-content: space-between; align-items: center; gap: .75rem;
+        width: 100%; padding: .22rem 0 !important; border: 0 !important;
+        text-align: right !important; background: transparent !important; box-shadow: none !important;
+    }
+    .table-stack td::before {
+        content: attr(data-label); flex: 0 0 38%; text-align: left;
+        font-size: .72rem; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; color: #64748b;
+    }
+    .table-stack td.stack-head { display: block; text-align: left !important; font-size: 1rem; padding-bottom: .3rem !important; }
+    .table-stack td.stack-head::before, .table-stack td.stack-actions::before { content: none; }
+    .table-stack td.stack-actions { justify-content: flex-start; flex-wrap: wrap; gap: .4rem; padding-top: .45rem !important; }
+    html[data-theme="dark"] .table-stack tr { border-bottom-color: #223049; }
+    html[data-theme="dark"] .table-stack td::before { color: #94a3b8; }
+}

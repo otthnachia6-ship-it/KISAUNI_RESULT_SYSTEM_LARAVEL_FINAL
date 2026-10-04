@@ -26,11 +26,13 @@
                 </div>
                 <span class="grade-badge grade-{{ $h['result']['grade'] }}">{{ $h['result']['grade'] }}</span>
             </div>
+            <div class="table-responsive">
             <table class="table table-sm mb-2">
                 <tr><td class="text-muted">Total</td><td class="text-end fw-semibold">{{ $h['result']['total'] }}</td></tr>
                 <tr><td class="text-muted">Average</td><td class="text-end fw-semibold">{{ $h['result']['average'] }}</td></tr>
                 <tr><td class="text-muted">Position</td><td class="text-end fw-semibold">{{ $h['result']['position'] }} of {{ $h['total_students'] }}</td></tr>
             </table>
+            </div>
             <a href="{{ route('student_report', ['student_id' => $student->id, 'exam_id' => $h['exam']['id']]) }}" class="btn btn-sm btn-outline-success w-100">
                 <i class="bi bi-file-earmark-text me-1"></i>View Full Report
             </a>
