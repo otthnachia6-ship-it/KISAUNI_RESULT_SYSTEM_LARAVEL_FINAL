@@ -1084,12 +1084,14 @@ html[data-theme="dark"] .modal-backdrop { opacity: .6; }
    When anything is wider than the phone, mobile Chrome shrinks the whole page and leaves
    an empty strip on the right. These rules keep the top bar, charts and the result
    report inside the screen width. They only apply on small screens (not print). */
-main { overflow-x: clip; }
-@media (max-width: 575.98px) {
-    .topbar { gap: .5rem; padding: .55rem .6rem; }
-    .topbar > .fw-semibold { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .topbar .text-end { max-width: 96px; min-width: 0; }
-    .topbar .text-end > .fw-semibold { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .78rem !important; }
+@media screen and (max-width: 575.98px) {
+    /* top bar: menu button on the left, user on the right, and the page title on its own full-width
+       line below them, so long titles never get squeezed or split in the middle of a word */
+    .topbar { flex-wrap: wrap; gap: .25rem .5rem; padding: .55rem .6rem; }
+    .topbar > .fw-semibold { order: 3; flex: 1 0 100%; font-size: 1.05rem; line-height: 1.25; overflow-wrap: break-word; }
+    .topbar > .d-flex { flex: 1 1 0; min-width: 0; justify-content: flex-end; }
+    .topbar .text-end { min-width: 0; flex: 0 1 auto; }
+    .topbar .text-end > .fw-semibold { font-size: .8rem; line-height: 1.15; overflow-wrap: break-word; }
     .topbar .role-pill { font-size: .62rem; padding: .08rem .4rem; }
     canvas { max-width: 100%; }
     .kps-sheet { padding: 12px 10px; }
@@ -1108,7 +1110,7 @@ main { overflow-x: clip; }
    Wide tables (Users, Review & Approval, Students) were cut off on the right and users had
    to scroll sideways to see Status / Submitted / Actions. On phones every row is stacked
    with its column name, so nothing is hidden. Tablets and computers keep the normal table. */
-@media (max-width: 575.98px) {
+@media screen and (max-width: 575.98px) {
     .table-stack thead { display: none; }
     .table-stack, .table-stack tbody, .table-stack tr { display: block; width: 100%; }
     .table-stack tr { padding: .6rem .85rem; border-bottom: 1px solid #e5e7eb; }
@@ -1127,4 +1129,38 @@ main { overflow-x: clip; }
     .table-stack td.stack-actions { justify-content: flex-start; flex-wrap: wrap; gap: .4rem; padding-top: .45rem !important; }
     html[data-theme="dark"] .table-stack tr { border-bottom-color: #223049; }
     html[data-theme="dark"] .table-stack td::before { color: #94a3b8; }
+}
+
+/* ---------- Touch comfort (phones and small tablets): easy-to-tap controls ----------
+   Small buttons, inputs and the two top-bar buttons were about 31px high; 40px is much easier
+   with a thumb. Only sizes change; nothing is hidden. The logout link stays pinned at the bottom
+   of the menu so it is always reachable without scrolling through the whole list. */
+@media screen and (max-width: 767.98px) {
+    .btn-sm { min-height: 40px; min-width: 40px; display: inline-flex; align-items: center; justify-content: center; gap: .3rem; }
+    .form-control-sm, .form-select-sm { min-height: 40px; font-size: 1rem; }
+    #sidebarToggle, #themeToggle { min-height: 40px; min-width: 40px; }
+    .subject-toggle { width: 38px; height: 38px; }
+    /* recent-activity lines on the dashboard: show the whole text (wrap) instead of cutting it with "..." */
+    .activity-row .text-truncate { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+    .app-confirm-modal .btn-close { padding: .75rem; }
+    .sidebar .nav-link.nav-logout {
+        position: sticky; bottom: 0; z-index: 1;
+        background: var(--brand-dark); border-top: 1px solid rgba(255, 255, 255, .12);
+    }
+}
+
+/* ---------- Login / Forgot password: easy-to-tap controls on phones ----------
+   The show/hide-password eye and the "Forgot password?" / "Back to Login" links were about
+   15-22px high. The eye icon stays the same size, but the area you can tap now fills the right
+   end of the field (44px wide, as tall as the field). The two links get a 44px-high tap area.
+   Applies to small screens and to any touch screen (including a large phone held sideways);
+   a computer with a mouse keeps the current look. Only these two pages are affected; ordinary
+   links inside sentences are not changed. */
+@media screen and (max-width: 767.98px), screen and (pointer: coarse) {
+    .login-split-card .password-input-group input { padding-right: 2.75rem; }
+    .login-split-card .password-toggle-btn {
+        top: 0; bottom: 0; right: 0; transform: none;
+        width: 44px; padding: 0; justify-content: center;
+    }
+    .touch-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 .5rem; }
 }

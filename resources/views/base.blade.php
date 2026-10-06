@@ -95,7 +95,7 @@
             <div class="nav-section">Account</div>
             <a class="nav-link" href="{{ route('profile') }}"><i class="bi bi-person-circle me-2"></i>Profile</a>
             <a class="nav-link" href="{{ route('change_password') }}"><i class="bi bi-key me-2"></i>Change Password</a>
-            <a class="nav-link" href="{{ route('logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a>
+            <a class="nav-link nav-logout" href="{{ route('logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a>
         </div>
     </nav>
 

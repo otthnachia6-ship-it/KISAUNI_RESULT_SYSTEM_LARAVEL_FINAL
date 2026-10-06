@@ -35,7 +35,7 @@
             </button>
         </form>
         <p class="text-center mt-3 mb-0" style="font-size:.85rem;">
-            <a href="{{ route('login') }}">&larr; Back to Login</a>
+            <a href="{{ route('login') }}" class="touch-link">&larr; Back to Login</a>
         </p>
     </div>
 </div>

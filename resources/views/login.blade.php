@@ -88,7 +88,7 @@
                     </div>
                 </div>
                 <div class="text-end mb-3">
-                    <a href="{{ route('forgot_password') }}" style="font-size:.85rem;">Forgot password?</a>
+                    <a href="{{ route('forgot_password') }}" class="touch-link" style="font-size:.85rem;">Forgot password?</a>
                 </div>
                 <button type="submit" class="btn btn-success w-100 py-2 fw-semibold" data-loading-text="Signing in&hellip;">
                     <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
