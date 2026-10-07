@@ -1164,3 +1164,33 @@ html[data-theme="dark"] .modal-backdrop { opacity: .6; }
     }
     .touch-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 .5rem; }
 }
+
+/* ---------- Login page on phones and tablets: sign-in form first ----------
+   On small screens the long welcome panel (headline + 4 feature cards) came first, so the form was
+   over a screen and a half down, and the card itself had a large empty area above and below the
+   fields (min-height 640px). Now the school logo/name is a slim header, the sign-in card comes right
+   under it, and the welcome text and feature cards follow below. Same colours, same wording, same
+   content; only the order and the spacing change. Computers (wide screens) keep the side-by-side look. */
+@media screen and (max-width: 991.98px) {
+    .login-split { position: relative; overflow: hidden; align-items: center; padding: 1.25rem 1rem 2rem; }
+    .login-split::before {
+        content: ""; position: absolute; top: -120px; right: -120px; width: 360px; height: 360px;
+        border-radius: 50%; background: radial-gradient(circle, rgba(56, 189, 248, .18), transparent 70%); pointer-events: none;
+    }
+    /* let the welcome panel's pieces take part in the page order directly */
+    .login-split-brand, .login-split-brand-inner { display: contents; }
+    .login-split-brand::before { display: none; }
+    .login-split-mark, .login-split-form-side, .login-split-headline, .login-split-sub,
+    .login-split-features, .login-split-footer { position: relative; width: 100%; max-width: 520px; }
+    .login-split-mark { order: 1; margin-bottom: 1.1rem; }
+    .login-split-mark img { height: 40px; width: 40px; }
+    .login-split-mark-name { font-size: .95rem; }
+    .login-split-form-side { order: 2; padding: 0; }
+    .login-split-card { min-height: 0; justify-content: flex-start; padding: 1.5rem 1.25rem; }
+    .login-split-card-title { font-size: 1.4rem; }
+    .login-split-card-sub { margin-bottom: 1.1rem; }
+    .login-split-headline { order: 3; margin: 2rem 0 .7rem; font-size: 1.45rem; }
+    .login-split-sub { order: 4; margin-bottom: 1.5rem; font-size: .92rem; line-height: 1.55; }
+    .login-split-features { order: 5; }
+    .login-split-footer { order: 6; margin-top: 1.75rem; text-align: center; }
+}
