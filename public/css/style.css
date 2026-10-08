@@ -1111,7 +1111,7 @@ html[data-theme="dark"] .modal-backdrop { opacity: .6; }
     }
     .table-stack td.stack-head { display: block; text-align: left !important; font-size: 1rem; padding-bottom: .3rem !important; }
     .table-stack td.stack-head::before, .table-stack td.stack-actions::before { content: none; }
-    .table-stack td.stack-actions { justify-content: flex-start; flex-wrap: wrap; gap: .4rem; padding-top: .45rem !important; }
+    .table-stack td.stack-actions { justify-content: flex-start; flex-wrap: wrap; gap: .5rem; padding-top: .45rem !important; }
     html[data-theme="dark"] .table-stack tr { border-bottom-color: #223049; }
     html[data-theme="dark"] .table-stack td::before { color: #94a3b8; }
 }
@@ -1121,7 +1121,11 @@ html[data-theme="dark"] .modal-backdrop { opacity: .6; }
    with a thumb. Only sizes change; nothing is hidden. The logout link stays pinned at the bottom
    of the menu so it is always reachable without scrolling through the whole list. */
 @media screen and (max-width: 767.98px) {
-    .btn-sm { min-height: 40px; min-width: 40px; display: inline-flex; align-items: center; justify-content: center; gap: .3rem; }
+    /* Comfortable, not oversized: normal buttons ~36px and small/icon buttons ~34px (were 38px / 40px). Normal buttons
+       are limited to the signed-in pages and pop-ups so the login page keeps its own sizing; the top-bar menu and
+       theme buttons keep their 40px (rule below). */
+    main .btn:not(.btn-sm), .modal .btn:not(.btn-sm) { font-size: .9rem; padding: .4rem .9rem; }
+    .btn-sm { min-height: 34px; min-width: 34px; font-size: .85rem; padding: .25rem .55rem; display: inline-flex; align-items: center; justify-content: center; gap: .3rem; }
     .form-control-sm, .form-select-sm { min-height: 40px; font-size: 1rem; }
     #sidebarToggle, #themeToggle { min-height: 40px; min-width: 40px; }
     .subject-toggle { width: 38px; height: 38px; }
