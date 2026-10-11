@@ -6,6 +6,7 @@ use App\Models\SchoolClass;
 use App\Models\User;
 use App\Services\LegacyPasswordService;
 use App\Services\SchoolService;
+use App\Support\UploadedImage;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -260,8 +261,8 @@ class AuthController extends Controller
             }
 
             $file = $request->file('photo');
-            $ext = strtolower($file->getClientOriginalExtension());
-            if (!in_array($ext, ['png', 'jpg', 'jpeg'], true)) {
+            $ext = UploadedImage::extension($file); // decided from the real file content, not its name
+            if ($ext === null) {
                 return back()->with('danger', 'Only PNG or JPG images are allowed for profile photos.');
             }
 

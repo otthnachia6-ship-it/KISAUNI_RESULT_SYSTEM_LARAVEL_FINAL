@@ -62,7 +62,7 @@
             @foreach (['danger', 'success', 'warning', 'info'] as $msgType)
                 @if(session()->has($msgType))
                 <div class="alert alert-{{ $msgType }} alert-dismissible fade show" role="alert">
-                    {!! session($msgType) !!}
+                    {{ session($msgType) }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
                 @endif

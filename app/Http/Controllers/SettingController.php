@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use App\Services\SchoolService;
+use App\Support\UploadedImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
@@ -23,8 +24,8 @@ class SettingController extends Controller
 
             if ($request->hasFile('logo')) {
                 $file = $request->file('logo');
-                $ext = strtolower($file->getClientOriginalExtension());
-                if (!in_array($ext, ['png', 'jpg', 'jpeg'], true)) {
+                $ext = UploadedImage::extension($file); // decided from the real file content, not its name
+                if ($ext === null) {
                     return back()->with('danger', 'Only PNG or JPG files are allowed for the logo.');
                 }
 

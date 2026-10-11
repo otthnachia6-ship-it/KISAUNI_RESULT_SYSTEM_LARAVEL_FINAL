@@ -125,7 +125,7 @@
                 @if(session()->has($msgType))
                 <div class="app-toast app-toast-{{ $msgType }}">
                     <i class="bi @if($msgType=='success' || $msgType=='info') bi-check-circle-fill @elseif($msgType=='danger') bi-x-circle-fill @else bi-exclamation-triangle-fill @endif"></i>
-                    <span>{!! session($msgType) !!}</span>
+                    <span>{{ session($msgType) }}</span>
                     <button type="button" class="app-toast-close" onclick="this.parentElement.remove()">&times;</button>
                 </div>
                 @endif
