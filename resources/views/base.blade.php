@@ -14,10 +14,10 @@
 <script>
 (function () {
     try {
-        if (localStorage.getItem('kps-theme') === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
+        // The system is always in light mode: drop any dark setting saved earlier in this browser.
+        localStorage.removeItem('kps-theme');
     } catch (e) {}
+    document.documentElement.removeAttribute('data-theme');
 })();
 </script>
 </head>
@@ -104,9 +104,6 @@
             <button id="sidebarToggle" class="btn btn-sm btn-outline-secondary d-md-none"><i class="bi bi-list"></i></button>
             <div class="fw-semibold">@yield('page_title')</div>
             <div class="d-flex align-items-center gap-2">
-                <button id="themeToggle" class="btn btn-sm btn-outline-secondary" title="Badilisha Dark/Light Mode">
-                    <i class="bi bi-moon-stars"></i>
-                </button>
                 <div class="text-end">
                     <div class="fw-semibold" style="font-size:.9rem;">{{ $session_user->full_name }}</div>
                     <small class="role-pill">
