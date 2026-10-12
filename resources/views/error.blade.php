@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ $title ?? "Something went wrong" }} - {{ $school_name ?? "School Result System" }}</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="{{ asset('vendor/bootstrap/5.3.3/css/bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ asset('vendor/bootstrap-icons/1.11.3/bootstrap-icons.css') }}" rel="stylesheet">
 <style>
     body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f4f6f9;font-family:Arial,Helvetica,sans-serif;}
     .error-card{max-width:460px;width:92%;background:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:2.2rem 2rem;text-align:center;}

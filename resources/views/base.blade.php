@@ -5,11 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>@yield('title', $school_name) - Result System</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="{{ asset('vendor/bootstrap/5.3.3/css/bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ asset('vendor/bootstrap-icons/1.11.3/bootstrap-icons.css') }}" rel="stylesheet">
+<link rel="preload" href="{{ asset('vendor/inter/5.3.0/files/inter-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+<link href="{{ asset('vendor/inter/5.3.0/inter.css') }}" rel="stylesheet">
 <link href="{{ asset('css/style.css') }}?v={{ $asset_version('css/style.css') }}" rel="stylesheet">
 <script>
 (function () {
@@ -182,7 +181,7 @@
     @yield('guest_content')
 @endif
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('vendor/bootstrap/5.3.3/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('js/script.js') }}?v={{ $asset_version('js/script.js') }}"></script>
 @yield('scripts')
 </body>

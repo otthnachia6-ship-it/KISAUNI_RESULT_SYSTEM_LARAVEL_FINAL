@@ -305,7 +305,7 @@ document.addEventListener("DOMContentLoaded", function () {
     $cbNames = array_map(fn($r) => is_array($r) ? ($r['name'] ?? '') : $r->name, $cbList);
     $cbCounts = array_map(fn($r) => is_array($r) ? ($r['c'] ?? 0) : $r->c, $cbList);
 @endphp
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ asset('vendor/chartjs/4.4.4/chart.umd.js') }}"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const palette = {!! json_encode($chart_colors) !!};
