@@ -1,7 +1,7 @@
 @extends('base')
 @section('page_title', 'Promote My Class')
 @section('content')
-<h5 class="mb-1">Promote My Class's Students</h5>
+<x-page_header title="Promote My Class" subtitle="Move your class's students up, or graduate them" />
 <p class="text-muted small">
     @if($is_final_standard)
     Mark all students currently in <strong>{{ $my_class->name }}</strong> as graduated - this is the

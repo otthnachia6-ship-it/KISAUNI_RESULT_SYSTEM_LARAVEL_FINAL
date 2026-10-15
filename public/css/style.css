@@ -23,9 +23,8 @@ body {
 /* ---------- Sidebar (dark theme, restored) ---------- */
 .sidebar {
     min-height: 100vh;
-    background: linear-gradient(180deg, var(--brand-navy), var(--brand-dark) 55%, var(--brand));
+    background: var(--brand-dark);
     color: #fff;
-    box-shadow: 2px 0 12px rgba(0,0,0,.12);
 }
 
 /* ---------- Mobile: sidebar becomes a slide-in drawer ---------- */
@@ -61,60 +60,59 @@ body {
 }
 .sidebar .brand {
     padding: 1.1rem 1rem;
-    border-bottom: 1px solid rgba(255,255,255,.12);
+    border-bottom: 1px solid rgba(255,255,255,.08);
 }
 .sidebar .brand img { height: 42px; margin-right: .5rem; border-radius: 8px; }
 .sidebar a.nav-link {
-    color: rgba(226,232,255,.8);
-    padding: .55rem 1rem;
+    color: rgba(226,232,255,.78);
+    padding: .55rem .9rem;
     border-radius: 8px;
-    margin: 2px 8px;
+    margin: 2px 10px;
     font-size: .93rem;
-    border-left: 3px solid transparent;
-    transition: background .15s ease, color .15s ease, border-color .15s ease, transform .15s ease;
+    transition: background .15s ease, color .15s ease;
 }
 .sidebar a.nav-link:hover {
-    background: rgba(96,165,250,.14);
+    background: rgba(255,255,255,.06);
     color: #fff;
-    transform: translateX(2px);
 }
 .sidebar a.nav-link.active {
-    background: linear-gradient(90deg, rgba(37,99,235,.35), rgba(96,165,250,.12));
+    background: rgba(255,255,255,.1);
     color: #fff;
     font-weight: 600;
-    border-left-color: var(--accent);
 }
 .sidebar .nav-section {
     text-transform: uppercase;
     font-size: .68rem;
     letter-spacing: .08em;
-    color: rgba(148,163,255,.55);
-    padding: .9rem 1rem .25rem;
+    color: rgba(165,180,252,.6);
+    padding: .9rem 1.1rem .25rem;
 }
 
 .topbar {
     background: #fff;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--border);
     padding: .7rem 1.2rem;
-    box-shadow: 0 1px 3px rgba(15,23,42,.05);
 }
+.crumbs { display: flex; align-items: center; gap: .5rem; min-width: 0; font-size: .85rem; color: #64748b; }
+.crumbs strong { color: #0f172a; font-weight: 600; white-space: nowrap; }
+.crumbs-root { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
+.crumbs-sep { font-size: .65rem; opacity: .7; }
+@media (max-width: 767.98px) { .crumbs-root, .crumbs-sep { display: none; } .crumbs strong { font-size: 1rem; } }
 .user-avatar {
     width: 38px; height: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--brand-blue), var(--accent));
+    background: var(--brand-blue);
     color: #fff;
     display: flex; align-items: center; justify-content: center;
     font-weight: 700; font-size: .85rem;
     letter-spacing: .02em;
-    box-shadow: 0 3px 8px rgba(37,99,235,.28);
     flex-shrink: 0;
 }
 .user-avatar-img {
     width: 38px; height: 38px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #fff;
-    box-shadow: 0 3px 8px rgba(15,23,42,.18);
+    border: 1px solid var(--border);
     flex-shrink: 0;
 }
 .profile-photo-lg {
@@ -137,38 +135,23 @@ body {
     border-radius: 20px;
 }
 
-.stat-card {
-    border: none;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-    transition: transform .18s var(--ease), box-shadow .18s var(--ease);
+.stat-tile {
+    position: relative;
+    height: 100%;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    transition: border-color .15s ease;
 }
-.stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
-}
-.stat-card .stat-value { font-size: 1.9rem; font-weight: 700; color: #0f1b3d; }
-.stat-card .stat-icon {
-    width: 46px; height: 46px; border-radius: 14px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem; color: #fff;
-    box-shadow: 0 4px 10px rgba(15,23,42,.18);
-}
-.stat-icon-blue   { background: linear-gradient(135deg, #2563eb, #60a5fa); }
-.stat-icon-navy   { background: linear-gradient(135deg, #0f1b3d, #2c3d6b); }
-.stat-icon-purple { background: linear-gradient(135deg, #6f42c1, #a78bfa); }
-.stat-icon-cyan   { background: linear-gradient(135deg, #0891b2, #38bdf8); }
-.stat-icon-orange { background: linear-gradient(135deg, #f97316, #fbbf24); }
-.stat-icon-green  { background: linear-gradient(135deg, #16a34a, #4ade80); }
-
-/* Each dashboard stat-card gets a top accent in its own icon's colour, so
-   the colour-coding reads at a glance even before the icon registers. */
-.stat-card.stat-card--blue   { border-top: 3px solid #2563eb; }
-.stat-card.stat-card--navy   { border-top: 3px solid #0f1b3d; }
-.stat-card.stat-card--purple { border-top: 3px solid #6f42c1; }
-.stat-card.stat-card--cyan   { border-top: 3px solid #0891b2; }
-.stat-card.stat-card--orange { border-top: 3px solid #f97316; }
-.stat-card.stat-card--green  { border-top: 3px solid #16a34a; }
+.stat-tile:hover { border-color: #c7d2e6; }
+.stat-tile-top { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+.stat-tile-label { font-size: .76rem; font-weight: 600; color: #64748b; letter-spacing: .02em; text-decoration: none; }
+a.stat-tile-label:hover { color: #0f172a; }
+.stat-tile-ico { color: #94a3b8; font-size: 1.05rem; }
+.stat-tile-value { font-size: 1.85rem; font-weight: 700; line-height: 1.1; color: #0f172a; margin: .5rem 0 .25rem; font-variant-numeric: tabular-nums; }
+.stat-tile-sub { font-size: .78rem; color: #64748b; }
+.stat-tile--attention .stat-tile-sub { color: #b45309; font-weight: 600; }
 
 /* ---------- Recent Activities list ---------- */
 .activity-list { display: flex; flex-direction: column; gap: .1rem; max-height: 360px; overflow-y: auto; }
@@ -179,17 +162,17 @@ body {
 }
 .activity-row:last-child { border-bottom: none; }
 .activity-icon {
-    width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: .95rem;
+    font-size: .9rem;
 }
-.icon-blue   { background: linear-gradient(135deg, #2563eb, #60a5fa); }
-.icon-navy   { background: linear-gradient(135deg, #0f1b3d, #2c3d6b); }
-.icon-purple { background: linear-gradient(135deg, #6f42c1, #a78bfa); }
-.icon-cyan   { background: linear-gradient(135deg, #0891b2, #38bdf8); }
-.icon-orange { background: linear-gradient(135deg, #f97316, #fbbf24); }
-.icon-green  { background: linear-gradient(135deg, #16a34a, #4ade80); }
-.icon-red    { background: linear-gradient(135deg, #dc2626, #f87171); }
+.icon-blue   { background: #e8effd; color: #2563eb; }
+.icon-navy   { background: #e7eaf3; color: #0f1b3d; }
+.icon-purple { background: #eee9fa; color: #6d4bc4; }
+.icon-cyan   { background: #e1f3f8; color: #0b7a93; }
+.icon-orange { background: #fdf0e1; color: #b45309; }
+.icon-green  { background: #e3f4e9; color: #15803d; }
+.icon-red    { background: #fde8e8; color: #b91c1c; }
 
 /* ---------- Students-by-class legend ---------- */
 .legend-dot {
@@ -198,41 +181,21 @@ body {
 }
 
 /* ---------- Quick Actions ---------- */
-.quick-action-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
-    gap: .6rem;
+.qa-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem .75rem; }
+@media (max-width: 575.98px) { .qa-list { grid-template-columns: 1fr; } }
+.qa-row {
+    display: flex; align-items: center; gap: .7rem;
+    padding: .6rem .75rem; border: 1px solid var(--border); border-radius: 10px;
+    color: #1e293b; text-decoration: none; font-size: .9rem; font-weight: 500;
+    transition: border-color .15s ease, background .15s ease;
 }
-.quick-action-tile {
-    display: flex; flex-direction: column; align-items: center; gap: .4rem;
-    text-decoration: none; color: #344055; font-size: .78rem; text-align: center;
-    padding: .6rem .25rem; border-radius: 12px;
-    transition: transform .15s var(--ease), background .15s ease;
-}
-.quick-action-tile:hover { transform: translateY(-2px); background: #f4f6fb; color: #1b2a4e; }
-.quick-action-tile .qa-icon {
-    width: 46px; height: 46px; border-radius: 14px;
+.qa-row:hover { background: #f7f9fc; border-color: #c7d2e6; color: #0f172a; }
+.qa-ico {
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 1.2rem;
-    box-shadow: 0 4px 10px rgba(15,23,42,.15);
+    background: #eef2fa; color: var(--brand-blue); font-size: 1rem;
 }
-
-/* Dashboard's one signature moment: the stat row settles in with a quick,
-   gentle stagger. This is the only place cards reveal individually - every
-   other page uses the single quiet .page-enter fade instead. */
-@media (prefers-reduced-motion: no-preference) {
-    .dashboard-stats .stat-card { opacity: 0; animation: statIn .5s var(--ease) forwards; }
-    .dashboard-stats > div:nth-child(1) .stat-card { animation-delay: .02s; }
-    .dashboard-stats > div:nth-child(2) .stat-card { animation-delay: .07s; }
-    .dashboard-stats > div:nth-child(3) .stat-card { animation-delay: .12s; }
-    .dashboard-stats > div:nth-child(4) .stat-card { animation-delay: .17s; }
-    .dashboard-stats > div:nth-child(5) .stat-card { animation-delay: .22s; }
-    .dashboard-stats > div:nth-child(6) .stat-card { animation-delay: .27s; }
-}
-@keyframes statIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
+.qa-go { margin-left: auto; font-size: .75rem; color: #94a3b8; }
 
 /* ---------- Toast notifications (replaces long-lived flash banners) ---------- */
 .toast-stack {
@@ -285,61 +248,30 @@ body {
 .app-confirm-modal .modal-body { font-size: .92rem; color: #334155; }
 .app-confirm-modal .modal-footer { border-top: 1px solid var(--border); }
 
-/* ---------- Shared "page header" banner (icon + title) used across pages ---------- */
-.page-header {
-    background: #e8f1ff;
-    border-radius: var(--radius);
-    padding: .85rem 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 1.1rem;
-}
-.page-header-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    background: var(--brand-blue);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    flex-shrink: 0;
-}
-.page-header-text { min-width: 0; }
-.page-header-title { font-size: 1.02rem; font-weight: 600; color: #1e3a6e; margin: 0; }
-.page-header-subtitle { font-size: .8rem; color: #3b5a8a; margin: .1rem 0 0; opacity: .9; }
-html[data-theme="dark"] .page-header { background: #16345e; }
-html[data-theme="dark"] .page-header-title { color: #dbeafe; }
-html[data-theme="dark"] .page-header-subtitle { color: #93c5fd; }
+/* ---------- Page header (date, title, short description, actions) ---------- */
+.page-head { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.4rem; }
+.page-eyebrow { display: flex; align-items: center; gap: .45rem; font-size: .78rem; color: #64748b; margin-bottom: .3rem; }
+.page-eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--brand-blue); }
+.page-title { font-size: 1.65rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: -.01em; }
+.page-sub { margin: .25rem 0 0; font-size: .88rem; color: #64748b; }
+.page-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.page-head-main { min-width: 0; }
+.d-flex > .page-head { margin-bottom: 0; }
+@media print { .page-eyebrow { display: none; } }
 
-/* ---------- Dashboard hero banner ---------- */
-.dash-hero {
-    background: linear-gradient(120deg, var(--brand-dark), var(--brand-blue) 85%);
-    border-radius: var(--radius);
-    padding: 1.4rem 1.6rem;
-    color: #fff;
-    margin-bottom: 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-    box-shadow: var(--shadow-md);
-}
-.dash-hero h4 { color: #fff; margin-bottom: .2rem; }
-.dash-hero .dash-hero-date { color: rgba(255,255,255,.75); font-size: .88rem; }
-.dash-hero .dash-hero-pending {
-    background: rgba(255,255,255,.12);
-    border: 1px solid rgba(255,255,255,.22);
-    border-radius: 10px;
-    padding: .55rem 1rem;
-    text-align: center;
-    min-width: 130px;
-}
-.dash-hero .dash-hero-pending .n { font-size: 1.5rem; font-weight: 800; line-height: 1; }
-.dash-hero .dash-hero-pending .l { font-size: .72rem; color: rgba(255,255,255,.75); text-transform: uppercase; letter-spacing: .04em; }
+/* ---------- Panel cards (title row with a small label above) ---------- */
+.panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; }
+.panel-eyebrow { font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #94a3b8; }
+.panel-title { font-size: 1.02rem; font-weight: 600; color: #0f172a; margin: .15rem 0 0; }
+.panel-note { font-size: .78rem; color: #94a3b8; margin: .2rem 0 0; }
+.attn-list { display: flex; flex-direction: column; }
+.attn-row { display: flex; align-items: center; gap: .9rem; padding: .75rem 0; border-top: 1px solid var(--border); }
+.attn-row:first-child { border-top: 0; padding-top: 0; }
+.attn-row:last-child { padding-bottom: 0; }
+.attn-main { min-width: 0; flex: 1; }
+.attn-title { font-size: .93rem; font-weight: 600; color: #0f172a; }
+.attn-sub { font-size: .8rem; color: #64748b; }
+@media (max-width: 575.98px) { .attn-row { flex-wrap: wrap; } .attn-main { flex-basis: 100%; } }
 
 /* ---------- Empty-state icon (small inline SVG, no external image) ---------- */
 .empty-state { text-align: center; padding: 2rem 1rem; color: #94a3b8; }
@@ -366,7 +298,7 @@ html[data-theme="dark"] .page-header-subtitle { color: #93c5fd; }
 }
 .subject-toggle:active { transform: scale(.9); }
 
-.card { border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+.card { border-radius: var(--radius); border: 1px solid var(--border); box-shadow: none; }
 .card-header {
     border-radius: var(--radius) var(--radius) 0 0 !important;
     background: #fafbfd !important;
@@ -454,11 +386,19 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, input:focus-visible, 
 html[data-theme="dark"] .class-gender-chip--boys { background: #16345e; color: #93c5fd; }
 html[data-theme="dark"] .class-gender-chip--girls { background: #4a1030; color: #f4a6d0; }
 
-.status-badge-draft { background: #6c757d; }
-.status-badge-submitted { background: #f97316; }
-.status-badge-under_review { background: #f97316; }
-.status-badge-approved { background: #16a34a; }
-.status-badge-returned { background: #dc2626; }
+/* Result status chips: soft tint with a small dot, the same on every page */
+.badge[class*="status-badge-"] {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .3rem .7rem; border-radius: 50rem;
+    font-size: .76rem; font-weight: 600; letter-spacing: 0;
+    background: #eef1f6; color: #475569;
+}
+.badge[class*="status-badge-"]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge.status-badge-draft { background: #eef1f6; color: #475569; }
+.badge.status-badge-submitted { background: #fef3c7; color: #92400e; }
+.badge.status-badge-under_review { background: #dbeafe; color: #1e40af; }
+.badge.status-badge-approved { background: #dcfce7; color: #166534; }
+.badge.status-badge-returned { background: #fee2e2; color: #991b1b; }
 
 /* ---------- Soft "chip" grade badges (light bg + colour text, like the
    boys/girls count chips on Class cards) - used on Performance Analytics
@@ -506,26 +446,26 @@ html[data-theme="dark"] .grade-chip-\- { background: #1e293b; color: #94a3b8; }
 .grade-count-circle.grade-dot-D { background: #f97316; }
 .grade-count-circle.grade-dot-E { background: #dc2626; }
 
-/* Coloured pill labels for stat-card headings on Performance Analytics
-   (Class Average / Average Grade / Top Subjects), matching the boys/girls
-   count-chip style. */
+/* Small grey caption above a figure (Class Average / Average Grade / Top Subjects / Class Ranking).
+   One quiet style for all of them; the --blue/--green/--amber/--purple names in the pages are kept
+   but no longer change the colour, so these captions do not read as a rainbow of pills. */
 .stat-label-chip {
     display: inline-block;
-    font-size: .72rem;
+    font-size: .7rem;
     font-weight: 700;
+    letter-spacing: .06em;
+    color: #64748b;
+    margin-bottom: .35rem;
+}
+/* The few chips that set their own colour in the page (Highest / Lowest average, Subjects needing
+   attention) keep the original pill shape, so only the colour-less ones turn into quiet captions. */
+.stat-label-chip[style] {
+    font-size: .72rem;
     letter-spacing: .02em;
     padding: .3rem .65rem;
     border-radius: 50rem;
     margin-bottom: .4rem;
 }
-.stat-label-chip--blue { background: #e6f0ff; color: #2563eb; }
-.stat-label-chip--green { background: #dcfce7; color: #16a34a; }
-.stat-label-chip--amber { background: #fef3c7; color: #b45309; }
-.stat-label-chip--purple { background: #ede9fe; color: #7c3aed; }
-html[data-theme="dark"] .stat-label-chip--blue { background: #16345e; color: #93c5fd; }
-html[data-theme="dark"] .stat-label-chip--green { background: #123524; color: #4ade80; }
-html[data-theme="dark"] .stat-label-chip--amber { background: #3a2e0c; color: #fbbf24; }
-html[data-theme="dark"] .stat-label-chip--purple { background: #2e1f4d; color: #c4b5fd; }
 
 /* Small circular position/rank badge for the class leaderboard. */
 .rank-badge {
@@ -1087,8 +1027,8 @@ html[data-theme="dark"] .modal-backdrop { opacity: .6; }
     .kps-table th[style*="width"] { width: auto !important; }
     /* page title + action buttons rows (Students, Users, Marks, ...): let buttons drop below the title */
     .d-flex.justify-content-between.align-items-center.mb-3 { flex-wrap: wrap; gap: .5rem; }
-    .d-flex.justify-content-between.align-items-center.mb-3 > div:not(.page-header) { display: flex; flex-wrap: wrap; gap: .4rem; }
-    .d-flex.justify-content-between.align-items-center.mb-3 > div:not(.page-header) > .btn { margin-right: 0 !important; }
+    .d-flex.justify-content-between.align-items-center.mb-3 > div:not(.page-head) { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .d-flex.justify-content-between.align-items-center.mb-3 > div:not(.page-head) > .btn { margin-right: 0 !important; }
 }
 
 /* ---------- Phone lists: show each row as a small card instead of a wide table ----------

@@ -1,12 +1,15 @@
 @extends('base')
 @section('page_title', 'Marks Entry')
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h5 class="mb-0">{{ $cls->name }} — {{ $exam->exam_type }} ({{ $exam->academic_year }})</h5>
-        <span class="badge status-badge-{{ $status }} mt-1">Status: {{ strtoupper($STATUS_LABELS[$status] ?? $status) }}</span>
+<div class="page-head">
+    <div class="page-head-main">
+        <div class="page-eyebrow"><span class="badge status-badge-{{ $status }}">{{ $STATUS_LABELS[$status] ?? $status }}</span></div>
+        <h1 class="page-title">{{ $cls->name }} — {{ $exam->exam_type }} ({{ $exam->academic_year }})</h1>
+        <p class="page-sub">Marks Entry</p>
     </div>
-    <a href="{{ route('marks_select') }}" class="btn btn-sm btn-outline-secondary">&larr; Back</a>
+    <div class="page-actions">
+        <a href="{{ route('marks_select') }}" class="btn btn-sm btn-outline-secondary">&larr; Back</a>
+    </div>
 </div>
 
 @if($status === 'returned')

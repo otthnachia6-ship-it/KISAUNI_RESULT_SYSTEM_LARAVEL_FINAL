@@ -101,7 +101,11 @@
     <main class="flex-grow-1" style="min-width:0;">
         <div class="topbar d-flex justify-content-between align-items-center no-print">
             <button id="sidebarToggle" class="btn btn-sm btn-outline-secondary d-md-none"><i class="bi bi-list"></i></button>
-            <div class="fw-semibold">@yield('page_title')</div>
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <span class="crumbs-root">{{ $school_name }}</span>
+                <i class="bi bi-chevron-right crumbs-sep" aria-hidden="true"></i>
+                <strong>@yield('page_title')</strong>
+            </nav>
             <div class="d-flex align-items-center gap-2">
                 <div class="text-end">
                     <div class="fw-semibold" style="font-size:.9rem;">{{ $session_user->full_name }}</div>

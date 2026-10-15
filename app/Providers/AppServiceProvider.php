@@ -69,6 +69,7 @@ class AppServiceProvider extends ServiceProvider
                 'session_user' => $sessionUser,
                 'ROLE_HEADMASTER' => SchoolService::ROLE_HEADMASTER,
                 'ROLE_CLASS_TEACHER' => SchoolService::ROLE_CLASS_TEACHER,
+                'STATUS_LABELS' => SchoolService::STATUS_LABELS,
                 'logo_url' => $logoUrl,
                 'user_photo_url' => $userPhotoUrl,
                 'asset_version' => $assetVersion,

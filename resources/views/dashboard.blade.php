@@ -2,17 +2,18 @@
 @section('page_title', 'Dashboard')
 @section('content')
 
-<div class="dash-hero">
+@php
+    $isHm = $session_user->role === $ROLE_HEADMASTER;
+    $cbRows = collect($class_breakdown ?? []);
+    $shownClasses = $cbRows->filter(fn($r) => (int) (is_array($r) ? ($r['c'] ?? 0) : $r->c) > 0)->values();
+    $classesWithStudents = $shownClasses->count();
+@endphp
+<div class="page-head">
     <div>
-        <h4 class="mb-1">Welcome back, {{ $session_user->full_name }} 👋</h4>
-        <div class="dash-hero-date" id="heroDate">{{ $school_name }} &middot; Academic Year {{ $academic_year }}</div>
+        <div class="page-eyebrow"><span class="page-eyebrow-dot"></span><span data-today>{{ now()->format('l, j F Y') }}</span></div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-sub">Welcome back, {{ $session_user->full_name }}. {{ $school_name }} &middot; Academic Year {{ $academic_year }}</p>
     </div>
-    @if(($stats['pending'] ?? 0) > 0)
-    <div class="dash-hero-pending">
-        <div class="n">{{ $stats['pending'] }}</div>
-        <div class="l">Pending Review</div>
-    </div>
-    @endif
 </div>
 
 @if($my_class)
@@ -85,7 +86,7 @@
     </p>
     @elseif($leading_class && ($leading_class['cls']->id ?? null) == ($my_class->id ?? null))
     <p class="text-muted small mb-2">
-        <i class="bi bi-trophy me-1"></i><strong>{{ $my_class->name }}</strong> is currently leading the school (position #1 of {{ $class_ranking_total }}) 🎉
+        <i class="bi bi-trophy me-1"></i><strong>{{ $my_class->name }}</strong> is currently leading the school (position #1 of {{ $class_ranking_total }})
     </p>
     @endif
 
@@ -119,59 +120,167 @@
 <!-- ---------- Top stats: the 6 headline numbers, all live counts ---------- -->
 <div class="row g-3 mb-4 dashboard-stats">
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="card stat-card stat-card--blue p-3">
-            <div class="stat-icon stat-icon-blue mb-2"><i class="bi bi-people"></i></div>
-            <div class="stat-value">{{ $stats['students'] }}</div>
-            <div class="text-muted small">Students</div>
+        <div class="stat-tile">
+            <div class="stat-tile-top">
+                <a class="stat-tile-label stretched-link" href="{{ route('students') }}">Students</a>
+                <i class="bi bi-people stat-tile-ico"></i>
+            </div>
+            <div class="stat-tile-value">{{ $stats['students'] }}</div>
+            <div class="stat-tile-sub">in {{ $classesWithStudents }} {{ \Illuminate\Support\Str::plural('class', $classesWithStudents) }}</div>
         </div>
     </div>
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="card stat-card stat-card--green p-3">
-            <div class="stat-icon stat-icon-green mb-2"><i class="bi bi-mortarboard"></i></div>
-            <div class="stat-value">{{ $stats['teachers'] }}</div>
-            <div class="text-muted small">Teachers</div>
+        <div class="stat-tile">
+            <div class="stat-tile-top">
+                @if($isHm)<a class="stat-tile-label stretched-link" href="{{ route('users') }}">Teachers</a>@else<span class="stat-tile-label">Teachers</span>@endif
+                <i class="bi bi-mortarboard stat-tile-ico"></i>
+            </div>
+            <div class="stat-tile-value">{{ $stats['teachers'] }}</div>
+            <div class="stat-tile-sub">active class teachers</div>
         </div>
     </div>
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="card stat-card stat-card--navy p-3">
-            <div class="stat-icon stat-icon-navy mb-2"><i class="bi bi-door-open"></i></div>
-            <div class="stat-value">{{ $stats['classes'] }}</div>
-            <div class="text-muted small">Classes</div>
+        <div class="stat-tile">
+            <div class="stat-tile-top">
+                @if($isHm)<a class="stat-tile-label stretched-link" href="{{ route('classes') }}">Classes</a>@else<span class="stat-tile-label">Classes</span>@endif
+                <i class="bi bi-door-open stat-tile-ico"></i>
+            </div>
+            <div class="stat-tile-value">{{ $stats['classes'] }}</div>
+            <div class="stat-tile-sub">{{ $classesWithStudents }} with students</div>
         </div>
     </div>
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="card stat-card stat-card--cyan p-3">
-            <div class="stat-icon stat-icon-cyan mb-2"><i class="bi bi-pencil-square"></i></div>
-            <div class="stat-value">{{ $stats['exams'] }}</div>
-            <div class="text-muted small">Examinations</div>
+        <div class="stat-tile">
+            <div class="stat-tile-top">
+                <a class="stat-tile-label stretched-link" href="{{ route('examinations') }}">Examinations</a>
+                <i class="bi bi-pencil-square stat-tile-ico"></i>
+            </div>
+            <div class="stat-tile-value">{{ $stats['exams'] }}</div>
+            <div class="stat-tile-sub">exams on record</div>
         </div>
     </div>
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="card stat-card stat-card--orange p-3">
-            <div class="stat-icon stat-icon-orange mb-2"><i class="bi bi-hourglass-split"></i></div>
-            <div class="stat-value">{{ $stats['pending'] }}</div>
-            <div class="text-muted small">Pending Review</div>
+        <div class="stat-tile @if($isHm && ($stats['pending'] ?? 0) > 0) stat-tile--attention @endif">
+            <div class="stat-tile-top">
+                @if($isHm)<a class="stat-tile-label stretched-link" href="{{ route('results') }}">Pending review</a>@else<span class="stat-tile-label">Pending review</span>@endif
+                <i class="bi bi-hourglass-split stat-tile-ico"></i>
+            </div>
+            <div class="stat-tile-value">{{ $stats['pending'] }}</div>
+            <div class="stat-tile-sub">@if($isHm && ($stats['pending'] ?? 0) > 0)Waiting for your review &rarr;@else Waiting for review @endif</div>
         </div>
     </div>
     <div class="col-6 col-md-4 col-lg-2">
-        <div class="card stat-card stat-card--green p-3">
-            <div class="stat-icon stat-icon-green mb-2"><i class="bi bi-check2-circle"></i></div>
-            <div class="stat-value">{{ $stats['approved'] }}</div>
-            <div class="text-muted small">Approved</div>
+        <div class="stat-tile">
+            <div class="stat-tile-top">
+                @if($isHm)<a class="stat-tile-label stretched-link" href="{{ route('results') }}">Approved</a>@else<span class="stat-tile-label">Approved</span>@endif
+                <i class="bi bi-check2-circle stat-tile-ico"></i>
+            </div>
+            <div class="stat-tile-value">{{ $stats['approved'] }}</div>
+            <div class="stat-tile-sub">class results approved</div>
         </div>
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <!-- ---------- Recent Activities: real audit log, restyled ---------- -->
-    @if($session_user->role === $ROLE_HEADMASTER)
-    <div class="col-lg-7">
-        <div class="card p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="mb-0"><i class="bi bi-clock-history me-1"></i>Recent Activities</h6>
-                <a href="{{ route('audit_logs') }}" class="small">View all &rarr;</a>
+@if($isHm && count($pending_reviews) > 0)
+<!-- ---------- Needs your attention: results waiting for the Headmaster ---------- -->
+<div class="card p-3 p-md-4 mb-3">
+    <div class="panel-head">
+        <div>
+            <div class="panel-eyebrow">Needs your attention</div>
+            <h2 class="panel-title">Results waiting for your review</h2>
+        </div>
+        <a href="{{ route('results') }}" class="small text-decoration-none">See all &rarr;</a>
+    </div>
+    <div class="attn-list">
+        @foreach($pending_reviews as $pr)
+        <div class="attn-row">
+            <div class="attn-main">
+                <div class="attn-title">{{ $pr->class_name }} &middot; {{ $pr->exam_type }} ({{ $pr->academic_year }})</div>
+                <div class="attn-sub">Submitted {{ $pr->submitted_at ?: 'recently' }}</div>
             </div>
-            <div class="activity-list">
+            <span class="badge status-badge-{{ $pr->status }}">{{ $STATUS_LABELS[$pr->status] ?? $pr->status }}</span>
+            <a href="{{ route('review_results', ['exam_id' => $pr->exam_id, 'class_id' => $pr->class_id_val]) }}" class="btn btn-sm btn-primary">Review</a>
+        </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
+<div class="row g-3 mb-3">
+    <!-- ---------- Students by Class: real per-class counts (classes without students are summarised) ---------- -->
+    <div class="col-lg-5">
+        <div class="card p-3 p-md-4 h-100">
+            <div class="panel-head">
+                <div>
+                    <div class="panel-eyebrow">School overview</div>
+                    <h2 class="panel-title">Students by class</h2>
+                </div>
+            </div>
+            @if($stats['students'] == 0)
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 13v6a1 1 0 001 1h14a1 1 0 001-1v-6M4 13l2.5-7A1 1 0 017.4 5h9.2a1 1 0 01.9 1l2.5 7M4 13h5a1 1 0 011 1 2 2 0 002 2 2 2 0 002-2 1 1 0 011-1h5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <div class="msg">No active students yet.</div>
+            </div>
+            @else
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div style="width:180px;height:180px;flex-shrink:0;"><canvas id="classChart"></canvas></div>
+                <div class="flex-grow-1">
+                @foreach($shownClasses as $idx => $row)
+                    @php
+                        $rName = is_array($row) ? ($row['name'] ?? '') : $row->name;
+                        $rCount = is_array($row) ? ($row['c'] ?? 0) : $row->c;
+                    @endphp
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span><span class="legend-dot" style="background:{{ $chart_colors[$idx % count($chart_colors)] }};"></span>{{ $rName }}</span>
+                        <span class="text-muted small">{{ $rCount }}</span>
+                    </div>
+                @endforeach
+                @php $emptyClasses = $cbRows->count() - $classesWithStudents; @endphp
+                @if($emptyClasses > 0)
+                    <div class="text-muted small mt-2">{{ $emptyClasses }} {{ \Illuminate\Support\Str::plural('class', $emptyClasses) }} without students yet.</div>
+                @endif
+                </div>
+            </div>
+            @endif
+        </div>
+    </div>
+
+    <!-- ---------- Quick Actions: real navigation shortcuts only ---------- -->
+    <div class="col-lg-7">
+        <div class="card p-3 p-md-4 h-100">
+            <div class="panel-head">
+                <div>
+                    <div class="panel-eyebrow">Shortcuts</div>
+                    <h2 class="panel-title">Quick actions</h2>
+                </div>
+            </div>
+            <div class="qa-list">
+                <a class="qa-row" href="{{ route('add_student') }}"><span class="qa-ico"><i class="bi bi-person-plus"></i></span>Add Student<i class="bi bi-chevron-right qa-go"></i></a>
+                <a class="qa-row" href="{{ route('marks_select') }}"><span class="qa-ico"><i class="bi bi-input-cursor-text"></i></span>Marks Entry<i class="bi bi-chevron-right qa-go"></i></a>
+                <a class="qa-row" href="{{ route('reports') }}"><span class="qa-ico"><i class="bi bi-file-earmark-text"></i></span>Reports<i class="bi bi-chevron-right qa-go"></i></a>
+                @if($session_user->role === $ROLE_HEADMASTER)
+                <a class="qa-row" href="{{ route('classes') }}"><span class="qa-ico"><i class="bi bi-door-open"></i></span>Add Class<i class="bi bi-chevron-right qa-go"></i></a>
+                <a class="qa-row" href="{{ route('add_user') }}"><span class="qa-ico"><i class="bi bi-person-badge"></i></span>Add User<i class="bi bi-chevron-right qa-go"></i></a>
+                <a class="qa-row" href="{{ route('examinations') }}"><span class="qa-ico"><i class="bi bi-pencil-square"></i></span>Add Exam<i class="bi bi-chevron-right qa-go"></i></a>
+                <a class="qa-row" href="{{ route('results') }}"><span class="qa-ico"><i class="bi bi-check2-square"></i></span>Review &amp; Approval<i class="bi bi-chevron-right qa-go"></i></a>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ---------- Recent Activities: real audit log ---------- -->
+@if($session_user->role === $ROLE_HEADMASTER)
+<div class="card p-3 p-md-4 mb-4">
+    <div class="panel-head">
+        <div>
+            <div class="panel-eyebrow">Recent work</div>
+            <h2 class="panel-title">Recent activities</h2>
+            <p class="panel-note">Sign-ins are hidden here. The full Audit Log shows everything.</p>
+        </div>
+        <a href="{{ route('audit_logs') }}" class="small text-decoration-none">View all &rarr;</a>
+    </div>
+    <div class="activity-list">
             @forelse($recent_logs as $log)
                 @php
                     $a = is_array($log) ? ($log['action'] ?? '') : $log->action;
@@ -218,90 +327,17 @@
                     <div class="msg">No activity yet.</div>
                 </div>
             @endforelse
-            </div>
-        </div>
-    </div>
-    @endif
-</div>
-
-<div class="row g-3">
-    <!-- ---------- Students by Class: real per-class counts ---------- -->
-    <div class="col-lg-5">
-        <div class="card p-3 h-100">
-            <h6 class="mb-3"><i class="bi bi-pie-chart me-1"></i>Students by Class</h6>
-            @if($stats['students'] == 0)
-            <div class="empty-state">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 13v6a1 1 0 001 1h14a1 1 0 001-1v-6M4 13l2.5-7A1 1 0 017.4 5h9.2a1 1 0 01.9 1l2.5 7M4 13h5a1 1 0 011 1 2 2 0 002 2 2 2 0 002-2 1 1 0 011-1h5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <div class="msg">No active students yet.</div>
-            </div>
-            @else
-            <div class="d-flex align-items-center gap-3 flex-wrap">
-                <div style="width:180px;height:180px;flex-shrink:0;"><canvas id="classChart"></canvas></div>
-                <div class="flex-grow-1">
-                @foreach($class_breakdown as $idx => $row)
-                    @php
-                        $rName = is_array($row) ? ($row['name'] ?? '') : $row->name;
-                        $rCount = is_array($row) ? ($row['c'] ?? 0) : $row->c;
-                    @endphp
-                    <div class="d-flex align-items-center justify-content-between mb-1">
-                        <span><span class="legend-dot" style="background:{{ $chart_colors[$idx % count($chart_colors)] }};"></span>{{ $rName }}</span>
-                        <span class="text-muted small">{{ $rCount }}</span>
-                    </div>
-                @endforeach
-                </div>
-            </div>
-            @endif
-        </div>
-    </div>
-
-    <!-- ---------- Quick Actions: real navigation shortcuts only ---------- -->
-    <div class="col-lg-7">
-        <div class="card p-3 h-100">
-            <h6 class="mb-3"><i class="bi bi-lightning-charge me-1"></i>Quick Actions</h6>
-            <div class="quick-action-grid">
-                <a class="quick-action-tile" href="{{ route('add_student') }}">
-                    <div class="qa-icon stat-icon-blue"><i class="bi bi-person-plus"></i></div>Add Student
-                </a>
-                <a class="quick-action-tile" href="{{ route('marks_select') }}">
-                    <div class="qa-icon stat-icon-cyan"><i class="bi bi-input-cursor-text"></i></div>Marks Entry
-                </a>
-                <a class="quick-action-tile" href="{{ route('reports') }}">
-                    <div class="qa-icon stat-icon-purple"><i class="bi bi-file-earmark-text"></i></div>Reports
-                </a>
-                @if($session_user->role === $ROLE_HEADMASTER)
-                <a class="quick-action-tile" href="{{ route('classes') }}">
-                    <div class="qa-icon stat-icon-navy"><i class="bi bi-door-open"></i></div>Add Class
-                </a>
-                <a class="quick-action-tile" href="{{ route('add_user') }}">
-                    <div class="qa-icon stat-icon-green"><i class="bi bi-person-badge"></i></div>Add User
-                </a>
-                <a class="quick-action-tile" href="{{ route('examinations') }}">
-                    <div class="qa-icon stat-icon-orange"><i class="bi bi-pencil-square"></i></div>Add Exam
-                </a>
-                <a class="quick-action-tile" href="{{ route('results') }}">
-                    <div class="qa-icon stat-icon-blue"><i class="bi bi-check2-square"></i></div>Review &amp; Approval
-                </a>
-                @endif
-            </div>
-        </div>
     </div>
 </div>
+@endif
 
 @endsection
 
 @section('scripts')
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const dateEl = document.getElementById("heroDate");
-    if (dateEl) {
-        const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-        dateEl.textContent = today;
-    }
-});
-</script>
 @if(!empty($class_breakdown) && $stats['students'] > 0)
 @php
-    $cbList = is_array($class_breakdown) ? $class_breakdown : $class_breakdown->all();
+    // Same list as the legend: only classes that actually have students, so colours line up.
+    $cbList = collect($class_breakdown)->filter(fn($r) => (int) (is_array($r) ? ($r['c'] ?? 0) : $r->c) > 0)->values()->all();
     $cbNames = array_map(fn($r) => is_array($r) ? ($r['name'] ?? '') : $r->name, $cbList);
     $cbCounts = array_map(fn($r) => is_array($r) ? ($r['c'] ?? 0) : $r->c, $cbList);
 @endphp

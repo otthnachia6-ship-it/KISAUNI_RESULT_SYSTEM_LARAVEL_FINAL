@@ -103,9 +103,26 @@ class DashboardController extends Controller
             }
         }
 
+        // Routine sign-ins and sign-outs are left out of this short list (the Audit Log page still shows everything).
         $recentLogs = SchoolService::humanizeLogs(
-            AuditLog::orderBy('id', 'desc')->limit(8)->get()
+            AuditLog::whereNotIn('action', ['LOGIN', 'LOGOUT', 'IDLE_LOGOUT', 'PASSWORD_HASH_UPGRADED'])
+                ->orderBy('id', 'desc')->limit(8)->get()
         );
+
+        // Headmaster only: the classes whose results are waiting for review, oldest first.
+        $pendingReviews = collect();
+        if ($user && $user->role === SchoolService::ROLE_HEADMASTER) {
+            $pendingReviews = DB::table('exam_class_status as ecs')
+                ->join('examinations as e', 'ecs.exam_id', '=', 'e.id')
+                ->join('classes as c', 'ecs.class_id', '=', 'c.id')
+                ->whereIn('ecs.status', ['submitted', 'under_review'])
+                ->where('e.academic_year', $currentAcademicYear)
+                ->select('ecs.exam_id', 'ecs.status', 'ecs.submitted_at', 'e.exam_type', 'e.academic_year', 'c.name as class_name', 'c.id as class_id_val')
+                ->orderBy('ecs.submitted_at')
+                ->orderBy('c.sort_order')
+                ->limit(5)
+                ->get();
+        }
 
 
         return view('dashboard', [
@@ -113,6 +130,7 @@ class DashboardController extends Controller
             'my_class' => $myClass,
             'my_class_students' => $myClassStudents,
             'recent_logs' => $recentLogs,
+            'pending_reviews' => $pendingReviews,
             'returned_results' => $returnedResults,
             'class_breakdown' => $classBreakdown,
             'status_breakdown' => $statusBreakdown,

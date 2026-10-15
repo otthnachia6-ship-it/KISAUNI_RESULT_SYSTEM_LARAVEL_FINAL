@@ -1,7 +1,7 @@
 @extends('base')
 @section('page_title', 'Marks Entry')
 @section('content')
-<h5 class="mb-3">Select Examination and Class for Marks Entry</h5>
+<x-page_header title="Marks Entry" subtitle="Select an examination and a class to enter marks" />
 <p class="text-muted small">
     Only examinations for Academic Year <strong>{{ $current_academic_year }}</strong> (set in
     Settings) are shown here.

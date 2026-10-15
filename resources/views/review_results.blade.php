@@ -1,14 +1,15 @@
 @extends('base')
 @section('page_title', 'Review Results')
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h5 class="mb-0">{{ $cls->name }} — {{ $exam->exam_type }} ({{ $exam->academic_year }})</h5>
-        <span class="badge status-badge-{{ $status_row ? $status_row->status : 'draft' }} mt-1">
-            {{ strtoupper($STATUS_LABELS[$status_row ? $status_row->status : 'draft'] ?? 'Draft') }}
-        </span>
+<div class="page-head">
+    <div class="page-head-main">
+        <div class="page-eyebrow">
+            <span class="badge status-badge-{{ $status_row ? $status_row->status : 'draft' }}">{{ $STATUS_LABELS[$status_row ? $status_row->status : 'draft'] ?? 'Draft' }}</span>
+        </div>
+        <h1 class="page-title">{{ $cls->name }} — {{ $exam->exam_type }} ({{ $exam->academic_year }})</h1>
+        <p class="page-sub">Review Results</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="page-actions">
         <a href="{{ route('review_results_download', ['exam_id' => $exam->id, 'class_id' => $cls->id]) }}" class="btn btn-sm btn-outline-primary no-print">
             <i class="bi bi-file-earmark-pdf me-1"></i>Download PDF
         </a>

@@ -1,12 +1,15 @@
 @extends('base')
 @section('page_title', 'Student History')
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h5 class="mb-0">{{ $student->full_name }}</h5>
-        <span class="text-muted small">{{ $student->reg_no }} &middot; {{ $cls ? $cls->name : '-' }} &middot; {{ $student->gender }}</span>
+<div class="page-head">
+    <div class="page-head-main">
+        <div class="page-eyebrow"><span class="page-eyebrow-dot"></span><span>Student History</span></div>
+        <h1 class="page-title">{{ $student->full_name }}</h1>
+        <p class="page-sub">{{ $student->reg_no }} &middot; {{ $cls ? $cls->name : '-' }} &middot; {{ $student->gender }}</p>
     </div>
-    <a href="{{ route('students') }}" class="btn btn-sm btn-outline-secondary">&larr; Back to Students</a>
+    <div class="page-actions">
+        <a href="{{ route('students') }}" class="btn btn-sm btn-outline-secondary">&larr; Back to Students</a>
+    </div>
 </div>
 
 <p class="text-muted small">Every examination this student has recorded marks for, across all academic years, most recent first.</p>

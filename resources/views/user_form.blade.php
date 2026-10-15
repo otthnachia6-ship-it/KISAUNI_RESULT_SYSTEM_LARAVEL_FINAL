@@ -1,8 +1,8 @@
 @extends('base')
 @section('page_title', $mode == 'add' ? 'Add User' : 'Edit User')
 @section('content')
+<x-page_header :title="$mode == 'add' ? 'Add User' : 'Edit User'" :subtitle="$mode == 'add' ? 'Create a headmaster or class-teacher account' : 'Update this account'" />
 <div class="card p-4" style="max-width:550px;">
-    <h5 class="mb-3">{{ $mode == 'add' ? 'Add New Account' : 'Edit Account' }}</h5>
     <form method="POST" action="{{ $mode == 'add' ? route('add_user') : route('edit_user', ['user_id' => $user->id]) }}">
         @csrf
         <div class="mb-3">

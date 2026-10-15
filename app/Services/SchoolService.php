@@ -20,6 +20,22 @@ class SchoolService
     public const DEFAULT_ACADEMIC_YEAR = '2026';
 
     public const ROLE_HEADMASTER = 'headmaster';
+
+    /** Wording shown on result-status chips. */
+
+    public const STATUS_LABELS = [
+
+        'draft' => 'Draft',
+
+        'submitted' => 'Submitted',
+
+        'under_review' => 'Under review',
+
+        'approved' => 'Approved',
+
+        'returned' => 'Returned',
+
+    ];
     public const ROLE_CLASS_TEACHER = 'class_teacher';
 
     public const GRADE_BANDS = [

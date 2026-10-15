@@ -1,7 +1,7 @@
 @extends('base')
 @section('page_title', 'Promote Students')
 @section('content')
-<h5 class="mb-1">Promote Students to a New Academic Year</h5>
+<x-page_header title="Promote Students" subtitle="Move every class up to the next standard and start a new academic year" />
 <p class="text-muted small">Move every class's students up to the next Standard (same Stream where possible),
 graduate Standard Seven out, and start a new academic year. This does not delete any past marks or reports —
 all history stays searchable under <a href="{{ route('records') }}">Exam Records</a>.</p>

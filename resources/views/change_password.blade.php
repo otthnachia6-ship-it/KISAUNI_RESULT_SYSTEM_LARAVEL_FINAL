@@ -1,8 +1,8 @@
 @extends('base')
 @section('page_title', 'Change Password')
 @section('content')
+<x-page_header title="Change Password" subtitle="Set your own username and a new password" />
 <div class="card p-4" style="max-width:500px;">
-    <h5 class="mb-3">Change Username &amp; Password</h5>
     <p class="text-muted small">You can set your own username here (leave it as-is if you don't want to change it), and you must set a new password below.</p>
     <form method="POST" action="{{ route('change_password') }}">
         @csrf

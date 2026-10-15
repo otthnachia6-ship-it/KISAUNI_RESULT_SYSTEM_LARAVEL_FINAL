@@ -1,7 +1,7 @@
 @extends('base')
 @section('page_title', 'Reports')
 @section('content')
-<h5 class="mb-1">Generate Student Report</h5>
+<x-page_header title="Reports" subtitle="Generate a student report card" />
 <p class="text-muted small mb-3">
     Showing examinations for the current academic year ({{ $current_academic_year }}) only.
     Looking for an older year? All of that data is still safe - open

@@ -281,3 +281,11 @@ function idleTimeoutInit() {
         }
     }, 1000);
 }
+
+// Today's date in the page header (uses the visitor's own clock, same format as before)
+document.addEventListener("DOMContentLoaded", function () {
+    const now = new Date();
+    const today = now.toLocaleDateString("en-GB", { weekday: "long" }) + ", " +
+        now.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    document.querySelectorAll("[data-today]").forEach(function (el) { el.textContent = today; });
+});

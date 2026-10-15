@@ -1,6 +1,7 @@
 @extends('base')
 @section('page_title', 'Profile')
 @section('content')
+<x-page_header title="Profile" subtitle="Your account details and photo" />
 <div class="card p-4" style="max-width:500px;">
     <div class="text-center mb-3">
         @php $photo = $user_photo_url($user->photo_path); @endphp

@@ -1,13 +1,14 @@
 @extends('base')
 @section('page_title', 'Register Multiple Students')
 @section('content')
-<div class="card p-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">Register Multiple Students</h5>
+<x-page_header title="Register Multiple Students" subtitle="Add many students to a class in one go">
+    <x-slot:actions>
         <a href="{{ route('add_student') }}" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-person-plus me-1"></i>Register One Instead
         </a>
-    </div>
+    </x-slot:actions>
+</x-page_header>
+<div class="card p-4">
     <p class="text-muted">Add as many students as you like below, then click <strong>Save All</strong> once at the end.</p>
 
     <form method="POST" action="{{ route('add_students_bulk') }}" id="bulkForm">

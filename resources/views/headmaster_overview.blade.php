@@ -1,7 +1,7 @@
 @extends('base')
 @section('page_title', 'Headmaster Overview')
 @section('content')
-<h5 class="mb-3">Results Overview - All Classes</h5>
+<x-page_header title="Headmaster Overview" subtitle="Results overview across all classes" />
 
 <form method="GET" action="{{ route('headmaster_overview') }}" class="mb-3">
     <select name="exam_id" class="form-select form-select-sm" style="max-width:320px;" onchange="this.form.submit()">
@@ -17,7 +17,7 @@
         <div class="card p-3 h-100">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <h6 class="mb-0">{{ $row['cls']->name }}</h6>
-                <span class="badge status-badge-{{ $row['status'] }}">{{ strtoupper($STATUS_LABELS[$row['status']] ?? $row['status']) }}</span>
+                <span class="badge status-badge-{{ $row['status'] }}">{{ $STATUS_LABELS[$row['status']] ?? $row['status'] }}</span>
             </div>
             <div class="table-responsive">
             <table class="table table-sm mb-0">
