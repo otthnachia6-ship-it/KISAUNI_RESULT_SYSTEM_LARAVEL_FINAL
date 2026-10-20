@@ -1,0 +1,10 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Prevent direct access to sensitive files
+    RewriteRule ^\.env - [F,L,NC]
+    RewriteRule ^storage/logs/ - [F,L,NC]
+
+    # Route all other traffic to the public/ folder
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
