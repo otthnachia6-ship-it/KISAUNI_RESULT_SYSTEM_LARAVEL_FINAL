@@ -1,22 +1,21 @@
 @extends('base')
 @section('page_title', 'Students')
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <x-page_header icon="bi-people" :title="$show_removed ? 'Removed Students' : 'Student List'" :subtitle="$show_removed ? 'Students who have left or been withdrawn' : 'Manage students across all classes'" />
-    <div>
+<x-page_header icon="bi-people" :title="$show_removed ? 'Removed Students' : 'Student List'" :subtitle="$show_removed ? 'Students who have left or been withdrawn' : 'Manage students across all classes'">
+    <x-slot:actions>
         @if($session_user->role === $ROLE_HEADMASTER)
             @if($show_removed)
-            <a href="{{ route('students') }}" class="btn btn-outline-secondary me-2"><i class="bi bi-arrow-left me-1"></i>Back to Active List</a>
+            <a href="{{ route('students') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back to Active List</a>
             @else
-            <a href="{{ route('students', ['status' => 'removed']) }}" class="btn btn-outline-secondary me-2"><i class="bi bi-archive me-1"></i>View Removed Students</a>
+            <a href="{{ route('students', ['status' => 'removed']) }}" class="btn btn-outline-secondary"><i class="bi bi-archive me-1"></i>View Removed Students</a>
             @endif
         @endif
         @if(!$show_removed)
-        <a href="{{ route('add_students_bulk') }}" class="btn btn-outline-success me-2"><i class="bi bi-people-fill me-1"></i>Register Multiple</a>
+        <a href="{{ route('add_students_bulk') }}" class="btn btn-outline-success"><i class="bi bi-people-fill me-1"></i>Register Multiple</a>
         <a href="{{ route('add_student') }}" class="btn btn-success"><i class="bi bi-person-plus me-1"></i>Register Student</a>
         @endif
-    </div>
-</div>
+    </x-slot:actions>
+</x-page_header>
 
 @if($show_removed)
 <div class="alert alert-info small">
@@ -69,41 +68,48 @@
         </span>
     </div>
     <div class="table-responsive">
-        <table class="table table-sm mb-0 align-middle table-stack">
-            <thead><tr><th class="d-none d-sm-table-cell">#</th><th>Reg No</th><th>Full Name</th><th>Gender</th><th class="text-end no-print">Actions</th></tr></thead>
+        <table class="table mb-0 align-middle table-stack tbl-clean">
+            <thead><tr><th>Student</th><th>Reg No</th><th class="text-end no-print">Actions</th></tr></thead>
             <tbody>
             @foreach($list as $s)
             <tr>
-                <td class="d-none d-sm-table-cell">{{ $loop->iteration }}</td>
-                <td data-label="Reg No">{{ $s->reg_no }}</td>
-                <td class="fw-semibold stack-head">{{ $s->full_name }}</td>
-                <td data-label="Gender">
-                    <span class="badge badge-gender-{{ $s->gender }}">{{ $s->gender }}</span>
-                    @if(!$s->gender_confirmed)<i class="bi bi-exclamation-triangle text-warning ms-1" title="Not confirmed"></i>@endif
+                @php
+                    $nameParts = preg_split('/\s+/', trim($s->full_name));
+                    $initials = mb_strtoupper(mb_substr($nameParts[0] ?? '', 0, 1) . (count($nameParts) > 1 ? mb_substr($nameParts[1], 0, 1) : ''));
+                @endphp
+                <td class="stack-head">
+                    <div class="person">
+                        <span class="person-av" aria-hidden="true">{{ $initials }}</span>
+                        <div>
+                            <div class="person-name">{{ $s->full_name }}</div>
+                            <div class="person-sub">{{ $s->gender }}@if(!$s->gender_confirmed)<i class="bi bi-exclamation-triangle text-warning ms-1" title="Gender not confirmed"></i>@endif</div>
+                        </div>
+                    </div>
                 </td>
-                <td class="text-end no-print stack-actions">
+                <td data-label="Reg No" class="cell-muted">{{ $s->reg_no }}</td>
+                <td class="text-end no-print stack-actions"><div class="acts">
                     @if($show_removed)
-                        <a href="{{ route('student_history', ['student_id' => $s->id]) }}" class="btn btn-sm btn-outline-info" title="History"><i class="bi bi-clock-history"></i></a>
+                        <a href="{{ route('student_history', ['student_id' => $s->id]) }}" class="ibtn" title="History" aria-label="History"><i class="bi bi-clock-history"></i></a>
                         <form method="POST" action="{{ route('restore_student', ['student_id' => $s->id]) }}" class="d-inline"
                               onsubmit="return appConfirm(this, 'Restore {{ addslashes($s->full_name) }} back to the active student list?', {okClass: 'btn-primary', okText: 'Restore', icon: 'bi-arrow-counterclockwise'});">
                             @csrf
-                            <button class="btn btn-sm btn-outline-success" title="Restore"><i class="bi bi-arrow-counterclockwise"></i></button>
+                            <button class="ibtn ibtn-ok" title="Restore" aria-label="Restore"><i class="bi bi-arrow-counterclockwise"></i></button>
                         </form>
                         <form method="POST" action="{{ route('purge_student', ['student_id' => $s->id]) }}" class="d-inline"
                               onsubmit="return appConfirm(this, 'PERMANENTLY delete {{ addslashes($s->full_name) }} and every mark ever recorded for them? This CANNOT be undone.', {okText: 'Delete permanently', icon: 'bi-trash3-fill'});">
                             @csrf
-                            <button class="btn btn-sm btn-danger" title="Permanently Delete"><i class="bi bi-trash3-fill"></i></button>
+                            <button class="ibtn ibtn-danger" title="Permanently delete" aria-label="Permanently delete"><i class="bi bi-trash3-fill"></i></button>
                         </form>
                     @else
-                        <a href="{{ route('student_history', ['student_id' => $s->id]) }}" class="btn btn-sm btn-outline-info" title="History"><i class="bi bi-clock-history"></i></a>
-                        <a href="{{ route('edit_student', ['student_id' => $s->id]) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                        <a href="{{ route('student_history', ['student_id' => $s->id]) }}" class="ibtn" title="History" aria-label="History"><i class="bi bi-clock-history"></i></a>
+                        <a href="{{ route('edit_student', ['student_id' => $s->id]) }}" class="ibtn" title="Edit" aria-label="Edit"><i class="bi bi-pencil"></i></a>
                         <form method="POST" action="{{ route('delete_student', ['student_id' => $s->id]) }}" class="d-inline"
                               onsubmit="return appConfirm(this, 'Are you sure you want to remove {{ addslashes($s->full_name) }}?', {okText: 'Remove', icon: 'bi-trash'});">
                             @csrf
-                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            <button class="ibtn ibtn-danger" title="Remove" aria-label="Remove"><i class="bi bi-trash"></i></button>
                         </form>
                     @endif
-                </td>
+                </div></td>
             </tr>
             @endforeach
             </tbody>

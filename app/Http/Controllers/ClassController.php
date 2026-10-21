@@ -28,11 +28,7 @@ class ClassController extends Controller
             $classId = $request->input('class_id');
             $teacherId = $request->input('teacher_id') ?: null;
 
-            SchoolClass::where('id', $classId)->update(['teacher_id' => $teacherId]);
-            User::where('class_id', $classId)->update(['class_id' => null]);
-            if ($teacherId) {
-                User::where('id', $teacherId)->update(['class_id' => $classId]);
-            }
+            $this->assignTeacher($classId, $teacherId);
 
             SchoolService::logAction(
                 $user,
@@ -60,6 +56,16 @@ class ClassController extends Controller
             'ordinal_words' => SchoolService::ORDINAL_WORDS,
             'num_standards' => SchoolService::NUM_STANDARDS,
         ]);
+    }
+
+    /** Sets (or clears, when $teacherId is null) the class teacher of a class and keeps both sides in step. */
+    private function assignTeacher($classId, $teacherId): void
+    {
+        SchoolClass::where('id', $classId)->update(['teacher_id' => $teacherId]);
+        User::where('class_id', $classId)->update(['class_id' => null]);
+        if ($teacherId) {
+            User::where('id', $teacherId)->update(['class_id' => $classId]);
+        }
     }
 
     public function add(Request $request)
@@ -107,9 +113,26 @@ class ClassController extends Controller
 
         SchoolService::logAction($user, 'ADD_CLASS', $name);
 
+        // Optional: the new class can be given its class teacher straight away.
+        $teacherNote = '';
+        $chosenTeacher = $request->input('teacher_id');
+        if ($chosenTeacher) {
+            $teacher = User::where('id', $chosenTeacher)
+                ->where('role', SchoolService::ROLE_CLASS_TEACHER)
+                ->where('active', 1)
+                ->first();
+            if ($teacher) {
+                $this->assignTeacher($class->id, $teacher->id);
+                SchoolService::logAction($user, 'ASSIGN_CLASS_TEACHER', "class_id={$class->id} teacher_id={$teacher->id}");
+                $teacherNote = " {$teacher->full_name} is its class teacher.";
+            } else {
+                $teacherNote = ' The chosen teacher could not be assigned (not an active class teacher); you can assign one later.';
+            }
+        }
+
         return redirect()->route('classes')->with(
             'success',
-            "Class '{$name}' added successfully with its subjects already set up."
+            "Class '{$name}' added successfully with its subjects already set up." . $teacherNote
         );
     }
 

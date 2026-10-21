@@ -107,18 +107,20 @@
                 <strong>@yield('page_title')</strong>
             </nav>
             <div class="d-flex align-items-center gap-2">
+                @if(request()->routeIs('dashboard'))
                 <div class="text-end">
                     <div class="fw-semibold" style="font-size:.9rem;">{{ $session_user->full_name }}</div>
                     <small class="role-pill">
                         @if($session_user->role == $ROLE_HEADMASTER){{ $session_user->title ?: 'Headmaster' }}@else Class Teacher @endif
                     </small>
                 </div>
+                @endif
                 @php $photo = $user_photo_url($session_user->photo_path); @endphp
                 @if($photo)
-                <img src="{{ $photo }}" alt="{{ $session_user->full_name }}" class="user-avatar-img">
+                <img src="{{ $photo }}" alt="{{ $session_user->full_name }}" title="{{ $session_user->full_name }}" class="user-avatar-img">
                 @else
                 @php $parts = explode(' ', trim($session_user->full_name)); @endphp
-                <div class="user-avatar">{{ strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : '')) }}</div>
+                <div class="user-avatar" title="{{ $session_user->full_name }}">{{ strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : '')) }}</div>
                 @endif
             </div>
         </div>

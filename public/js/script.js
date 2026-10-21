@@ -289,3 +289,29 @@ document.addEventListener("DOMContentLoaded", function () {
         now.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
     document.querySelectorAll("[data-today]").forEach(function (el) { el.textContent = today; });
 });
+
+// Search box above a table: <input data-filter-table="#tableId" data-noun="classes" data-count="#countId">
+// Rows opt in with data-search="lower case text". Everything happens in the browser.
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("[data-filter-table]").forEach(function (input) {
+        const table = document.querySelector(input.dataset.filterTable);
+        if (!table) { return; }
+        const rows = Array.from(table.querySelectorAll("tbody tr[data-search]"));
+        const none = table.querySelector("tbody tr.filter-empty");
+        const counter = input.dataset.count ? document.querySelector(input.dataset.count) : null;
+        const noun = input.dataset.noun || "rows";
+        function apply() {
+            const q = input.value.trim().toLowerCase();
+            let shown = 0;
+            rows.forEach(function (row) {
+                const match = !q || row.dataset.search.indexOf(q) !== -1;
+                row.classList.toggle("d-none", !match);
+                if (match) { shown++; }
+            });
+            if (none) { none.classList.toggle("d-none", shown !== 0); }
+            if (counter) { counter.textContent = "Showing " + shown + " of " + rows.length + " " + noun; }
+        }
+        input.addEventListener("input", apply);
+        apply();
+    });
+});

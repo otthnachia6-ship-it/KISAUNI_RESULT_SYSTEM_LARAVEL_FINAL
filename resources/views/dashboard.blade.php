@@ -123,7 +123,7 @@
         <div class="stat-tile">
             <div class="stat-tile-top">
                 <a class="stat-tile-label stretched-link" href="{{ route('students') }}">Students</a>
-                <i class="bi bi-people stat-tile-ico"></i>
+                <span class="stat-tile-ico stat-tile-ico--blue"><i class="bi bi-people"></i></span>
             </div>
             <div class="stat-tile-value">{{ $stats['students'] }}</div>
             <div class="stat-tile-sub">in {{ $classesWithStudents }} {{ \Illuminate\Support\Str::plural('class', $classesWithStudents) }}</div>
@@ -133,7 +133,7 @@
         <div class="stat-tile">
             <div class="stat-tile-top">
                 @if($isHm)<a class="stat-tile-label stretched-link" href="{{ route('users') }}">Teachers</a>@else<span class="stat-tile-label">Teachers</span>@endif
-                <i class="bi bi-mortarboard stat-tile-ico"></i>
+                <span class="stat-tile-ico stat-tile-ico--purple"><i class="bi bi-mortarboard"></i></span>
             </div>
             <div class="stat-tile-value">{{ $stats['teachers'] }}</div>
             <div class="stat-tile-sub">active class teachers</div>
@@ -143,7 +143,7 @@
         <div class="stat-tile">
             <div class="stat-tile-top">
                 @if($isHm)<a class="stat-tile-label stretched-link" href="{{ route('classes') }}">Classes</a>@else<span class="stat-tile-label">Classes</span>@endif
-                <i class="bi bi-door-open stat-tile-ico"></i>
+                <span class="stat-tile-ico stat-tile-ico--navy"><i class="bi bi-door-open"></i></span>
             </div>
             <div class="stat-tile-value">{{ $stats['classes'] }}</div>
             <div class="stat-tile-sub">{{ $classesWithStudents }} with students</div>
@@ -153,7 +153,7 @@
         <div class="stat-tile">
             <div class="stat-tile-top">
                 <a class="stat-tile-label stretched-link" href="{{ route('examinations') }}">Examinations</a>
-                <i class="bi bi-pencil-square stat-tile-ico"></i>
+                <span class="stat-tile-ico stat-tile-ico--teal"><i class="bi bi-pencil-square"></i></span>
             </div>
             <div class="stat-tile-value">{{ $stats['exams'] }}</div>
             <div class="stat-tile-sub">exams on record</div>
@@ -163,7 +163,7 @@
         <div class="stat-tile @if($isHm && ($stats['pending'] ?? 0) > 0) stat-tile--attention @endif">
             <div class="stat-tile-top">
                 @if($isHm)<a class="stat-tile-label stretched-link" href="{{ route('results') }}">Pending review</a>@else<span class="stat-tile-label">Pending review</span>@endif
-                <i class="bi bi-hourglass-split stat-tile-ico"></i>
+                <span class="stat-tile-ico stat-tile-ico--amber"><i class="bi bi-hourglass-split"></i></span>
             </div>
             <div class="stat-tile-value">{{ $stats['pending'] }}</div>
             <div class="stat-tile-sub">@if($isHm && ($stats['pending'] ?? 0) > 0)Waiting for your review &rarr;@else Waiting for review @endif</div>
@@ -173,7 +173,7 @@
         <div class="stat-tile">
             <div class="stat-tile-top">
                 @if($isHm)<a class="stat-tile-label stretched-link" href="{{ route('results') }}">Approved</a>@else<span class="stat-tile-label">Approved</span>@endif
-                <i class="bi bi-check2-circle stat-tile-ico"></i>
+                <span class="stat-tile-ico stat-tile-ico--green"><i class="bi bi-check2-circle"></i></span>
             </div>
             <div class="stat-tile-value">{{ $stats['approved'] }}</div>
             <div class="stat-tile-sub">class results approved</div>

@@ -25,6 +25,7 @@ body {
     min-height: 100vh;
     background: var(--brand-dark);
     color: #fff;
+    flex-shrink: 0;   /* fixed width: wide page content must never squeeze the menu */
 }
 
 /* ---------- Mobile: sidebar becomes a slide-in drawer ---------- */
@@ -148,7 +149,17 @@ body {
 .stat-tile-top { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
 .stat-tile-label { font-size: .76rem; font-weight: 600; color: #64748b; letter-spacing: .02em; text-decoration: none; }
 a.stat-tile-label:hover { color: #0f172a; }
-.stat-tile-ico { color: #94a3b8; font-size: 1.05rem; }
+.stat-tile-ico {
+    width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.05rem;
+}
+/* one soft tint per card, chosen by what the card counts (waiting = amber, approved = green, as on the status chips) */
+.stat-tile-ico--blue   { background: #e8effd; color: #2563eb; }
+.stat-tile-ico--purple { background: #eee9fa; color: #6d4bc4; }
+.stat-tile-ico--navy   { background: #e7eaf3; color: #0f1b3d; }
+.stat-tile-ico--teal   { background: #dff3f1; color: #0f766e; }
+.stat-tile-ico--amber  { background: #fdf0e1; color: #b45309; }
+.stat-tile-ico--green  { background: #e3f4e9; color: #15803d; }
 .stat-tile-value { font-size: 1.85rem; font-weight: 700; line-height: 1.1; color: #0f172a; margin: .5rem 0 .25rem; font-variant-numeric: tabular-nums; }
 .stat-tile-sub { font-size: .78rem; color: #64748b; }
 .stat-tile--attention .stat-tile-sub { color: #b45309; font-weight: 600; }
@@ -247,6 +258,55 @@ a.stat-tile-label:hover { color: #0f172a; }
 .app-confirm-modal .modal-title i { color: #f97316; font-size: 1.1rem; }
 .app-confirm-modal .modal-body { font-size: .92rem; color: #334155; }
 .app-confirm-modal .modal-footer { border-top: 1px solid var(--border); }
+
+/* ---------- Clean tables: Students, Users, Classes, Examinations, Review & Approval ---------- */
+.tbl-clean thead th {
+    background: #f8fafc; font-size: .68rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+    color: #94a3b8; padding: .65rem 1rem; border-width: 0 0 1px; border-bottom: 1px solid var(--border);
+}
+.tbl-clean tbody td { padding: .7rem 1rem; border-width: 1px 0 0; border-style: solid; border-color: #eef1f6; vertical-align: middle; color: #1e293b; }
+.tbl-clean tbody tr:first-child td { border-top-width: 0; }
+.tbl-clean tbody tr:hover { background: #fafbfd; }
+.person { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+.person-av {
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: #e8effd; color: #2563eb; font-size: .72rem; font-weight: 700;
+}
+.person-av img { width: 100%; height: 100%; object-fit: cover; }
+.person-name { font-weight: 600; color: #0f172a; line-height: 1.25; }
+.person-sub { font-size: .76rem; color: #64748b; }
+.cell-muted { color: #64748b; font-variant-numeric: tabular-nums; font-size: .88rem; }
+/* row actions: quiet grey icons that take their colour when touched */
+.acts { display: flex; justify-content: flex-end; align-items: center; gap: .15rem; }
+.ibtn {
+    width: 34px; height: 34px; padding: 0; border: 0; border-radius: 8px; background: transparent;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #64748b; font-size: 1rem; line-height: 1; text-decoration: none; cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+}
+.ibtn:hover, .ibtn:focus-visible { background: #eef2fa; color: #2563eb; }
+.ibtn-danger:hover, .ibtn-danger:focus-visible { background: #fee2e2; color: #b91c1c; }
+.ibtn-ok:hover, .ibtn-ok:focus-visible { background: #dcfce7; color: #15803d; }
+.ibtn.is-disabled { opacity: .35; cursor: not-allowed; }
+.ibtn.is-disabled:hover { background: transparent; color: #64748b; }
+.chip {
+    display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap;
+    padding: .24rem .65rem; border-radius: 50rem; font-size: .74rem; font-weight: 600;
+    background: #eef1f6; color: #475569;
+}
+.chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.chip--ok   { background: #dcfce7; color: #166534; }
+.chip--off  { background: #eef1f6; color: #64748b; }
+.chip--warn { background: #fef3c7; color: #92400e; }
+.role-tag { display: inline-block; padding: .24rem .6rem; border-radius: 6px; font-size: .74rem; font-weight: 600; }
+.role-tag--head    { background: #e7eaf3; color: #0f1b3d; }
+.role-tag--admin   { background: #eee9fa; color: #5b3fb0; }
+.role-tag--teacher { background: #e8effd; color: #1d4ed8; }
+.tbl-tools { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem; padding: .85rem 1rem; border-bottom: 1px solid var(--border); }
+.tbl-search { position: relative; flex: 1 1 260px; max-width: 360px; }
+.tbl-search i { position: absolute; left: .8rem; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; }
+.tbl-search .form-control { padding-left: 2.2rem; }
 
 /* ---------- Page header (date, title, short description, actions) ---------- */
 .page-head { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.4rem; }
@@ -1051,6 +1111,12 @@ html[data-theme="dark"] .modal-backdrop { opacity: .6; }
     }
     .table-stack td.stack-head { display: block; text-align: left !important; font-size: 1rem; padding-bottom: .3rem !important; }
     .table-stack td.stack-head::before, .table-stack td.stack-actions::before { content: none; }
+    /* "No results submitted yet." and similar one-cell rows: no side label, so centre the message */
+    .table-stack td[colspan] { justify-content: center; text-align: center !important; }
+    .table-stack td[colspan]::before { content: none; }
+    /* page-header buttons (Student List, Users, Classes ...): small, several per line */
+    .page-actions { width: 100%; gap: .4rem; }
+    main .page-actions .btn, main .page-actions .btn-sm { font-size: .8rem; padding: .28rem .7rem; min-height: 32px; }
     .table-stack td.stack-actions { justify-content: flex-start; flex-wrap: wrap; gap: .5rem; padding-top: .45rem !important; }
     html[data-theme="dark"] .table-stack tr { border-bottom-color: #223049; }
     html[data-theme="dark"] .table-stack td::before { color: #94a3b8; }
@@ -1162,4 +1228,22 @@ html[data-theme="dark"] .modal-backdrop { opacity: .6; }
     .login-split-feature-title { font-size: 1.2rem; }
     .login-split-feature-desc { font-size: 1.05rem; }
     .login-split-footer { font-size: 1rem; }
+}
+
+/* ---------- Compact buttons: medium size on ALL screens (computer and phone) ----------
+   Normal buttons were large (about 38px on a computer, 36px on a phone). Now about 31px, with
+   slightly smaller text. Small and icon buttons (.btn-sm) and large buttons (.btn-lg) are not
+   changed, and the login page is not affected (it has its own sizing and is outside <main>).
+   To undo: delete this whole block. */
+main .btn:not(.btn-sm):not(.btn-lg),
+.modal .btn:not(.btn-sm):not(.btn-lg) {
+    font-size: .85rem;
+    font-weight: 500;
+    line-height: 1.4;
+    padding: .3rem .8rem;
+    border-radius: 8px;
+}
+main .btn:not(.btn-sm):not(.btn-lg) i,
+.modal .btn:not(.btn-sm):not(.btn-lg) i {
+    font-size: .95em;
 }

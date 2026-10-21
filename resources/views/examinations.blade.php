@@ -31,22 +31,22 @@
 
 <div class="card">
     <div class="table-responsive">
-    <table class="table align-middle mb-0">
+    <table class="table align-middle mb-0 tbl-clean">
         <thead><tr><th>#</th><th>Examination Type</th><th>Academic Year</th>@if($session_user->role === $ROLE_HEADMASTER)<th class="text-end">Action</th>@endif</tr></thead>
         <tbody>
         @forelse($exams as $e)
         <tr>
-            <td>{{ $loop->iteration }}</td>
+            <td class="cell-muted">{{ $loop->iteration }}</td>
             <td class="fw-semibold">{{ $e->exam_type }}</td>
-            <td>{{ $e->academic_year }}</td>
+            <td class="cell-muted">{{ $e->academic_year }}</td>
             @if($session_user->role === $ROLE_HEADMASTER)
-            <td class="text-end">
+            <td class="text-end"><div class="acts">
                 <form method="POST" action="{{ route('delete_examination', ['exam_id' => $e->id]) }}"
                       onsubmit="return appConfirm(this, 'Delete {{ addslashes($e->exam_type) }} ({{ addslashes($e->academic_year) }})? This only works if no marks/results exist for it yet.', {okText: 'Delete', icon: 'bi-trash'});">
                     @csrf
-                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Remove</button>
+                    <button class="ibtn ibtn-danger" title="Remove examination" aria-label="Remove examination"><i class="bi bi-trash"></i></button>
                 </form>
-            </td>
+            </div></td>
             @endif
         </tr>
         @empty
