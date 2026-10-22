@@ -6,6 +6,7 @@ use App\Models\Examination;
 use App\Models\Mark;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Services\OzemsImporter;
 use App\Services\SchoolService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -84,6 +85,7 @@ class StudentController extends Controller
 
         $user = Auth::user();
         $regNo = trim($request->input('reg_no', ''));
+        $zemsNo = OzemsImporter::normalizeZems($request->input('zems_no', ''));
         $fullName = trim($request->input('full_name', ''));
         $classId = $request->input('class_id');
         $gender = trim($request->input('gender', ''));
@@ -94,6 +96,8 @@ class StudentController extends Controller
             $error = 'Please fill in Reg No, Full Name and Class.';
         } elseif (Student::where('reg_no', $regNo)->exists()) {
             $error = 'This Reg No is already registered in the system.';
+        } elseif ($zemsError = $this->zemsError($zemsNo, null)) {
+            $error = $zemsError;
         } elseif ($user->isClassTeacher() && (string)$classId !== (string)$user->class_id) {
             $error = 'You can only register students for your own assigned class.';
         }
@@ -112,6 +116,7 @@ class StudentController extends Controller
 
         Student::create([
             'reg_no' => $regNo,
+            'zems_no' => $zemsNo,
             'full_name' => $fullName,
             'gender' => $gender,
             'gender_confirmed' => $genderConfirmed,
@@ -289,14 +294,19 @@ class StudentController extends Controller
         $gender = trim($request->input('gender', ''));
         $genderConfirmed = $request->input('gender_confirmed') === 'on' ? 1 : 0;
         $regNo = trim($request->input('reg_no', ''));
+        $zemsNo = OzemsImporter::normalizeZems($request->input('zems_no', ''));
 
         $dup = Student::where('reg_no', $regNo)->where('id', '!=', $id)->exists();
         if ($dup) {
             return back()->withInput()->with('danger', 'This Reg No is already used by another student.');
         }
+        if ($zemsError = $this->zemsError($zemsNo, (int) $id)) {
+            return back()->withInput()->with('danger', $zemsError);
+        }
 
         $student->update([
             'reg_no' => $regNo,
+            'zems_no' => $zemsNo,
             'full_name' => $fullName,
             'gender' => $gender ?: ($student->gender ?? 'Unknown'),
             'gender_confirmed' => $genderConfirmed,
@@ -306,6 +316,25 @@ class StudentController extends Controller
         SchoolService::logAction($user, 'EDIT_STUDENT', "{$fullName} ({$regNo})");
 
         return redirect()->route('students')->with('success', 'Student details updated successfully.');
+    }
+
+    /** Message when a ZEMS number cannot be used, or null when it is empty/valid/free. */
+    private function zemsError(?string $zemsNo, ?int $ignoreId): ?string
+    {
+        if ($zemsNo === null) {
+            return null;
+        }
+        if (!OzemsImporter::looksLikeZems($zemsNo) || strlen($zemsNo) > 32) {
+            return 'The ZEMS number looks wrong. It should be two letters followed by digits, for example ZE0423951897.';
+        }
+        $owner = Student::where('zems_no', $zemsNo)
+            ->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId))
+            ->first();
+        if ($owner) {
+            return "This ZEMS number is already used by {$owner->full_name}.";
+        }
+
+        return null;
     }
 
     public function delete($id)

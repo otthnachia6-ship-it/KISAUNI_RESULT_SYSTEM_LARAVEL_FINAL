@@ -20,7 +20,7 @@
 <div class="alert alert-success">
     <i class="bi bi-door-open me-1"></i>
     You are assigned to <strong>{{ $my_class->name }}</strong> — {{ $my_class_students }} students.
-    <a href="{{ route('marks_select') }}" class="alert-link">Enter marks &rarr;</a>
+    <a href="{{ route('marks_upload') }}" class="alert-link">Upload results &rarr;</a>
 </div>
 @endif
 
@@ -256,7 +256,9 @@
             </div>
             <div class="qa-list">
                 <a class="qa-row" href="{{ route('add_student') }}"><span class="qa-ico"><i class="bi bi-person-plus"></i></span>Add Student<i class="bi bi-chevron-right qa-go"></i></a>
-                <a class="qa-row" href="{{ route('marks_select') }}"><span class="qa-ico"><i class="bi bi-input-cursor-text"></i></span>Marks Entry<i class="bi bi-chevron-right qa-go"></i></a>
+                @if($session_user->role === $ROLE_CLASS_TEACHER)
+                <a class="qa-row" href="{{ route('marks_upload') }}"><span class="qa-ico"><i class="bi bi-cloud-arrow-up"></i></span>Upload Exam Results<i class="bi bi-chevron-right qa-go"></i></a>
+                @endif
                 <a class="qa-row" href="{{ route('reports') }}"><span class="qa-ico"><i class="bi bi-file-earmark-text"></i></span>Reports<i class="bi bi-chevron-right qa-go"></i></a>
                 @if($session_user->role === $ROLE_HEADMASTER)
                 <a class="qa-row" href="{{ route('classes') }}"><span class="qa-ico"><i class="bi bi-door-open"></i></span>Add Class<i class="bi bi-chevron-right qa-go"></i></a>

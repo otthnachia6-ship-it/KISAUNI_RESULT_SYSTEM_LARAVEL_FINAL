@@ -11,6 +11,7 @@
             @endif
         @endif
         @if(!$show_removed)
+        <a href="{{ route('students_import') }}" class="btn btn-outline-primary"><i class="bi bi-file-earmark-excel me-1"></i>Import from ZEMS</a>
         <a href="{{ route('add_students_bulk') }}" class="btn btn-outline-success"><i class="bi bi-people-fill me-1"></i>Register Multiple</a>
         <a href="{{ route('add_student') }}" class="btn btn-success"><i class="bi bi-person-plus me-1"></i>Register Student</a>
         @endif

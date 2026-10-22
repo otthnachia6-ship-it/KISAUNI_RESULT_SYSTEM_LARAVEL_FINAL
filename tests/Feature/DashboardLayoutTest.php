@@ -61,7 +61,7 @@ class DashboardLayoutTest extends TestCase
         $page = $this->actingAs($this->teacher)->get(route('dashboard'))->assertOk();
 
         $page->assertSee('Add Student');
-        $page->assertSee('Marks Entry');
+        $page->assertSee('Upload Exam Results');
         $page->assertDontSee('Add Class');
         $page->assertDontSee('Add User');
         $page->assertDontSee('Recent activities');
