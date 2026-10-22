@@ -411,7 +411,10 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, input:focus-visible, 
 /* ---------- Page-load motion: one quiet, consistent moment on every page,
    instead of scattered fade-ins on individual elements. ---------- */
 @media (prefers-reduced-motion: no-preference) {
-    .page-enter { animation: pageEnter .35s var(--ease) both; }
+    /* 'backwards' (not 'both'): after the animation ends the page must NOT keep the final
+       transform. A leftover transform traps every Bootstrap modal inside the page, under its
+       own backdrop, so the dialog opens but nothing in it can be clicked or typed into. */
+    .page-enter { animation: pageEnter .35s var(--ease) backwards; }
 }
 @keyframes pageEnter {
     from { opacity: 0; transform: translateY(8px); }
