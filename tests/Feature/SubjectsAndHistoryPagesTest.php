@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Examination;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Models\Subject;
 use App\Models\User;
 use App\Services\SchoolService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -31,38 +32,125 @@ class SubjectsAndHistoryPagesTest extends TestCase
         $this->hm->update(['must_change_password' => 0]);
     }
 
-    public function test_subjects_page_ticks_match_the_class_subjects_table(): void
+    public function test_subjects_page_assignments_match_the_class_subjects_table(): void
     {
         $assigned = DB::table('class_subjects')->count();
         $this->assertGreaterThan(0, $assigned);
 
         $html = $this->actingAs($this->hm)->get('/subjects')->assertStatus(200)->getContent();
-        $this->assertSame($assigned, substr_count($html, 'subject-toggle checked'));
+        // Subject Assignments card shows the real number
+        $this->assertMatchesRegularExpression('/Subject Assignments<\/div><div class="subj-stat-num">' . $assigned . '</', $html);
+        // no more one column per class in the main table
+        $this->assertStringNotContainsString('subject-toggle', $html);
 
-        // removing one assignment removes exactly one tick
         $row = DB::table('class_subjects')->first();
         DB::table('class_subjects')->where('class_id', $row->class_id)->where('subject_id', $row->subject_id)->delete();
         $html = $this->actingAs($this->hm)->get('/subjects')->getContent();
-        $this->assertSame($assigned - 1, substr_count($html, 'subject-toggle checked'));
+        $this->assertMatchesRegularExpression('/Subject Assignments<\/div><div class="subj-stat-num">' . ($assigned - 1) . '</', $html);
     }
 
-    public function test_subjects_page_shows_no_ticks_when_nothing_is_assigned(): void
+    public function test_subjects_page_shows_zero_assignments_when_nothing_is_assigned(): void
     {
         DB::table('class_subjects')->delete();
         $html = $this->actingAs($this->hm)->get('/subjects')->assertStatus(200)->getContent();
-        $this->assertSame(0, substr_count($html, 'subject-toggle checked'));
+        $this->assertMatchesRegularExpression('/Subject Assignments<\/div><div class="subj-stat-num">0</', $html);
+        $this->assertStringContainsString('0 classes', $html);
     }
 
-    public function test_subjects_page_for_a_class_teacher_shows_check_icons(): void
+    public function test_subjects_page_for_a_class_teacher_is_read_only(): void
     {
         $cls = SchoolClass::where('standard', 5)->orderBy('id')->first();
         $teacher = User::create([
             'username' => 'tchr5', 'password' => bcrypt('Secret#123'), 'full_name' => 'Teacher Five',
             'role' => 'class_teacher', 'class_id' => $cls->id, 'active' => 1, 'must_change_password' => 0,
         ]);
-        $assigned = DB::table('class_subjects')->count();
         $html = $this->actingAs($teacher)->get('/subjects')->assertStatus(200)->getContent();
-        $this->assertSame($assigned, substr_count($html, 'bi-check-lg text-success'));
+        $this->assertStringContainsString('Mathematics', $html);
+        $this->assertStringNotContainsString('Add Subject', $html);
+        $this->assertStringNotContainsString('manageClassesModal', $html);
+
+        // and cannot change assignments
+        $math = Subject::where('name', 'Mathematics')->first();
+        $before = DB::table('class_subjects')->count();
+        $this->actingAs($teacher)->post('/subjects', ['action' => 'set_class_assignments', 'subject_id' => $math->id, 'class_ids' => []]);
+        $this->assertSame($before, DB::table('class_subjects')->count());
+    }
+
+    public function test_search_by_name_and_code_and_filters(): void
+    {
+        $this->actingAs($this->hm);
+        $this->post('/subjects', ['action' => 'add_subject', 'name' => 'Computer', 'subject_code' => '122d', 'class_ids' => []]);
+        $this->assertSame('122D', Subject::where('name', 'Computer')->value('subject_code')); // letters kept, not turned into a number
+
+        $byName = $this->get('/subjects?q=comput')->getContent();
+        $this->assertStringContainsString('Computer', $byName);
+        $this->assertStringNotContainsString('Kiswahili', $byName);
+
+        $byCode = $this->get('/subjects?q=122D')->getContent();
+        $this->assertStringContainsString('Computer', $byCode);
+        $this->assertStringNotContainsString('Kiswahili', $byCode);
+
+        $this->assertStringContainsString('No subjects found', $this->get('/subjects?q=zzzzzz')->getContent());
+
+        $unassigned = $this->get('/subjects?f=unassigned')->getContent();
+        $this->assertStringContainsString('Computer', $unassigned);
+        $this->assertStringNotContainsString('Kiswahili', $unassigned);
+
+        $nocode = $this->get('/subjects?f=nocode')->getContent();
+        $this->assertStringNotContainsString('Computer', $nocode);
+    }
+
+    public function test_manage_classes_adds_and_removes_assignments_without_duplicates(): void
+    {
+        $this->actingAs($this->hm);
+        $this->post('/subjects', ['action' => 'add_subject', 'name' => 'Computer', 'subject_code' => '130', 'class_ids' => []]);
+        $sub = Subject::where('name', 'Computer')->first();
+        $c = SchoolClass::orderBy('sort_order')->take(3)->pluck('id')->all();
+
+        $this->post('/subjects', ['action' => 'set_class_assignments', 'subject_id' => $sub->id, 'class_ids' => [$c[0], $c[1], $c[1]]]);
+        $this->assertEqualsCanonicalizing([$c[0], $c[1]], DB::table('class_subjects')->where('subject_id', $sub->id)->pluck('class_id')->all());
+
+        // swap one class: add the third, remove the first
+        $this->post('/subjects', ['action' => 'set_class_assignments', 'subject_id' => $sub->id, 'class_ids' => [$c[1], $c[2]]]);
+        $this->assertEqualsCanonicalizing([$c[1], $c[2]], DB::table('class_subjects')->where('subject_id', $sub->id)->pluck('class_id')->all());
+        $this->assertTrue(DB::table('audit_log')->where('action', 'UPDATE_SUBJECT_CLASSES')->exists());
+
+        // a made-up class id is ignored, the subject itself is untouched
+        $this->post('/subjects', ['action' => 'set_class_assignments', 'subject_id' => $sub->id, 'class_ids' => [$c[1], 999999]]);
+        $this->assertSame([$c[1]], DB::table('class_subjects')->where('subject_id', $sub->id)->pluck('class_id')->map(fn($i) => (int) $i)->all());
+        $this->assertSame('130', $sub->fresh()->subject_code);
+    }
+
+    public function test_manage_classes_refuses_to_remove_a_class_that_has_marks_and_changes_nothing(): void
+    {
+        [$sid, $exam] = $this->studentWithMarks();
+        $cls = SchoolClass::where('standard', 5)->orderBy('id')->first();
+        $subjectId = DB::table('marks')->where('student_id', $sid)->value('subject_id');
+        $other = SchoolClass::where('standard', 6)->orderBy('id')->first();
+
+        $before = DB::table('class_subjects')->where('subject_id', $subjectId)->pluck('class_id')->sort()->values()->all();
+        $marksBefore = DB::table('marks')->count();
+
+        // try to drop the class with marks AND add another class in the same save
+        $this->actingAs($this->hm)->post('/subjects', [
+            'action' => 'set_class_assignments', 'subject_id' => $subjectId,
+            'class_ids' => [$other->id],
+        ])->assertRedirect(route('subjects'));
+
+        $this->assertSame($before, DB::table('class_subjects')->where('subject_id', $subjectId)->pluck('class_id')->sort()->values()->all());
+        $this->assertSame($marksBefore, DB::table('marks')->count());
+        $this->assertStringContainsString('Nothing was saved', session('danger'));
+    }
+
+    public function test_deleting_a_subject_with_marks_is_refused_and_results_stay(): void
+    {
+        [$sid, $exam] = $this->studentWithMarks();
+        $subjectId = DB::table('marks')->where('student_id', $sid)->value('subject_id');
+        $marks = DB::table('marks')->where('subject_id', $subjectId)->count();
+
+        $this->actingAs($this->hm)->post("/subjects/delete/{$subjectId}");
+        $this->assertNotNull(Subject::find($subjectId));
+        $this->assertSame($marks, DB::table('marks')->where('subject_id', $subjectId)->count());
     }
 
     private function studentWithMarks(): array

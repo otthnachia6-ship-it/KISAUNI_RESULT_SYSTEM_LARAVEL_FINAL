@@ -7,13 +7,13 @@
             @if($show_removed)
             <a href="{{ route('students') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back to Active List</a>
             @else
-            <a href="{{ route('students', ['status' => 'removed']) }}" class="btn btn-outline-secondary"><i class="bi bi-archive me-1"></i>View Removed Students</a>
+            <a href="{{ route('students', ['status' => 'removed']) }}" class="btn btn-outline-secondary"><i class="bi bi-archive me-1"></i>Removed Students</a>
             @endif
         @endif
         @if(!$show_removed)
-        <a href="{{ route('students_import') }}" class="btn btn-outline-primary"><i class="bi bi-file-earmark-excel me-1"></i>Import from ZEMS</a>
-        <a href="{{ route('add_students_bulk') }}" class="btn btn-outline-success"><i class="bi bi-people-fill me-1"></i>Register Multiple</a>
-        <a href="{{ route('add_student') }}" class="btn btn-success"><i class="bi bi-person-plus me-1"></i>Register Student</a>
+        <a href="{{ route('students_import') }}" class="btn btn-outline-secondary"><i class="bi bi-cloud-arrow-down me-1"></i>Import from ZEMS</a>
+        <a href="{{ route('add_students_bulk') }}" class="btn btn-outline-secondary"><i class="bi bi-people me-1"></i>Register Multiple</a>
+        <a href="{{ route('add_student') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Register Student</a>
         @endif
     </x-slot:actions>
 </x-page_header>
@@ -42,7 +42,7 @@
         @endif
         <div class="col-auto">
             <label class="form-label small mb-1">Search</label>
-            <input type="text" name="q" class="form-control form-control-sm" placeholder="Search by name or Reg No..." value="{{ $search }}">
+            <input type="text" name="q" class="form-control form-control-sm" placeholder="Search by name or ZEMS No..." value="{{ $search }}">
         </div>
         <div class="col-auto">
             <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-search me-1"></i>Search</button>
@@ -70,24 +70,13 @@
     </div>
     <div class="table-responsive">
         <table class="table mb-0 align-middle table-stack tbl-clean">
-            <thead><tr><th>Student</th><th>Reg No</th><th class="text-end no-print">Actions</th></tr></thead>
+            <thead><tr><th>Student</th><th>ZEMS No</th><th>Gender</th><th class="text-end no-print">Actions</th></tr></thead>
             <tbody>
             @foreach($list as $s)
             <tr>
-                @php
-                    $nameParts = preg_split('/\s+/', trim($s->full_name));
-                    $initials = mb_strtoupper(mb_substr($nameParts[0] ?? '', 0, 1) . (count($nameParts) > 1 ? mb_substr($nameParts[1], 0, 1) : ''));
-                @endphp
-                <td class="stack-head">
-                    <div class="person">
-                        <span class="person-av" aria-hidden="true">{{ $initials }}</span>
-                        <div>
-                            <div class="person-name">{{ $s->full_name }}</div>
-                            <div class="person-sub">{{ $s->gender }}@if(!$s->gender_confirmed)<i class="bi bi-exclamation-triangle text-warning ms-1" title="Gender not confirmed"></i>@endif</div>
-                        </div>
-                    </div>
-                </td>
-                <td data-label="Reg No" class="cell-muted">{{ $s->reg_no }}</td>
+                <td class="stack-head fw-semibold">{{ $s->full_name }}</td>
+                <td data-label="ZEMS No" class="cell-muted">{{ $s->zems_no ?: $s->reg_no }}</td>
+                <td data-label="Gender">{{ $s->gender }}@if(!$s->gender_confirmed)<i class="bi bi-exclamation-triangle text-warning ms-1" title="Gender not confirmed"></i>@endif</td>
                 <td class="text-end no-print stack-actions"><div class="acts">
                     @if($show_removed)
                         <a href="{{ route('student_history', ['student_id' => $s->id]) }}" class="ibtn" title="History" aria-label="History"><i class="bi bi-clock-history"></i></a>

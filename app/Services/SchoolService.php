@@ -518,12 +518,43 @@ class SchoolService
         ];
     }
 
-    public static function computeTrend($classId = null, int $limit = 6): array
+    /**
+     * Have the results of this examination been released to class teachers?
+     * That happens only when EVERY class that took part in this examination is Approved by the
+     * Headmaster. A class "took part" when it has active students AND either a result status
+     * (draft, submitted, returned, ...) or at least one mark for this examination.
+     * A class with no marks and no status for it (no examination for that class) never blocks.
+     */
+    public static function examReleaseStatus(int $examId): array
+    {
+        $withStatus = DB::table('exam_class_status')->where('exam_id', $examId)->pluck('class_id');
+        $withMarks = DB::table('marks')->where('exam_id', $examId)->whereNotNull('score')
+            ->whereNotNull('class_id')->distinct()->pluck('class_id');
+        $took = $withStatus->merge($withMarks)->unique();
+
+        $classIds = $took->isEmpty() ? collect() : DB::table('students')
+            ->where('active', 1)->whereIn('class_id', $took)->distinct()->pluck('class_id');
+
+        $total = $classIds->count();
+        $approved = $total === 0 ? 0 : (int) DB::table('exam_class_status')
+            ->where('exam_id', $examId)
+            ->where('status', 'approved')
+            ->whereIn('class_id', $classIds)
+            ->distinct()
+            ->count('class_id');
+
+        return ['total' => $total, 'approved' => $approved, 'released' => $total > 0 && $approved >= $total];
+    }
+
+    public static function computeTrend($classId = null, int $limit = 6, bool $releasedOnly = false): array
     {
         $exams = Examination::orderBy('academic_year', 'asc')->orderBy('id', 'asc')->get();
         $points = [];
 
         foreach ($exams as $e) {
+            if ($releasedOnly && !static::examReleaseStatus($e->id)['released']) {
+                continue;
+            }
             if ($classId) {
                 $hasMarks = Mark::where('exam_id', $e->id)
                     ->where('class_id', $classId)

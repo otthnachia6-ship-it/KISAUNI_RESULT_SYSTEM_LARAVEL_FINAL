@@ -302,7 +302,6 @@ class ClassController extends Controller
 
         if ($request->isMethod('post')) {
             $newAcademicYearInput = trim($request->input('new_academic_year', ''));
-            $moveTeachers = $request->input('move_teachers') === 'on';
 
             if ($newAcademicYearInput && $newAcademicYearInput !== $currentAcademicYear) {
                 $newAcademicYear = $newAcademicYearInput;
@@ -363,12 +362,8 @@ class ClassController extends Controller
 
                 $cls->update(['last_promoted_year' => $newAcademicYear]);
 
-                if ($moveTeachers && $cls->teacher_id && !$target->teacher_id) {
-                    $tid = $cls->teacher_id;
-                    $target->update(['teacher_id' => $tid]);
-                    User::where('id', $tid)->update(['class_id' => $target->id]);
-                    $cls->update(['teacher_id' => null]);
-                }
+                // Only the students are promoted. Class teachers are NOT moved:
+                // the Headmaster assigns the teacher of each class afterwards (Classes page).
 
                 $summary[] = "{$cls->name} -> {$target->name}: {$item['student_count']} student(s) moved";
                 SchoolService::logAction(

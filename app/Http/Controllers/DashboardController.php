@@ -69,6 +69,7 @@ class DashboardController extends Controller
         $classRanking = [];
         $leadingClass = null;
         $myClassRank = null;
+        $myClassPendingRelease = null;
 
         if ($user && $user->role === SchoolService::ROLE_CLASS_TEACHER && $user->class_id) {
             $myClass = SchoolClass::find($user->class_id);
@@ -82,13 +83,29 @@ class DashboardController extends Controller
                 ->orderBy('e.id', 'desc')
                 ->get();
 
-            $myClassLatestExam = Examination::whereExists(function ($query) use ($user) {
+            // Only examinations whose results are released (every class Approved) are shown to a class teacher.
+            $examsWithMarks = Examination::whereExists(function ($query) use ($user) {
                 $query->select(DB::raw(1))
                     ->from('marks')
                     ->whereColumn('marks.exam_id', 'examinations.id')
                     ->where('marks.class_id', $user->class_id)
                     ->whereNotNull('marks.score');
-            })->orderBy('id', 'desc')->first();
+            })->orderBy('id', 'desc')->get();
+
+            $myClassLatestExam = null;
+            foreach ($examsWithMarks as $candidate) {
+                $release = SchoolService::examReleaseStatus($candidate->id);
+                if ($release['released']) {
+                    $myClassLatestExam = $candidate;
+                    break;
+                }
+                if (!$myClassPendingRelease) {
+                    $myClassPendingRelease = ['exam' => $candidate] + $release;
+                }
+            }
+            if ($myClassLatestExam) {
+                $myClassPendingRelease = null;
+            }
 
             if ($myClassLatestExam) {
                 $myClassAnalytics = SchoolService::computeClassAnalytics($user->class_id, $myClassLatestExam->id);
@@ -137,6 +154,7 @@ class DashboardController extends Controller
             'current_academic_year' => $currentAcademicYear,
             'my_class_analytics' => $myClassAnalytics,
             'my_class_latest_exam' => $myClassLatestExam,
+            'my_class_pending_release' => $myClassPendingRelease,
             'leading_class' => $leadingClass,
             'my_class_rank' => $myClassRank,
             'class_ranking' => $classRanking,

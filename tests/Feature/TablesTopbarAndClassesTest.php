@@ -104,14 +104,15 @@ class TablesTopbarAndClassesTest extends TestCase
 
     // ---------------------------------------------------------------- students table
 
-    public function test_students_table_shows_initials_name_gender_and_quiet_actions(): void
+    public function test_students_table_shows_name_zems_gender_and_quiet_actions(): void
     {
         $this->student('Hamad Khamis', 'Male', $this->classA, 'T001');
         $this->student('Asha Juma', 'Female', $this->classA, 'T002');
 
         $page = $this->actingAs($this->hm)->get(route('students'))->assertOk();
-        $page->assertSee('<span class="person-av" aria-hidden="true">HK</span>', false);
-        $page->assertSee('<span class="person-av" aria-hidden="true">AJ</span>', false);
+        // no photo / initials avatar any more: name, ZEMS No and gender columns instead
+        $page->assertDontSee('person-av', false);
+        $page->assertSee('Hamad Khamis')->assertSee('T001')->assertSee('Gender');
         $page->assertSee('class="ibtn" title="Edit" aria-label="Edit"', false);
         $page->assertSee('class="ibtn ibtn-danger" title="Remove" aria-label="Remove"', false);
         $page->assertDontSee('badge-gender-', false);

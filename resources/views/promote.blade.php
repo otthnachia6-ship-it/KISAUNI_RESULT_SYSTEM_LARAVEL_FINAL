@@ -26,14 +26,6 @@ all history stays searchable under <a href="{{ route('records') }}">Exam Records
                     change the year and promote in one step.
                 </div>
             </div>
-            <div class="col-sm-4">
-                <div class="form-check mt-2">
-                    <input class="form-check-input" type="checkbox" name="move_teachers" id="move_teachers" checked>
-                    <label class="form-check-label small" for="move_teachers">
-                        Also move each Class Teacher up with their students
-                    </label>
-                </div>
-            </div>
         </div>
     </div>
 

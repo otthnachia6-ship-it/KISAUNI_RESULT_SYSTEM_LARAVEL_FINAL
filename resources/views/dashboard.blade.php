@@ -43,6 +43,22 @@
 </div>
 @endforeach
 
+@if(!empty($my_class_pending_release))
+<div class="card p-3 mb-3">
+    <div class="d-flex align-items-start gap-2">
+        <i class="bi bi-hourglass-split text-primary fs-5"></i>
+        <div>
+            <strong>Results not released yet</strong>
+            <div class="text-muted small">
+                {{ $my_class->name }} analytics for {{ $my_class_pending_release['exam']->exam_type }} ({{ $my_class_pending_release['exam']->academic_year }})
+                will appear after all classes have submitted their marks and the Headmaster has approved them
+                ({{ $my_class_pending_release['approved'] }} of {{ $my_class_pending_release['total'] }} classes approved so far).
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 @if($my_class_analytics && $my_class_latest_exam)
 <div class="card p-3 mb-3">
     <div class="d-flex justify-content-between align-items-center mb-2">

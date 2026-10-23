@@ -615,22 +615,24 @@ class OzemsUploadTest extends TestCase
         $this->assertSame('ZL0033/0300/21', $this->s3->fresh()->zems_no);
     }
 
-    public function test_new_student_can_be_registered_with_or_without_zems_number(): void
+    public function test_new_student_is_registered_with_zems_number_only(): void
     {
         $this->actingAs($this->teacher)->post(route('add_student'), [
-            'reg_no' => 'N1', 'full_name' => 'New One', 'class_id' => $this->classA->id, 'gender' => 'Female', 'zems_no' => 'ze0000000100',
+            'full_name' => 'New One', 'class_id' => $this->classA->id, 'gender' => 'Female', 'zems_no' => 'ze0000000100',
         ])->assertRedirect(route('students'));
         $this->actingAs($this->teacher)->post(route('add_student'), [
-            'reg_no' => 'N2', 'full_name' => 'New Two', 'class_id' => $this->classA->id, 'gender' => 'Female', 'zems_no' => '',
-        ])->assertRedirect(route('students'));
+            'full_name' => 'New Two', 'class_id' => $this->classA->id, 'gender' => 'Female', 'zems_no' => '',
+        ]);
 
-        $this->assertSame('ZE0000000100', Student::where('reg_no', 'N1')->value('zems_no'));
-        $this->assertNull(Student::where('reg_no', 'N2')->value('zems_no'));
+        $one = Student::where('full_name', 'New One')->first();
+        $this->assertSame('ZE0000000100', $one->zems_no);
+        $this->assertSame('ZE0000000100', $one->reg_no);
+        $this->assertSame(0, Student::where('full_name', 'New Two')->count()); // ZEMS No is required
     }
 
     public function test_student_form_shows_the_zems_field(): void
     {
         $this->actingAs($this->teacher)->get(route('edit_student', ['student_id' => $this->s1->id]))
-            ->assertOk()->assertSee('ZEMS Number')->assertSee('ZE0000000001');
+            ->assertOk()->assertSee('ZEMS No')->assertSee('ZE0000000001');
     }
 }

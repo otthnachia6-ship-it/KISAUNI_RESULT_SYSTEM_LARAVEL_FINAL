@@ -6,15 +6,11 @@
     <form method="POST" action="{{ $mode == 'add' ? route('add_student') : route('edit_student', ['student_id' => $student->id]) }}">
         @csrf
         <div class="mb-3">
-            <label class="form-label">Reg No (Admission Number)</label>
-            <input type="text" class="form-control" name="reg_no" required
-                   value="{{ $student ? ($student['reg_no'] ?? $student->reg_no) : old('reg_no') }}">
-        </div>
-        <div class="mb-3">
-            <label class="form-label">ZEMS Number <span class="text-muted small">(optional)</span></label>
-            <input type="text" class="form-control" name="zems_no" maxlength="32" autocomplete="off" placeholder="e.g. ZE0423951897"
+            <label class="form-label" for="zems_no">ZEMS No @if($mode == 'add')<span class="text-danger">*</span>@endif</label>
+            <input type="text" id="zems_no" class="form-control text-uppercase" name="zems_no" maxlength="32" autocomplete="off" placeholder="e.g. ZE0423951897"
+                   @if($mode == 'add') required @endif
                    value="{{ old('zems_no', $student ? ($student['zems_no'] ?? $student->zems_no) : '') }}">
-            <div class="form-text">Needed to upload results from ZEMS. You can add it later.</div>
+            <div class="form-text">The student's ZEMS number. It is also used to upload results from ZEMS.</div>
         </div>
         <div class="mb-3">
             <label class="form-label">Student's Full Name</label>

@@ -33,7 +33,7 @@
                 <thead>
                     <tr>
                         <th style="width:3%;">#</th>
-                        <th style="width:22%;">Reg No (Admission Number)</th>
+                        <th style="width:22%;">ZEMS No</th>
                         <th style="width:45%;">Student's Full Name</th>
                         <th style="width:20%;">Gender</th>
                         <th style="width:10%;"></th>
@@ -43,7 +43,7 @@
                     @forelse($rows as $r)
                     <tr>
                         <td class="row-num"></td>
-                        <td><input type="text" class="form-control" name="reg_no[]" value="{{ $r['reg_no'] ?? '' }}"></td>
+                        <td><input type="text" class="form-control text-uppercase" name="zems_no[]" maxlength="32" autocomplete="off" placeholder="ZE0423951897" aria-label="ZEMS No" value="{{ $r['zems_no'] ?? '' }}"></td>
                         <td><input type="text" class="form-control bulk-name" name="full_name[]" value="{{ $r['full_name'] ?? '' }}"></td>
                         <td>
                             <select class="form-select bulk-gender" name="gender[]">
@@ -58,7 +58,7 @@
                     @for($i = 0; $i < 3; $i++)
                     <tr>
                         <td class="row-num"></td>
-                        <td><input type="text" class="form-control" name="reg_no[]"></td>
+                        <td><input type="text" class="form-control text-uppercase" name="zems_no[]" maxlength="32" autocomplete="off" placeholder="ZE0423951897" aria-label="ZEMS No"></td>
                         <td><input type="text" class="form-control bulk-name" name="full_name[]"></td>
                         <td>
                             <select class="form-select bulk-gender" name="gender[]">
@@ -134,7 +134,7 @@
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td class="row-num"></td>
-            <td><input type="text" class="form-control" name="reg_no[]"></td>
+            <td><input type="text" class="form-control text-uppercase" name="zems_no[]" maxlength="32" autocomplete="off" placeholder="ZE0423951897" aria-label="ZEMS No"></td>
             <td><input type="text" class="form-control bulk-name" name="full_name[]"></td>
             <td>
                 <select class="form-select bulk-gender" name="gender[]">
@@ -148,7 +148,7 @@
         tbody.appendChild(tr);
         attachRowEvents(tr);
         renumberRows();
-        tr.querySelector("input[name='reg_no[]']").focus();
+        tr.querySelector("input[name='zems_no[]']").focus();
     }
 
     tbody.querySelectorAll("tr").forEach(attachRowEvents);

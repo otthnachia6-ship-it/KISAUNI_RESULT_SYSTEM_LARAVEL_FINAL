@@ -1250,3 +1250,22 @@ main .btn:not(.btn-sm):not(.btn-lg) i,
 .modal .btn:not(.btn-sm):not(.btn-lg) i {
     font-size: .95em;
 }
+
+/* ===== Subject Management (scoped: only .subj-* and .class-pick-* classes) ===== */
+.subj-stat { display: flex; align-items: center; gap: .85rem; padding: .85rem 1rem; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; }
+.subj-stat-icon { width: 2.4rem; height: 2.4rem; border-radius: 8px; background: #eff6ff; color: #1d4ed8; display: inline-flex; align-items: center; justify-content: center; font-size: 1.15rem; flex: 0 0 auto; }
+.subj-stat-label { font-size: .8rem; color: #64748b; }
+.subj-stat-num { font-size: 1.5rem; font-weight: 700; line-height: 1.1; color: #0f172a; }
+.subj-count { display: inline-block; padding: .1rem .6rem; border-radius: 999px; background: #eff6ff; color: #1d4ed8; font-size: .8rem; font-weight: 600; }
+.class-picker { border: 1px solid #e5e7eb; border-radius: 8px; padding: .5rem .75rem; max-height: 320px; overflow-y: auto; }
+.class-pick-group + .class-pick-group { margin-top: .6rem; padding-top: .6rem; border-top: 1px dashed #e5e7eb; }
+.class-pick-head { display: flex; justify-content: space-between; align-items: center; font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: #475569; margin-bottom: .35rem; }
+.class-pick-items { display: flex; flex-wrap: wrap; gap: .4rem; }
+.class-pick-item { display: inline-flex; align-items: center; gap: .4rem; padding: .3rem .65rem; border: 1px solid #cbd5e1; border-radius: 999px; font-size: .85rem; cursor: pointer; user-select: none; }
+.class-pick-item:has(input:checked) { background: #eff6ff; border-color: #2563eb; color: #1d4ed8; }
+.class-pick-item.is-locked { opacity: .75; cursor: not-allowed; }
+.class-pick-item[hidden] { display: none; }
+
+/* Subjects: grey "Manage" button, icon and text on one line */
+.btn-manage { display: inline-flex; align-items: center; white-space: nowrap; background: #e5e7eb; border: 1px solid #d1d5db; color: #1f2937; }
+.btn-manage:hover, .btn-manage:focus { background: #d1d5db; border-color: #9ca3af; color: #111827; }

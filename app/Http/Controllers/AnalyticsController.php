@@ -17,6 +17,15 @@ class AnalyticsController extends Controller
         $examId = $request->input('exam_id') ? (int) $request->input('exam_id') : null;
         if (!$examId && $exams->isNotEmpty()) {
             $examId = $exams->first()->id;
+            // A class teacher is first shown the newest examination whose results are released.
+            if ($user->isClassTeacher()) {
+                foreach ($exams as $candidate) {
+                    if (SchoolService::examReleaseStatus($candidate->id)['released']) {
+                        $examId = $candidate->id;
+                        break;
+                    }
+                }
+            }
         }
 
         $classes = null;
@@ -59,6 +68,13 @@ class AnalyticsController extends Controller
                 'title' => 'Examination not found',
                 'message' => 'The selected examination could not be found. Please choose another examination from the list.',
             ];
+        } elseif ($user->isClassTeacher() && ($release = SchoolService::examReleaseStatus($exam->id))['total'] > 0 && !$release['released']) {
+            // Class teachers see analytics only after every class is Approved by the Headmaster.
+            $cls = SchoolClass::find($classId);
+            $emptyState = [
+                'title' => 'Results not released yet',
+                'message' => "Analytics for {$exam->exam_type} {$exam->academic_year} will appear after teachers of all classes have submitted their marks and the Headmaster has approved them ({$release['approved']} of {$release['total']} classes approved so far).",
+            ];
         } elseif ($viewScope === 'class') {
             $cls = SchoolClass::find($classId);
             if (!$cls) {
@@ -69,7 +85,7 @@ class AnalyticsController extends Controller
                 $classId = null;
             } else {
                 $analytics = SchoolService::computeClassAnalytics($classId, $examId);
-                $trend = SchoolService::computeTrend($classId);
+                $trend = SchoolService::computeTrend($classId, 6, $user->isClassTeacher());
             }
         } else {
             $analytics = SchoolService::computeSchoolAnalytics($examId);

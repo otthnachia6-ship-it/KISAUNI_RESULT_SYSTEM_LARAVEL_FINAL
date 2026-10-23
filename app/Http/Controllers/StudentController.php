@@ -35,7 +35,8 @@ class StudentController extends Controller
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('s.full_name', 'like', "%{$search}%")
-                  ->orWhere('s.reg_no', 'like', "%{$search}%");
+                  ->orWhere('s.reg_no', 'like', "%{$search}%")
+                  ->orWhere('s.zems_no', 'like', "%{$search}%");
             });
         }
 
@@ -84,18 +85,20 @@ class StudentController extends Controller
         }
 
         $user = Auth::user();
-        $regNo = trim($request->input('reg_no', ''));
         $zemsNo = OzemsImporter::normalizeZems($request->input('zems_no', ''));
+        // The ZEMS number is the student's number: it is also stored in reg_no
+        // (same convention as the "Import from ZEMS" feature), so no separate Reg No is typed.
+        $regNo = $zemsNo;
         $fullName = trim($request->input('full_name', ''));
         $classId = $request->input('class_id');
         $gender = trim($request->input('gender', ''));
         $genderConfirmed = $request->input('gender_confirmed') === 'on' ? 1 : 0;
 
         $error = null;
-        if (!$regNo || !$fullName || !$classId) {
-            $error = 'Please fill in Reg No, Full Name and Class.';
+        if (!$zemsNo || !$fullName || !$classId) {
+            $error = 'Please fill in ZEMS No, Full Name and Class.';
         } elseif (Student::where('reg_no', $regNo)->exists()) {
-            $error = 'This Reg No is already registered in the system.';
+            $error = 'This ZEMS No is already registered in the system.';
         } elseif ($zemsError = $this->zemsError($zemsNo, null)) {
             $error = $zemsError;
         } elseif ($user->isClassTeacher() && (string)$classId !== (string)$user->class_id) {
@@ -152,7 +155,7 @@ class StudentController extends Controller
 
         $user = Auth::user();
         $classId = $request->input('class_id');
-        $regNos = $request->input('reg_no', []);
+        $zemsNos = $request->input('zems_no', []);
         $fullNames = $request->input('full_name', []);
         $genders = $request->input('gender', []);
 
@@ -170,39 +173,44 @@ class StudentController extends Controller
 
         $rowsOut = [];
         $toInsert = [];
-        $seenRegNos = [];
+        $seenZems = [];
         $errors = [];
 
-        $count = max(count($regNos), count($fullNames), count($genders));
+        $count = max(count($zemsNos), count($fullNames), count($genders));
         for ($i = 0; $i < $count; $i++) {
             $rowNum = $i + 1;
-            $regNo = trim($regNos[$i] ?? '');
+            $zemsNo = OzemsImporter::normalizeZems($zemsNos[$i] ?? '') ?? '';
             $fullName = trim($fullNames[$i] ?? '');
             $gender = trim($genders[$i] ?? '');
 
-            $rowsOut[] = ['reg_no' => $regNo, 'full_name' => $fullName, 'gender' => $gender];
+            $rowsOut[] = ['zems_no' => $zemsNo, 'full_name' => $fullName, 'gender' => $gender];
 
-            if ($regNo === '' && $fullName === '') {
+            if ($zemsNo === '' && $fullName === '') {
                 continue;
             }
 
-            if ($regNo === '' || $fullName === '' || $gender === '') {
-                $errors[] = "Row {$rowNum}: Reg No, Full Name and Gender are all required.";
+            if ($zemsNo === '' || $fullName === '' || $gender === '') {
+                $errors[] = "Row {$rowNum}: ZEMS No, Full Name and Gender are all required.";
                 continue;
             }
 
-            if (in_array($regNo, $seenRegNos, true)) {
-                $errors[] = "Row {$rowNum}: Reg No '{$regNo}' is duplicated in this list.";
+            if (!OzemsImporter::looksLikeZems($zemsNo)) {
+                $errors[] = "Row {$rowNum}: ZEMS No '" . e($zemsNo) . "' looks wrong (example: ZE0423951897).";
                 continue;
             }
 
-            if (Student::where('reg_no', $regNo)->exists()) {
-                $errors[] = "Row {$rowNum}: Reg No '{$regNo}' is already registered in the system.";
+            if (in_array($zemsNo, $seenZems, true)) {
+                $errors[] = "Row {$rowNum}: ZEMS No '" . e($zemsNo) . "' is duplicated in this list.";
                 continue;
             }
 
-            $seenRegNos[] = $regNo;
-            $toInsert[] = [$regNo, $fullName, $gender];
+            if (Student::where('reg_no', $zemsNo)->orWhere('zems_no', $zemsNo)->exists()) {
+                $errors[] = "Row {$rowNum}: ZEMS No '" . e($zemsNo) . "' is already registered in the system.";
+                continue;
+            }
+
+            $seenZems[] = $zemsNo;
+            $toInsert[] = [$zemsNo, $fullName, $gender];
         }
 
         if (empty($toInsert) && empty($errors)) {
@@ -210,9 +218,10 @@ class StudentController extends Controller
         }
 
         $nowStr = SchoolService::nowStr();
-        foreach ($toInsert as [$regNo, $fullName, $gender]) {
+        foreach ($toInsert as [$zemsNo, $fullName, $gender]) {
             Student::create([
-                'reg_no' => $regNo,
+                'reg_no' => $zemsNo,
+                'zems_no' => $zemsNo,
                 'full_name' => $fullName,
                 'gender' => $gender,
                 'gender_confirmed' => 1,
@@ -231,8 +240,8 @@ class StudentController extends Controller
         }
 
         if (!empty($errors)) {
-            $savedRegNos = array_column($toInsert, 0);
-            $remainingRows = array_values(array_filter($rowsOut, fn($r) => !in_array($r['reg_no'], $savedRegNos, true)));
+            $savedZems = array_column($toInsert, 0);
+            $remainingRows = array_values(array_filter($rowsOut, fn($r) => !in_array($r['zems_no'], $savedZems, true)));
 
             $msg = implode('<br>', $errors);
             if (!empty($toInsert)) {
@@ -293,12 +302,18 @@ class StudentController extends Controller
         $classId = $request->input('class_id');
         $gender = trim($request->input('gender', ''));
         $genderConfirmed = $request->input('gender_confirmed') === 'on' ? 1 : 0;
-        $regNo = trim($request->input('reg_no', ''));
         $zemsNo = OzemsImporter::normalizeZems($request->input('zems_no', ''));
+
+        // Reg No is no longer typed. It follows the ZEMS No when it was the same number
+        // (or empty); a different school Reg No that already exists is left untouched.
+        $regNo = $student->reg_no;
+        if ($zemsNo && ($regNo === '' || $regNo === null || $regNo === $student->zems_no)) {
+            $regNo = $zemsNo;
+        }
 
         $dup = Student::where('reg_no', $regNo)->where('id', '!=', $id)->exists();
         if ($dup) {
-            return back()->withInput()->with('danger', 'This Reg No is already used by another student.');
+            return back()->withInput()->with('danger', 'This ZEMS No is already used by another student.');
         }
         if ($zemsError = $this->zemsError($zemsNo, (int) $id)) {
             return back()->withInput()->with('danger', $zemsError);

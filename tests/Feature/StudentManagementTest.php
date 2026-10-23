@@ -28,21 +28,42 @@ class StudentManagementTest extends TestCase
         $this->c2 = SchoolClass::where('standard', 6)->orderBy('id')->first();
     }
 
-    public function test_bulk_add_validates_rows_and_rejects_duplicates(): void
+    public function test_bulk_add_uses_zems_no_validates_rows_and_rejects_duplicates(): void
     {
-        $r = $this->actingAs($this->hm)->post('/students/add-bulk', [
+        $this->actingAs($this->hm)->post('/students/add-bulk', [
             'class_id' => $this->c1->id,
-            'reg_no' => ['B1', 'B2', 'B2', 'B3', ''],
-            'full_name' => ['Asha Ali', 'Juma Omar', 'Dup Row', 'No Gender', ''],
-            'gender' => ['Female', 'Male', 'Male', '', ''],
+            'zems_no' => ['ZE0000000001', 'ze0000000002', 'ZE0000000002', 'ZE0000000003', 'BAD', ''],
+            'full_name' => ['Asha Ali', 'Juma Omar', 'Dup Row', 'No Gender', 'Bad Number', ''],
+            'gender' => ['Female', 'Male', 'Male', '', 'Male', ''],
         ]);
-        $this->assertSame(2, Student::whereIn('reg_no', ['B1', 'B2'])->count());
-        $this->assertSame(0, Student::where('reg_no', 'B3')->count());
+        $this->assertSame(2, Student::whereIn('zems_no', ['ZE0000000001', 'ZE0000000002'])->count());
+        // the ZEMS number is also kept as the Reg No (same as "Import from ZEMS")
+        $this->assertSame('ZE0000000001', Student::where('full_name', 'Asha Ali')->value('reg_no'));
+        $this->assertSame(0, Student::where('zems_no', 'ZE0000000003')->count());
+        $this->assertSame(0, Student::where('full_name', 'Bad Number')->count());
         $this->assertTrue(DB::table('audit_log')->where('action', 'ADD_STUDENTS_BULK')->exists());
 
-        // already-registered reg no is refused on a second import
-        $this->post('/students/add-bulk', ['class_id' => $this->c1->id, 'reg_no' => ['B1'], 'full_name' => ['Again'], 'gender' => ['Male']]);
-        $this->assertSame(1, Student::where('reg_no', 'B1')->count());
+        // an already-registered ZEMS No is refused on a second save
+        $this->post('/students/add-bulk', ['class_id' => $this->c1->id, 'zems_no' => ['ZE0000000001'], 'full_name' => ['Again'], 'gender' => ['Male']]);
+        $this->assertSame(1, Student::where('zems_no', 'ZE0000000001')->count());
+    }
+
+    public function test_single_add_needs_zems_no_and_list_shows_it(): void
+    {
+        $this->actingAs($this->hm);
+        $this->post('/students/add', ['zems_no' => '', 'full_name' => 'Nobody', 'class_id' => $this->c1->id, 'gender' => 'Male']);
+        $this->assertSame(0, Student::where('full_name', 'Nobody')->count());
+
+        $this->post('/students/add', ['zems_no' => 'ze0000000099', 'full_name' => 'Hawa Said', 'class_id' => $this->c1->id, 'gender' => 'Female']);
+        $st = Student::where('full_name', 'Hawa Said')->first();
+        $this->assertSame('ZE0000000099', $st->zems_no);
+        $this->assertSame('ZE0000000099', $st->reg_no);
+
+        $html = $this->get('/students')->getContent();
+        $this->assertStringContainsString('ZE0000000099', $html);
+        $this->assertStringContainsString('ZEMS No', $html);
+        $this->assertStringContainsString('ZE0000000099', $this->get('/students?q=000099')->getContent());
+        $this->assertStringNotContainsString('name="reg_no"', $this->get('/students/add')->getContent());
     }
 
     public function test_search_filter_soft_delete_restore_and_purge(): void
