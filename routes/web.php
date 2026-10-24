@@ -65,6 +65,7 @@ Route::middleware(['auth', 'no_cache'])->group(function () {
     Route::get('/records', [RecordController::class, 'records'])->name('records');
     Route::get('/reports', [ReportController::class, 'reports'])->name('reports');
     Route::get('/reports/student/{student_id}/{exam_id}', [ReportController::class, 'studentReport'])->name('student_report');
+    Route::get('/reports/class-sheet/{exam_id}/{class_id}', [ReportController::class, 'classSheetDownload'])->name('class_sheet_download');
     Route::get('/reports/student/{student_id}/{exam_id}/download', [ReportController::class, 'studentReportDownload'])->name('student_report_download');
 
     // APIs
@@ -98,7 +99,6 @@ Route::middleware(['auth', 'no_cache'])->group(function () {
         // Results Review & Approval
         Route::get('/results', [ResultController::class, 'results'])->name('results');
         Route::match(['get', 'post'], '/results/review/{exam_id}/{class_id}', [ResultController::class, 'review'])->name('review_results');
-        Route::get('/results/review/{exam_id}/{class_id}/download', [ResultController::class, 'reviewDownload'])->name('review_results_download');
         Route::get('/headmaster/overview', [ResultController::class, 'headmasterOverview'])->name('headmaster_overview');
 
         // Settings

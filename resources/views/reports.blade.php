@@ -1,7 +1,7 @@
 @extends('base')
 @section('page_title', 'Reports')
 @section('content')
-<x-page_header title="Reports" subtitle="Generate a student report card" />
+<x-page_header title="Reports" subtitle="Generate student report cards and the class result sheet" />
 <p class="text-muted small mb-3">
     Showing examinations for the current academic year ({{ $current_academic_year }}) only.
     Looking for an older year? All of that data is still safe - open
@@ -36,7 +36,45 @@
                 <select name="student_id" id="rep_student" class="form-select mb-3" required disabled>
                     <option value="">-- Select Class and Examination First --</option>
                 </select>
+                <div id="rep_notice" class="alert alert-warning small d-none" role="alert"></div>
                 <button class="btn btn-success w-100">Generate Student Report</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-7 col-lg-6">
+        <div class="card p-4">
+            <h6><i class="bi bi-table me-1"></i>Class Result Sheet</h6>
+            <p class="text-muted small">All students of a class for one examination, with totals, grades and positions (PDF).
+                @if($session_user->role === $ROLE_CLASS_TEACHER)
+                Available once the Headmaster has approved the results of all classes for that examination.
+                @endif
+            </p>
+            <form method="GET" onsubmit="event.preventDefault();
+                const c = document.getElementById('sheet_class').value; const e = document.getElementById('sheet_exam').value;
+                if (c && e) { window.location = '/reports/class-sheet/' + e + '/' + c; }">
+                @if($session_user->role === $ROLE_CLASS_TEACHER)
+                    @if(count($classes) > 0)
+                    <label class="form-label small mb-1" for="sheet_class_label">Class</label>
+                    <input type="text" id="sheet_class_label" class="form-control mb-2" value="{{ $classes[0]->name }}" disabled>
+                    <input type="hidden" id="sheet_class" value="{{ $classes[0]->id }}">
+                    @else
+                    <div class="alert alert-warning">You are not currently assigned to a class.</div>
+                    <input type="hidden" id="sheet_class" value="">
+                    @endif
+                @else
+                <label class="form-label small mb-1" for="sheet_class">Class</label>
+                <select id="sheet_class" class="form-select mb-2" required>
+                    <option value="">-- Class --</option>
+                    @foreach($classes as $c)<option value="{{ $c->id }}">{{ $c->name }}</option>@endforeach
+                </select>
+                @endif
+                <label class="form-label small mb-1" for="sheet_exam">Examination</label>
+                <select id="sheet_exam" class="form-select mb-3" required>
+                    <option value="">-- Examination --</option>
+                    @foreach($exams as $e)<option value="{{ $e->id }}">{{ $e->exam_type }} - {{ $e->academic_year }}</option>@endforeach
+                </select>
+                <button class="btn btn-primary w-100"><i class="bi bi-download me-1"></i>Download Class Result Sheet</button>
             </form>
         </div>
     </div>
@@ -51,6 +89,8 @@ async function loadStudents() {
     const classId = classEl ? classEl.value : null;
     const examId = examEl ? examEl.value : null;
     const sel = document.getElementById('rep_student');
+    const notice = document.getElementById('rep_notice');
+    if (notice) { notice.classList.add('d-none'); notice.textContent = ''; }
 
     if (!classId || !examId) {
         sel.innerHTML = '<option value="">-- Select Class and Examination First --</option>';
@@ -63,6 +103,12 @@ async function loadStudents() {
     try {
         const res = await fetch('/api/students-with-marks/' + classId + '/' + examId);
         const list = await res.json();
+        if (!res.ok) {
+            sel.innerHTML = '<option value="">Not available yet</option>';
+            sel.disabled = true;
+            if (notice && list && list.message) { notice.textContent = list.message; notice.classList.remove('d-none'); }
+            return;
+        }
         if (!list || list.length === 0) {
             sel.innerHTML = '<option value="">No students have marks for this examination</option>';
             return;

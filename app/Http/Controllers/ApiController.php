@@ -47,6 +47,10 @@ class ApiController extends Controller
             return response()->json(['error' => 'Forbidden.'], 403);
         }
 
+        if ($user->isClassTeacher() && !SchoolService::examReleaseStatus((int) $examId)['released']) {
+            return response()->json(['error' => 'not_released', 'message' => SchoolService::releaseNotice((int) $examId)], 403);
+        }
+
         $rows = DB::table('students as s')
             ->join('marks as m', 'm.student_id', '=', 's.id')
             ->where('s.class_id', $classId)

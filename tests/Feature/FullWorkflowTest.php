@@ -121,8 +121,8 @@ class FullWorkflowTest extends TestCase
         $r->assertStatus(302);
         echo "[OK] approved -> " . $r->headers->get('Location') . "\n";
 
-        // Review download (PDF)
-        $r = $this->get("/results/review/{$exam->id}/{$class->id}/download");
+        // Class Result Sheet (PDF) now comes from the Reports menu only
+        $r = $this->get("/reports/class-sheet/{$exam->id}/{$class->id}");
         echo "[INFO] class pdf status: {$r->getStatusCode()}, content-type: " . $r->headers->get('Content-Type') . ", bytes: " . strlen($r->getContent()) . "\n";
         $r->assertStatus(200);
         echo "[OK] class result PDF generated\n";

@@ -546,6 +546,16 @@ class SchoolService
         return ['total' => $total, 'approved' => $approved, 'released' => $total > 0 && $approved >= $total];
     }
 
+    /** Plain-language reason shown to a class teacher while results are not released yet. */
+    public static function releaseNotice(int $examId): string
+    {
+        $st = static::examReleaseStatus($examId);
+        $exam = Examination::find($examId);
+        $label = $exam ? "{$exam->exam_type} {$exam->academic_year}" : 'this examination';
+
+        return "Reports for {$label} are not available yet. They open after the teachers of all classes have submitted their marks and the Headmaster has approved them ({$st['approved']} of {$st['total']} classes approved so far).";
+    }
+
     public static function computeTrend($classId = null, int $limit = 6, bool $releasedOnly = false): array
     {
         $exams = Examination::orderBy('academic_year', 'asc')->orderBy('id', 'asc')->get();
@@ -675,6 +685,16 @@ class SchoolService
         }
 
         $exam = Examination::find($examId);
+        if (!$exam) {
+            return [null, null];
+        }
+
+        // A class teacher may generate a student report only after the results of ALL classes
+        // have been submitted and approved by the Headmaster. Headmaster/Administrator: no limit.
+        if ($user && $user->role === static::ROLE_CLASS_TEACHER && !static::examReleaseStatus((int) $examId)['released']) {
+            return [null, 'not_released'];
+        }
+
         $cls = SchoolClass::find($student->class_id);
         $teacher = $cls && $cls->teacher_id ? User::find($cls->teacher_id) : null;
 

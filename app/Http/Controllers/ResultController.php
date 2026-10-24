@@ -140,6 +140,7 @@ class ResultController extends Controller
         ]);
     }
 
+    /** Class Result Sheet PDF. Reached only through Reports (ReportController::classSheetDownload). */
     public function reviewDownload($examId, $classId)
     {
         $exam = Examination::find($examId);

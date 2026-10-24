@@ -10,9 +10,6 @@
         <p class="page-sub">Review Results</p>
     </div>
     <div class="page-actions">
-        <a href="{{ route('review_results_download', ['exam_id' => $exam->id, 'class_id' => $cls->id]) }}" class="btn btn-sm btn-outline-primary no-print">
-            <i class="bi bi-file-earmark-pdf me-1"></i>Download PDF
-        </a>
         <a href="{{ route('results') }}" class="btn btn-sm btn-outline-secondary no-print">&larr; Back</a>
     </div>
 </div>

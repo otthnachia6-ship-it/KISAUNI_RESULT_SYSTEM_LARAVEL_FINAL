@@ -42,6 +42,9 @@ class ReportController extends Controller
         if ($error === 'forbidden') {
             return redirect()->route('reports')->with('danger', 'You do not have permission to do that.');
         }
+        if ($error === 'not_released') {
+            return redirect()->route('reports')->with('warning', SchoolService::releaseNotice((int) $examId));
+        }
         if (!$ctx) {
             abort(404);
         }
@@ -56,6 +59,9 @@ class ReportController extends Controller
 
         if ($error === 'forbidden') {
             return redirect()->route('reports')->with('danger', 'You do not have permission to do that.');
+        }
+        if ($error === 'not_released') {
+            return redirect()->route('reports')->with('warning', SchoolService::releaseNotice((int) $examId));
         }
         if (!$ctx) {
             abort(404);
@@ -116,5 +122,37 @@ class ReportController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
+    }
+
+    /**
+     * Class Result Sheet (PDF) from the Reports menu.
+     * Headmaster/Administrator: any class. Class teacher: own class only, and only once the
+     * results of all classes are released (everything approved by the Headmaster).
+     */
+    public function classSheetDownload($examId, $classId)
+    {
+        $user = Auth::user();
+        $exam = Examination::find($examId);
+        $cls = SchoolClass::find($classId);
+        if (!$exam || !$cls) {
+            abort(404);
+        }
+
+        if ($user->isClassTeacher()) {
+            if ((int) $classId !== (int) $user->class_id) {
+                return redirect()->route('reports')->with('danger', 'You do not have permission to do that.');
+            }
+            if (!SchoolService::examReleaseStatus((int) $examId)['released']) {
+                return redirect()->route('reports')->with('warning', str_replace('Reports for', 'The Class Result Sheet for', SchoolService::releaseNotice((int) $examId)));
+            }
+            $own = \App\Models\ExamClassStatus::where('exam_id', $examId)->where('class_id', $classId)->first();
+            if (!$own || $own->status !== 'approved') {
+                return redirect()->route('reports')->with('warning', 'Results of your class have not been approved by the Headmaster for this examination yet.');
+            }
+        }
+
+        SchoolService::logAction($user, 'DOWNLOAD_CLASS_SHEET', "exam={$examId} class={$classId}");
+
+        return app(ResultController::class)->reviewDownload($examId, $classId);
     }
 }
