@@ -67,6 +67,18 @@ class StudentManagementTest extends TestCase
         $this->assertStringNotContainsString('ZEMS', $this->get('/students/add')->getContent());
     }
 
+    public function test_register_form_is_one_card_with_all_fields_inside_the_form(): void
+    {
+        $html = $this->actingAs($this->hm)->get('/students/add')->assertOk()->getContent();
+        $form = substr($html, strpos($html, '<form method="POST"'), strpos($html, '</form>', strpos($html, '<form method="POST"')) - strpos($html, '<form method="POST"'));
+        foreach (['name="reg_no"', 'name="full_name"', 'name="gender"', 'name="class_id"', 'Register Student'] as $needle) {
+            $this->assertStringContainsString($needle, $form, "{$needle} must be inside the form");
+        }
+        // no stray closing tag: the form's divs are balanced, so every field stays in the same card
+        $this->assertSame(substr_count($form, '<div'), substr_count($form, '</div>'));
+        $this->assertSame(1, substr_count($html, 'student-form-card'));
+    }
+
     public function test_search_filter_soft_delete_restore_and_purge(): void
     {
         $mk = fn($reg, $name, $cls) => Student::create(['reg_no' => $reg, 'full_name' => $name, 'gender' => 'Male',

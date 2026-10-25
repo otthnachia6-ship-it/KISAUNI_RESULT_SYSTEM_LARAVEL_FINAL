@@ -1269,3 +1269,8 @@ main .btn:not(.btn-sm):not(.btn-lg) i,
 /* Subjects: grey "Manage" button, icon and text on one line */
 .btn-manage { display: inline-flex; align-items: center; white-space: nowrap; background: #e5e7eb; border: 1px solid #d1d5db; color: #1f2937; }
 .btn-manage:hover, .btn-manage:focus { background: #d1d5db; border-color: #9ca3af; color: #111827; }
+
+/* Register / Edit Student form (scoped) */
+.student-form-card { max-width: 760px; }
+.student-form-confirm { margin-top: 2.1rem; }
+@media (max-width: 767.98px) { .student-form-confirm { margin-top: 0; } }
