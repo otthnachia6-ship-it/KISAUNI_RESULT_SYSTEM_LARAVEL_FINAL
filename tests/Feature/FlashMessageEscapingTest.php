@@ -24,7 +24,7 @@ class FlashMessageEscapingTest extends TestCase
 
         $payload = '<img src=x onerror=alert(1)>';
         $this->actingAs($hm)->post('/students/add', [
-            'zems_no' => 'ZE0000000555', 'full_name' => $payload, 'gender' => 'Male', 'class_id' => $class->id,
+            'reg_no' => 'XSS1', 'full_name' => $payload, 'gender' => 'Male', 'class_id' => $class->id,
         ])->assertRedirect(route('students'));
 
         $page = $this->get('/students');

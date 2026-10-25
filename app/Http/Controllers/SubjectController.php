@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Mark;
 use App\Models\SchoolClass;
 use App\Models\Subject;
-use App\Services\OzemsImporter;
 use App\Services\SchoolService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +21,7 @@ class SubjectController extends Controller
 
             if ($action === 'add_subject') {
                 $name = trim($request->input('name', ''));
-                $code = OzemsImporter::normalizeCode($request->input('subject_code', ''));
+                $code = \App\Models\Subject::normalizeCode($request->input('subject_code', ''));
                 $classIds = $request->input('class_ids', []);
                 if ($name !== '') {
                     $error = $this->subjectError($name, $code, null);
@@ -47,7 +46,7 @@ class SubjectController extends Controller
                 }
 
                 $name = trim($request->input('name', ''));
-                $code = OzemsImporter::normalizeCode($request->input('subject_code', ''));
+                $code = \App\Models\Subject::normalizeCode($request->input('subject_code', ''));
                 if ($name === '') {
                     return redirect()->route('subjects')->with('danger', 'The subject name cannot be empty.');
                 }

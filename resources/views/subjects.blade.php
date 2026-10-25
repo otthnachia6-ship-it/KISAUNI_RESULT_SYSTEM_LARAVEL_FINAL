@@ -91,7 +91,7 @@
             <div class="modal-body">
                 <div class="mb-3"><label class="form-label" for="add-subject-name">Subject Name <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" name="name" id="add-subject-name" maxlength="191" required placeholder="e.g. Science and Technology"></div>
-                <div class="mb-3"><label class="form-label" for="add-subject-code">ZEMS Subject Code</label>
+                <div class="mb-3"><label class="form-label" for="add-subject-code">Subject Code</label>
                     <input type="text" class="form-control" name="subject_code" id="add-subject-code" maxlength="20" autocomplete="off" placeholder="e.g. 114">
                     <div class="form-text">Optional. Letters and numbers only.</div></div>
                 <div class="mb-0"><div class="form-label">Assign to Classes</div>
@@ -134,9 +134,9 @@
             <div class="modal-body">
                 <div class="mb-3"><label class="form-label" for="edit-subject-name">Subject Name</label>
                     <input type="text" class="form-control" name="name" id="edit-subject-name" required maxlength="191"></div>
-                <div class="mb-0"><label class="form-label" for="edit-subject-code">ZEMS Code</label>
+                <div class="mb-0"><label class="form-label" for="edit-subject-code">Subject Code</label>
                     <input type="text" class="form-control" name="subject_code" id="edit-subject-code" maxlength="20" autocomplete="off">
-                    <div class="form-text">The code used in ZEMS result files (for example 104). Leave empty if the subject has no code.</div></div>
+                    <div class="form-text">A short code for the subject (for example 104). Leave empty if the subject has no code.</div></div>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Save Changes</button></div>
         </form>

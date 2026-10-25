@@ -48,12 +48,12 @@ class DatabaseSeeder extends Seeder
         foreach ($allSubjectNames as $sname) {
             $sub = Subject::firstOrCreate(['name' => $sname]);
             $subjectMap[$sname] = $sub->id;
-            $zemsCode = [
+            $subjectCode = [
                 'English' => '101', 'Kiswahili' => '102', 'Mathematics' => '104', 'Dini' => '107',
                 'Arabic' => '108', 'S.JAMII' => '110', 'Science and Technology' => '114', 'Mazingira' => '121D',
             ][$sname] ?? null;
-            if ($zemsCode && !$sub->subject_code && !Subject::where('subject_code', $zemsCode)->exists()) {
-                $sub->update(['subject_code' => $zemsCode]);
+            if ($subjectCode && !$sub->subject_code && !Subject::where('subject_code', $subjectCode)->exists()) {
+                $sub->update(['subject_code' => $subjectCode]);
             }
         }
 

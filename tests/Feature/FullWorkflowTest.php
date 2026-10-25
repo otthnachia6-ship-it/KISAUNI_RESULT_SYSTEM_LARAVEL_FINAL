@@ -57,13 +57,13 @@ class FullWorkflowTest extends TestCase
 
         // Add a student as headmaster
         $r = $this->post('/students/add', [
-            'zems_no' => 'ZE0000000771',
+            'reg_no' => 'RN-TEST-001',
             'full_name' => 'Juma Testi',
             'gender' => 'Male',
             'class_id' => $class->id,
         ]);
         $r->assertStatus(302);
-        $student = Student::where('zems_no', 'ZE0000000771')->first();
+        $student = Student::where('reg_no', 'RN-TEST-001')->first();
         $this->assertNotNull($student, 'student was created');
         echo "[OK] add student -> " . ($r->headers->get('Location')) . "\n";
 

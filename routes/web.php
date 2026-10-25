@@ -14,7 +14,8 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ResultController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StudentController;
-use App\Http\Controllers\StudentImportController;
+use App\Http\Controllers\StudentExcelController;
+use App\Http\Controllers\MarksExcelController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -38,12 +39,13 @@ Route::middleware(['auth', 'no_cache'])->group(function () {
     Route::get('/students', [StudentController::class, 'index'])->name('students');
     Route::match(['get', 'post'], '/students/add', [StudentController::class, 'add'])->name('add_student');
     Route::match(['get', 'post'], '/students/add-bulk', [StudentController::class, 'addBulk'])->name('add_students_bulk');
-    Route::get('/students/import', [StudentImportController::class, 'form'])->name('students_import');
-    Route::post('/students/import', [StudentImportController::class, 'upload'])->name('students_import_upload');
-    Route::get('/students/import/preview', [StudentImportController::class, 'preview'])->name('students_import_preview');
-    Route::post('/students/import/confirm', [StudentImportController::class, 'confirm'])->name('students_import_confirm');
     Route::match(['get', 'post'], '/students/edit/{student_id}', [StudentController::class, 'edit'])->name('edit_student');
     Route::post('/students/delete/{student_id}', [StudentController::class, 'delete'])->name('delete_student');
+    Route::get('/students/template', [StudentExcelController::class, 'template'])->name('students_template');
+    Route::get('/students/upload', [StudentExcelController::class, 'form'])->name('students_upload');
+    Route::post('/students/upload', [StudentExcelController::class, 'upload'])->name('students_upload_post');
+    Route::get('/students/upload/preview', [StudentExcelController::class, 'preview'])->name('students_upload_preview');
+    Route::post('/students/upload/confirm', [StudentExcelController::class, 'confirm'])->name('students_upload_confirm');
     Route::get('/students/{student_id}/history', [StudentController::class, 'history'])->name('student_history');
 
     // Promotion
@@ -56,7 +58,10 @@ Route::middleware(['auth', 'no_cache'])->group(function () {
     // Marks Entry
     Route::get('/marks', [MarksController::class, 'marksSelect'])->name('marks_select');
     Route::get('/marks/upload', [MarksController::class, 'uploadPage'])->name('marks_upload');
-    Route::post('/marks/upload-ozems', [MarksController::class, 'uploadOzemsExcel'])->name('marks.upload_ozems');
+    Route::get('/marks/template/{exam_id}/{subject_id}', [MarksExcelController::class, 'template'])->name('marks_template');
+    Route::post('/marks/upload', [MarksExcelController::class, 'upload'])->name('marks_upload_post');
+    Route::get('/marks/upload/preview', [MarksExcelController::class, 'preview'])->name('marks_upload_preview');
+    Route::post('/marks/upload/confirm', [MarksExcelController::class, 'confirm'])->name('marks_upload_confirm');
     Route::match(['get', 'post'], '/marks/{exam_id}/{class_id}', [MarksController::class, 'marks'])->name('marks');
     Route::post('/marks/submit/{exam_id}/{class_id}', [MarksController::class, 'submit'])->name('submit_marks');
 

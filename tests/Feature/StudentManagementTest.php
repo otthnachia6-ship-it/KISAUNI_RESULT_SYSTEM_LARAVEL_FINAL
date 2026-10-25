@@ -28,42 +28,43 @@ class StudentManagementTest extends TestCase
         $this->c2 = SchoolClass::where('standard', 6)->orderBy('id')->first();
     }
 
-    public function test_bulk_add_uses_zems_no_validates_rows_and_rejects_duplicates(): void
+    public function test_bulk_add_validates_rows_and_rejects_duplicates(): void
     {
         $this->actingAs($this->hm)->post('/students/add-bulk', [
             'class_id' => $this->c1->id,
-            'zems_no' => ['ZE0000000001', 'ze0000000002', 'ZE0000000002', 'ZE0000000003', 'BAD', ''],
-            'full_name' => ['Asha Ali', 'Juma Omar', 'Dup Row', 'No Gender', 'Bad Number', ''],
+            'reg_no' => ['R-001', 'R-002', 'R-002', 'R-003', str_repeat('X', 60), ''],
+            'full_name' => ['Asha Ali', 'Juma Omar', 'Dup Row', 'No Gender', 'Too Long', ''],
             'gender' => ['Female', 'Male', 'Male', '', 'Male', ''],
         ]);
-        $this->assertSame(2, Student::whereIn('zems_no', ['ZE0000000001', 'ZE0000000002'])->count());
-        // the ZEMS number is also kept as the Reg No (same as "Import from ZEMS")
-        $this->assertSame('ZE0000000001', Student::where('full_name', 'Asha Ali')->value('reg_no'));
-        $this->assertSame(0, Student::where('zems_no', 'ZE0000000003')->count());
-        $this->assertSame(0, Student::where('full_name', 'Bad Number')->count());
+        $this->assertSame(2, Student::whereIn('reg_no', ['R-001', 'R-002'])->count());
+        $this->assertSame(0, Student::where('reg_no', 'R-003')->count());      // gender missing
+        $this->assertSame(0, Student::where('full_name', 'Too Long')->count()); // Reg No over 50 characters
+        $this->assertSame(0, Student::where('full_name', 'Dup Row')->count());  // repeated in the same list
         $this->assertTrue(DB::table('audit_log')->where('action', 'ADD_STUDENTS_BULK')->exists());
 
-        // an already-registered ZEMS No is refused on a second save
-        $this->post('/students/add-bulk', ['class_id' => $this->c1->id, 'zems_no' => ['ZE0000000001'], 'full_name' => ['Again'], 'gender' => ['Male']]);
-        $this->assertSame(1, Student::where('zems_no', 'ZE0000000001')->count());
+        // an already-registered Reg No is refused on a second save
+        $this->post('/students/add-bulk', ['class_id' => $this->c1->id, 'reg_no' => ['R-001'], 'full_name' => ['Again'], 'gender' => ['Male']]);
+        $this->assertSame(1, Student::where('reg_no', 'R-001')->count());
     }
 
-    public function test_single_add_needs_zems_no_and_list_shows_it(): void
+    public function test_single_add_needs_reg_no_and_list_shows_it(): void
     {
         $this->actingAs($this->hm);
-        $this->post('/students/add', ['zems_no' => '', 'full_name' => 'Nobody', 'class_id' => $this->c1->id, 'gender' => 'Male']);
+        $this->post('/students/add', ['reg_no' => '', 'full_name' => 'Nobody', 'class_id' => $this->c1->id, 'gender' => 'Male']);
         $this->assertSame(0, Student::where('full_name', 'Nobody')->count());
 
-        $this->post('/students/add', ['zems_no' => 'ze0000000099', 'full_name' => 'Hawa Said', 'class_id' => $this->c1->id, 'gender' => 'Female']);
-        $st = Student::where('full_name', 'Hawa Said')->first();
-        $this->assertSame('ZE0000000099', $st->zems_no);
-        $this->assertSame('ZE0000000099', $st->reg_no);
+        $this->post('/students/add', ['reg_no' => 'KPS/2026/099', 'full_name' => 'Hawa Said', 'class_id' => $this->c1->id, 'gender' => 'Female']);
+        $this->assertSame('KPS/2026/099', Student::where('full_name', 'Hawa Said')->value('reg_no'));
+        // the same Reg No cannot be used twice
+        $this->post('/students/add', ['reg_no' => 'KPS/2026/099', 'full_name' => 'Copy Cat', 'class_id' => $this->c1->id, 'gender' => 'Male']);
+        $this->assertSame(0, Student::where('full_name', 'Copy Cat')->count());
 
         $html = $this->get('/students')->getContent();
-        $this->assertStringContainsString('ZE0000000099', $html);
-        $this->assertStringContainsString('ZEMS No', $html);
-        $this->assertStringContainsString('ZE0000000099', $this->get('/students?q=000099')->getContent());
-        $this->assertStringNotContainsString('name="reg_no"', $this->get('/students/add')->getContent());
+        $this->assertStringContainsString('KPS/2026/099', $html);
+        $this->assertStringContainsString('Reg No', $html);
+        $this->assertStringContainsString('KPS/2026/099', $this->get('/students?q=2026/099')->getContent());
+        $this->assertStringNotContainsString('ZEMS', $this->get('/students')->getContent());
+        $this->assertStringNotContainsString('ZEMS', $this->get('/students/add')->getContent());
     }
 
     public function test_search_filter_soft_delete_restore_and_purge(): void

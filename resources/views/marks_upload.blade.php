@@ -1,112 +1,89 @@
 @extends('base')
 @section('page_title', 'Upload Exam Results')
 @section('content')
-<x-page_header title="Upload Exam Results" subtitle="Upload the Excel file of each subject exported from ZEMS" />
+<x-page_header title="Upload Exam Results" subtitle="Fill the marks of a subject in Excel and upload them">
+    <x-slot:actions>
+        @if($cls && $selected_exam)
+        <a href="{{ route('marks', ['exam_id' => $selected_exam, 'class_id' => $cls->id]) }}" class="btn btn-outline-secondary"><i class="bi bi-table me-1"></i>Marks sheet</a>
+        @endif
+    </x-slot:actions>
+</x-page_header>
 
 @if(!$cls)
-<div class="alert alert-warning" style="max-width:600px;">
-    You are not currently assigned to a class. Contact the Headmaster.
-</div>
+<div class="alert alert-warning" style="max-width:600px;">You are not currently assigned to a class. Contact the Headmaster.</div>
 @elseif($exams->isEmpty())
 <div class="alert alert-warning" style="max-width:600px;">
     <i class="bi bi-exclamation-triangle me-1"></i>
-    No examinations have been added yet for Academic Year <strong>{{ $current_academic_year }}</strong>.
-    Please ask the Headmaster to add one.
+    No examinations have been added yet for Academic Year <strong>{{ $current_academic_year }}</strong>. Please ask the Headmaster to add one.
 </div>
 @else
-@php $hasSelected = $exams->contains('id', $selected_exam); @endphp
-<div class="card p-4 mb-3" style="max-width:640px;">
-    <form method="POST" action="{{ route('marks.upload_ozems') }}" enctype="multipart/form-data">
-        @csrf
-        <div class="mb-3">
-            <label class="form-label">Class</label>
-            <input type="text" class="form-control" value="{{ $cls->name }}" disabled>
-        </div>
-        <div class="mb-3">
-            <label class="form-label" for="exam_id">Examination</label>
-            <select id="exam_id" name="exam_id" class="form-select" required>
+<div class="card p-4 mb-3" style="max-width:760px;">
+    <form method="GET" action="{{ route('marks_upload') }}" class="row g-2">
+        <div class="col-12"><label class="form-label small mb-1">Class</label>
+            <input type="text" class="form-control" value="{{ $cls->name }}" disabled></div>
+        <div class="col-md-6">
+            <label class="form-label small mb-1" for="exam">Examination</label>
+            <select id="exam" name="exam" class="form-select" onchange="this.form.submit()">
                 <option value="">-- Select Examination --</option>
                 @foreach($exams as $e)
-                <option value="{{ $e->id }}" @if($hasSelected && (int)$e->id === (int)$selected_exam) selected @endif>{{ $e->exam_type }} - {{ $e->academic_year }}</option>
+                <option value="{{ $e->id }}" @selected((int) $e->id === (int) $selected_exam)>{{ $e->exam_type }} - {{ $e->academic_year }}</option>
                 @endforeach
             </select>
         </div>
-        <div class="mb-3">
-            <label class="form-label" for="file">ZEMS result file (.xls)</label>
-            <input type="file" id="file" name="file" class="form-control" accept=".xls,.csv,application/vnd.ms-excel,text/csv" required>
-            <div class="form-text">
-                Upload the Excel file exactly as exported from ZEMS (do not edit or re-save it). One subject per file.
-                The subject and the pupils are recognised automatically, and only the pupils of your class are used.
-                Uploading the same subject again replaces its marks.
-            </div>
-        </div>
-        <div class="d-flex flex-wrap gap-2">
-            <button class="btn btn-success"><i class="bi bi-cloud-arrow-up me-1"></i>Upload</button>
-            @if($hasSelected)
-            <a href="{{ route('marks', ['exam_id' => $selected_exam, 'class_id' => $cls->id]) }}" class="btn btn-outline-secondary">
-                <i class="bi bi-table me-1"></i>Open marks sheet (check &amp; submit)
-            </a>
-            @else
-            <a href="{{ route('marks_select') }}" class="btn btn-outline-secondary">
-                <i class="bi bi-table me-1"></i>Open marks sheet (check &amp; submit)
-            </a>
-            @endif
+        <div class="col-md-6">
+            <label class="form-label small mb-1" for="subject">Subject</label>
+            <select id="subject" name="subject" class="form-select" onchange="this.form.submit()">
+                <option value="">-- Select Subject --</option>
+                @foreach($subjects as $s)
+                <option value="{{ $s->id }}" @selected((int) $s->id === (int) $selected_subject)>{{ $s->name }}@if($s->subject_code) ({{ $s->subject_code }})@endif</option>
+                @endforeach
+            </select>
         </div>
     </form>
 </div>
-@endif
 
-@if(!empty($report))
-<div class="card p-4" style="max-width:640px;">
-    <h2 class="h6 mb-3">{{ $report['subject_name'] }} <span class="text-muted">(code {{ $report['subject_code'] }})</span></h2>
-    @if(!empty($report['file_std']) || !empty($report['file_term']) || !empty($report['file_year']))
-    <div class="text-muted small mb-2">
-        File: @if(!empty($report['file_std']))STD{{ $report['file_std'] }}@endif
-        @if(!empty($report['file_term'])) &middot; {{ $report['file_term'] }}@endif
-        @if(!empty($report['file_year'])) &middot; {{ $report['file_year'] }}@endif
+@if($selected_exam && $selected_subject)
+    @if($locked)
+    <div class="alert alert-warning" style="max-width:760px;"><i class="bi bi-lock me-1"></i>
+        Marks for this class are already <strong>{{ str_replace('_', ' ', $status) }}</strong> and cannot be changed by upload.</div>
+    @else
+    <div class="row g-3" style="max-width:760px;">
+        <div class="col-md-6">
+            <div class="card p-4 h-100">
+                <h6><span class="badge bg-primary me-1">1</span> Download the marks template</h6>
+                <p class="text-muted small">It already lists the pupils of your class. Give it to the subject teacher, who only fills the yellow Marks column.</p>
+                <a href="{{ route('marks_template', ['exam_id' => $selected_exam, 'subject_id' => $selected_subject]) }}" class="btn btn-outline-secondary"><i class="bi bi-download me-1"></i>Download template (.xlsx)</a>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-4 h-100">
+                <h6><span class="badge bg-primary me-1">2</span> Upload the filled file</h6>
+                <form method="POST" action="{{ route('marks_upload_post') }}" enctype="multipart/form-data" data-once>
+                    @csrf
+                    <input type="hidden" name="exam_id" value="{{ $selected_exam }}">
+                    <input type="hidden" name="subject_id" value="{{ $selected_subject }}">
+                    <label class="form-label small mb-1" for="file">Excel file (.xlsx)</label>
+                    <input type="file" id="file" name="file" class="form-control mb-3" accept=".xlsx" required>
+                    <button class="btn btn-primary"><i class="bi bi-upload me-1"></i>Upload and check</button>
+                </form>
+            </div>
+        </div>
     </div>
+    <p class="text-muted small mt-3" style="max-width:760px;">You will see a preview first. After saving, open the marks sheet and press Submit when every subject is complete.</p>
     @endif
-    <ul class="list-unstyled small mb-3">
-        <li><strong>{{ $report['saved'] }}</strong> mark(s) saved</li>
-        <li>{{ $report['total_rows'] }} pupil row(s) in the file</li>
-        @if(($report['other_class'] ?? 0) > 0)<li>{{ $report['other_class'] }} pupil(s) of other classes in the file were skipped (normal when the file covers all streams)</li>@endif
-        @if(($report['removed'] ?? 0) > 0)<li>{{ $report['removed'] }} removed pupil(s) were skipped</li>@endif
-        @if($report['blank'] > 0)<li>{{ $report['blank'] }} empty score(s) skipped</li>@endif
-    </ul>
-
-    @if(($report['linked_total'] ?? 0) > 0)
-    <details class="mb-2" open>
-        <summary class="text-primary">{{ $report['linked_total'] }} pupil(s) linked to their ZEMS number by name - please check</summary>
-        <ul class="small mt-1 mb-0">@foreach($report['linked'] as $line)<li>{{ $line }}</li>@endforeach</ul>
-        <div class="form-text">Wrong link? Correct the ZEMS Number on the Students page (Edit) and upload again.</div>
-    </details>
-    @endif
-
-    @if($report['invalid_total'] > 0)
-    <details class="mb-2" open>
-        <summary class="text-danger">{{ $report['invalid_total'] }} score(s) could not be used</summary>
-        <ul class="small mt-1 mb-0">@foreach($report['invalid'] as $line)<li>{{ $line }}</li>@endforeach</ul>
-    </details>
-    @endif
-    @if($report['not_found_total'] > 0)
-    <details class="mb-2" open>
-        <summary class="text-danger">{{ $report['not_found_total'] }} pupil(s) in the file are not registered in your class</summary>
-        <ul class="small mt-1 mb-0">@foreach($report['not_found'] as $z)<li>{{ $z }}</li>@endforeach</ul>
-        <div class="form-text">Register the pupil in your class (Students page) or fill in the ZEMS Number there, then upload again.</div>
-    </details>
-    @endif
-    @if($report['duplicates_total'] > 0)
-    <details class="mb-2">
-        <summary class="text-warning">{{ $report['duplicates_total'] }} repeated ZEMS number(s) ignored</summary>
-        <ul class="small mt-1 mb-0">@foreach($report['duplicates'] as $z)<li>{{ $z }}</li>@endforeach</ul>
-    </details>
-    @endif
-    @if($report['missing_students_total'] > 0)
-    <details class="mb-0">
-        <summary class="text-muted">{{ $report['missing_students_total'] }} pupil(s) of your class have no mark from this file</summary>
-        <ul class="small mt-1 mb-0">@foreach($report['missing_students'] as $n)<li>{{ $n }}</li>@endforeach</ul>
-    </details>
-    @endif
-</div>
+@else
+<p class="text-muted">Choose the examination and the subject to get the template.</p>
 @endif
+@endif
+@endsection
+
+@section('scripts')
+<script>
+document.querySelectorAll('form[data-once]').forEach(function (f) {
+    f.addEventListener('submit', function () {
+        var b = f.querySelector('button:not([type=button])');
+        if (b) { setTimeout(function () { b.disabled = true; }, 0); }
+    });
+});
+</script>
 @endsection

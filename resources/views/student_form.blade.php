@@ -6,11 +6,11 @@
     <form method="POST" action="{{ $mode == 'add' ? route('add_student') : route('edit_student', ['student_id' => $student->id]) }}">
         @csrf
         <div class="mb-3">
-            <label class="form-label" for="zems_no">ZEMS No @if($mode == 'add')<span class="text-danger">*</span>@endif</label>
-            <input type="text" id="zems_no" class="form-control text-uppercase" name="zems_no" maxlength="32" autocomplete="off" placeholder="e.g. ZE0423951897"
-                   @if($mode == 'add') required @endif
-                   value="{{ old('zems_no', $student ? ($student['zems_no'] ?? $student->zems_no) : '') }}">
-            <div class="form-text">The student's ZEMS number. It is also used to upload results from ZEMS.</div>
+            <label class="form-label" for="reg_no">Reg No <span class="text-danger">*</span></label>
+            <input type="text" id="reg_no" class="form-control" name="reg_no" maxlength="50" autocomplete="off" required
+                   value="{{ old('reg_no', $student ? ($student['reg_no'] ?? $student->reg_no) : '') }}">
+            <div class="form-text">The school's own registration number of the student. It must be unique.</div>
+        </div>
         </div>
         <div class="mb-3">
             <label class="form-label">Student's Full Name</label>

@@ -58,7 +58,7 @@
 
             <div class="nav-section">Results</div>
             @if($session_user->role == $ROLE_CLASS_TEACHER)
-            <a class="nav-link {{ request()->routeIs('marks_upload', 'marks.upload_ozems', 'marks_select', 'marks') ? 'active' : '' }}" href="{{ route('marks_upload') }}">
+            <a class="nav-link {{ request()->routeIs('marks_upload', 'marks_select', 'marks') ? 'active' : '' }}" href="{{ route('marks_upload') }}">
                 <i class="bi bi-cloud-arrow-up me-2"></i>Upload Exam Results
             </a>
             @endif

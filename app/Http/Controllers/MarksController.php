@@ -9,7 +9,6 @@ use App\Models\SchoolClass;
 use App\Models\Setting;
 use App\Models\Student;
 use App\Models\Subject;
-use App\Services\OzemsImporter;
 use App\Services\SchoolService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -53,80 +52,33 @@ class MarksController extends Controller
         $currentAcademicYear = Setting::get('academic_year', SchoolService::DEFAULT_ACADEMIC_YEAR);
         $exams = Examination::where('academic_year', $currentAcademicYear)->orderBy('id', 'desc')->get();
 
+        $subjects = $cls
+            ? DB::table('subjects as sub')->join('class_subjects as cs', 'cs.subject_id', '=', 'sub.id')
+                ->where('cs.class_id', $cls->id)->select('sub.id', 'sub.name', 'sub.subject_code')->orderBy('sub.name')->get()
+            : collect();
+        $selectedExam = (int) $request->query('exam', 0);
+        $selectedSubject = (int) $request->query('subject', 0);
+        if (!$exams->contains('id', $selectedExam)) {
+            $selectedExam = 0;
+        }
+        if (!$subjects->contains('id', $selectedSubject)) {
+            $selectedSubject = 0;
+        }
+        $status = null;
+        if ($cls && $selectedExam) {
+            $status = DB::table('exam_class_status')->where('exam_id', $selectedExam)->where('class_id', $cls->id)->value('status') ?: 'draft';
+        }
+
         return view('marks_upload', [
             'cls' => $cls,
             'exams' => $exams,
-            'selected_exam' => (int) $request->query('exam', 0),
+            'subjects' => $subjects,
+            'selected_exam' => $selectedExam,
+            'selected_subject' => $selectedSubject,
+            'status' => $status,
+            'locked' => in_array($status, ['submitted', 'under_review', 'approved'], true),
             'current_academic_year' => $currentAcademicYear,
-            'report' => session('ozems_report'),
         ]);
-    }
-
-    public function uploadOzemsExcel(Request $request)
-    {
-        $user = Auth::user();
-        if (!$user->isClassTeacher()) {
-            return redirect()->route('marks_select')
-                ->with('danger', 'Only the Class Teacher of a class can upload result files.');
-        }
-        if (!$user->class_id || !SchoolClass::find($user->class_id)) {
-            return redirect()->route('marks_upload')
-                ->with('danger', 'You are not assigned to a class yet. Contact the Headmaster.');
-        }
-
-        $validator = Validator::make($request->all(), [
-            'exam_id' => 'required|integer|exists:examinations,id',
-            'file' => 'required|file|max:4096',
-        ], [
-            'exam_id.required' => 'Please choose the examination.',
-            'exam_id.exists' => 'That examination does not exist.',
-            'file.required' => 'Please choose the Excel file exported from ZEMS.',
-            'file.max' => 'The file is too large (maximum 4 MB).',
-            'file.file' => 'The file could not be uploaded. Please try again.',
-        ]);
-        if ($validator->fails()) {
-            return redirect()->route('marks_upload')->with('danger', $validator->errors()->first());
-        }
-
-        $examId = (int) $request->input('exam_id');
-        $file = $request->file('file');
-        $extension = strtolower($file->getClientOriginalExtension());
-        if (!in_array($extension, ['xls', 'csv'], true)) {
-            return redirect()->route('marks_upload', ['exam' => $examId])
-                ->with('danger', 'Please upload the Excel file (.xls) exactly as exported from ZEMS. A .csv file also works.');
-        }
-
-        try {
-            $summary = OzemsImporter::import($user, $examId, (int) $user->class_id, $file->getRealPath());
-        } catch (InvalidArgumentException $e) {
-            return redirect()->route('marks_upload', ['exam' => $examId])->with('danger', $e->getMessage());
-        } catch (\Throwable $e) {
-            report($e);
-            return redirect()->route('marks_upload', ['exam' => $examId])
-                ->with('danger', 'The upload failed and nothing was saved. Please try again, or tell the Headmaster if it keeps happening.');
-        }
-
-        $report = $summary;
-        foreach (['invalid', 'not_found', 'duplicates', 'missing_students', 'linked'] as $key) {
-            $report[$key . '_total'] = count($summary[$key]);
-            $report[$key] = array_slice($summary[$key], 0, 30);
-        }
-
-        $problems = count($summary['invalid']) + count($summary['not_found']) + count($summary['duplicates']);
-        $text = "{$summary['saved']} mark(s) saved for {$summary['subject_name']} (code {$summary['subject_code']}).";
-        if (count($summary['linked']) > 0) {
-            $text .= ' ' . count($summary['linked']) . ' pupil(s) were linked to their ZEMS number by name - please check them below.';
-        }
-
-        $redirect = redirect()->route('marks_upload', ['exam' => $examId])->with('ozems_report', $report);
-        if ($summary['saved'] === 0) {
-            return $redirect->with('warning', 'No marks were saved from this file. See the details below.');
-        }
-        if ($problems > 0) {
-            return $redirect->with('warning', $text . " {$problems} row(s) were skipped - see the details below.");
-        }
-
-        return $redirect->with('success', $text);
     }
 
     public function marks(Request $request, $examId, $classId)

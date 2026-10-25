@@ -27,4 +27,14 @@ class Subject extends Model
     {
         return $this->hasMany(Mark::class, 'subject_id');
     }
+
+    /** Subject codes are text ("104", "121D"): trimmed, upper-case, "108.0" from Excel becomes "108". */
+    public static function normalizeCode(?string $raw): string
+    {
+        $code = trim((string) $raw);
+        $code = preg_replace('/^\xEF\xBB\xBF/', '', $code);
+        $code = preg_replace('/\.0+$/', '', $code);
+
+        return strtoupper($code);
+    }
 }
