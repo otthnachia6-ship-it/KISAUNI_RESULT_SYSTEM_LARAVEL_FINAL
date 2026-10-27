@@ -64,11 +64,7 @@ class DashboardController extends Controller
         $myClass = null;
         $myClassStudents = 0;
         $returnedResults = [];
-        $myClassAnalytics = null;
         $myClassLatestExam = null;
-        $classRanking = [];
-        $leadingClass = null;
-        $myClassRank = null;
         $myClassPendingRelease = null;
 
         if ($user && $user->role === SchoolService::ROLE_CLASS_TEACHER && $user->class_id) {
@@ -106,18 +102,6 @@ class DashboardController extends Controller
             if ($myClassLatestExam) {
                 $myClassPendingRelease = null;
             }
-
-            if ($myClassLatestExam) {
-                $myClassAnalytics = SchoolService::computeClassAnalytics($user->class_id, $myClassLatestExam->id);
-                $classRanking = SchoolService::computeClassRanking($myClassLatestExam->id);
-                $leadingClass = !empty($classRanking) ? $classRanking[0] : null;
-                foreach ($classRanking as $cr) {
-                    if ($cr['cls']['id'] == $user->class_id) {
-                        $myClassRank = $cr;
-                        break;
-                    }
-                }
-            }
         }
 
         // Routine sign-ins and sign-outs are left out of this short list (the Audit Log page still shows everything).
@@ -152,13 +136,8 @@ class DashboardController extends Controller
             'class_breakdown' => $classBreakdown,
             'status_breakdown' => $statusBreakdown,
             'current_academic_year' => $currentAcademicYear,
-            'my_class_analytics' => $myClassAnalytics,
             'my_class_latest_exam' => $myClassLatestExam,
             'my_class_pending_release' => $myClassPendingRelease,
-            'leading_class' => $leadingClass,
-            'my_class_rank' => $myClassRank,
-            'class_ranking' => $classRanking,
-            'class_ranking_total' => count($classRanking),
             'chart_colors' => [
                 '#2563eb', '#16a34a', '#f59e0b', '#dc2626',
                 '#6f42c1', '#0891b2', '#db2777', '#64748b',

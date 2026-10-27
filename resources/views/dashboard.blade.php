@@ -59,76 +59,20 @@
 </div>
 @endif
 
-@if($my_class_analytics && $my_class_latest_exam)
-<div class="card p-3 mb-3">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <h6 class="mb-0"><i class="bi bi-graph-up-arrow me-1"></i>{{ $my_class->name }} Performance - {{ $my_class_latest_exam->exam_type }} ({{ $my_class_latest_exam->academic_year }})</h6>
-        <a href="{{ route('performance_analytics', ['exam_id' => $my_class_latest_exam->id]) }}" class="btn btn-sm btn-outline-primary">View Full Analytics</a>
-    </div>
-    <div class="row g-3">
-        <div class="col-6 col-md-3">
-            <span class="stat-label-chip stat-label-chip--blue">CLASS AVERAGE</span>
-            <div style="font-size:1.4rem; font-weight:700;">{{ !is_null($my_class_analytics['class_average'] ?? null) ? $my_class_analytics['class_average'] : '-' }}</div>
-        </div>
-        <div class="col-6 col-md-3">
-            <span class="stat-label-chip stat-label-chip--green">AVERAGE GRADE</span>
-            <div><span class="grade-chip grade-chip-{{ $my_class_analytics['class_grade'] }}">{{ $my_class_analytics['class_grade'] }}</span></div>
-        </div>
-        <div class="col-12 col-md-6">
-            <span class="stat-label-chip stat-label-chip--amber">TOP SUBJECT{{ count($my_class_analytics['top_subjects'] ?? []) > 1 ? 'S' : '' }}</span>
-            <div>
-            @forelse($my_class_analytics['top_subjects'] ?? [] as $s)
-            <span class="badge bg-light text-dark border me-1">{{ $s['name'] }} ({{ $s['average'] }}%)</span>
-            @empty
-            <span class="text-muted">-</span>
-            @endforelse
+@if(!empty($my_class_latest_exam))
+<div class="card p-3 mb-3 results-ready-card">
+    <div class="d-flex align-items-start gap-3 flex-wrap">
+        <span class="results-ready-ico"><i class="bi bi-patch-check"></i></span>
+        <div class="flex-grow-1" style="min-width:220px;">
+            <strong>Results are ready</strong>
+            <div class="text-muted small mt-1">
+                {{ $my_class_latest_exam->exam_type }} {{ $my_class_latest_exam->academic_year }} results have been approved.
+                View your class performance in Performance Analytics.
             </div>
         </div>
-    </div>
-</div>
-@endif
-
-@if(!empty($class_ranking))
-<div class="card p-3 mb-3">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <span class="stat-label-chip stat-label-chip--purple"><i class="bi bi-bar-chart-steps me-1"></i>CLASS RANKING - {{ $my_class_latest_exam->exam_type }} ({{ $my_class_latest_exam->academic_year }})</span>
-        <a href="{{ route('performance_analytics', ['exam_id' => $my_class_latest_exam->id]) }}" class="btn btn-sm btn-outline-primary">View My Class Analytics</a>
-    </div>
-
-    @if($leading_class && $my_class_rank && ($leading_class['cls']->id ?? null) != ($my_class->id ?? null))
-    <p class="text-muted small mb-2">
-        <i class="bi bi-trophy me-1"></i><strong>{{ $leading_class['cls']->name }}</strong> is currently leading (average {{ $leading_class['class_average'] }}).
-        Your class, <strong>{{ $my_class->name }}</strong>, is position <strong>#{{ $my_class_rank['position'] }}</strong> of {{ $class_ranking_total }}.
-    </p>
-    @elseif($leading_class && ($leading_class['cls']->id ?? null) == ($my_class->id ?? null))
-    <p class="text-muted small mb-2">
-        <i class="bi bi-trophy me-1"></i><strong>{{ $my_class->name }}</strong> is currently leading the school (position #1 of {{ $class_ranking_total }})
-    </p>
-    @endif
-
-    <div class="table-responsive">
-        <table class="table table-sm align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Class</th>
-                    <th class="text-end">Average</th>
-                    <th class="text-center">Grade</th>
-                    <th>Top Subject</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($class_ranking as $e)
-                <tr @if(($e['cls']->id ?? null) == ($my_class->id ?? null)) class="table-active fw-semibold" @endif>
-                    <td><span class="rank-badge @if($e['position'] == 1) rank-badge--gold @endif">#{{ $e['position'] }}</span></td>
-                    <td>{{ $e['cls']->name }}@if(($e['cls']->id ?? null) == ($my_class->id ?? null)) <span class="badge bg-primary ms-1">Your Class</span>@endif</td>
-                    <td class="text-end">{{ $e['class_average'] }}</td>
-                    <td class="text-center"><span class="grade-chip grade-chip-{{ $e['class_grade'] }}">{{ $e['class_grade'] }}</span></td>
-                    <td>{{ !empty($e['top_subjects']) ? $e['top_subjects'][0]['name'] : '-' }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+        <a href="{{ route('performance_analytics', ['exam_id' => $my_class_latest_exam->id]) }}" class="btn btn-primary btn-sm align-self-center">
+            <i class="bi bi-graph-up-arrow me-1"></i>Open Performance Analytics
+        </a>
     </div>
 </div>
 @endif

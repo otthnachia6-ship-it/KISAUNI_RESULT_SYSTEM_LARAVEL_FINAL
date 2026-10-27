@@ -90,7 +90,9 @@ class AnalyticsReleaseGateTest extends TestCase
         $r->assertOk()->assertDontSee('Results not released yet')->assertSee('Mathematics');
 
         $d = $this->actingAs($this->teacher)->get('/dashboard');
-        $d->assertOk()->assertDontSee('Results not released yet')->assertSee('View Full Analytics');
+        $d->assertOk()->assertDontSee('Results not released yet')
+            ->assertSee('Results are ready')->assertSee('Open Performance Analytics')
+            ->assertSee('/analytics?exam_id=' . $this->exam->id, false);
     }
 
     public function test_class_without_this_exam_does_not_block_release(): void
@@ -129,5 +131,22 @@ class AnalyticsReleaseGateTest extends TestCase
         $this->setStatus($this->classB, 'submitted');
         $this->assertCount(1, SchoolService::computeTrend($this->classA->id));
         $this->assertCount(0, SchoolService::computeTrend($this->classA->id, 6, true));
+    }
+
+    public function test_dashboard_shows_no_performance_figures_to_a_class_teacher_only_a_notice(): void
+    {
+        $this->setStatus($this->classA, 'approved');
+        $this->setStatus($this->classB, 'approved');
+        $html = $this->actingAs($this->teacher)->get('/dashboard')->assertOk()->getContent();
+
+        foreach (['TOP SUBJECT', 'Subjects Needing Attention', 'CLASS RANKING', 'is currently leading', 'Grade Distribution', 'grade-chip', 'View Full Analytics'] as $figure) {
+            $this->assertStringNotContainsString($figure, $html, "Performance item still on the dashboard: {$figure}");
+        }
+        $this->assertStringContainsString('Results are ready', $html);
+
+        // the figures are still on the Performance Analytics page
+        $a = $this->actingAs($this->teacher)->get('/analytics?exam_id=' . $this->exam->id)->assertOk()->getContent();
+        $this->assertStringContainsString('Mathematics', $a);
+        $this->assertStringNotContainsString('Results not released yet', $a);
     }
 }
