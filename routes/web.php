@@ -5,6 +5,7 @@ use App\Http\Controllers\ApiController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClassController;
+use App\Http\Controllers\ClassToolsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExaminationController;
 use App\Http\Controllers\MarksController;
@@ -89,6 +90,11 @@ Route::middleware(['auth', 'no_cache'])->group(function () {
         // Subjects & Examinations deletion
         Route::post('/subjects/delete/{subject_id}', [SubjectController::class, 'delete'])->name('delete_subject');
         Route::post('/examinations/delete/{exam_id}', [ExaminationController::class, 'delete'])->name('delete_examination');
+
+        // Class tools (Headmaster): fix or permanently remove a class's data
+        Route::get('/classes/{class_id}/tools', [ClassToolsController::class, 'show'])->name('class_tools');
+        Route::post('/classes/{class_id}/tools/preview', [ClassToolsController::class, 'preview'])->name('class_tools_preview');
+        Route::post('/classes/{class_id}/tools/run', [ClassToolsController::class, 'run'])->name('class_tools_run');
 
         // Students restore & purge
         Route::post('/students/restore/{student_id}', [StudentController::class, 'restore'])->name('restore_student');

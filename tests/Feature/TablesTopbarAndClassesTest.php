@@ -184,13 +184,15 @@ class TablesTopbarAndClassesTest extends TestCase
         $page->assertSee('Search class or teacher...', false);
     }
 
-    public function test_class_with_students_cannot_be_removed_and_empty_one_can(): void
+    public function test_class_with_students_uses_class_tools_and_empty_one_can_be_removed_quickly(): void
     {
         $this->student('Pupil Two', 'Female', $this->classA, 'C002');
         $page = $this->actingAs($this->hm)->get(route('classes'))->assertOk();
 
-        $page->assertSee('class="ibtn is-disabled"', false);
+        // a class with students has no one-click removal; the Headmaster goes through Class tools
         $page->assertDontSee(route('delete_class', ['class_id' => $this->classA->id]), false);
+        $page->assertSee(route('class_tools', ['class_id' => $this->classA->id]), false);
+        // an empty class can still be removed in one click
         $page->assertSee(route('delete_class', ['class_id' => $this->classB->id]), false);
     }
 

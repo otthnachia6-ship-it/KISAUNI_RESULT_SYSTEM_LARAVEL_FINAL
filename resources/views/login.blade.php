@@ -1,63 +1,75 @@
 @extends('base')
 @section('title', 'Login')
 @section('guest_content')
-<div class="login-split page-enter">
+<div class="lp page-enter">
 
-    <div class="login-split-brand">
-        <div class="login-split-brand-inner">
-            <div class="login-split-mark">
-                <img src="{{ $logo_url($logo_path) }}" alt="{{ $school_name }} logo">
-                <div>
-                    <div class="login-split-mark-name">{{ $school_name }}</div>
-                    <div class="login-split-mark-tag">Result Management System</div>
+    <section class="lp-brand">
+        <div class="lp-brand-inner">
+            <div class="lp-top">
+                <span class="lp-logo"><img src="{{ $logo_url($logo_path) }}" alt="{{ $school_name }} logo"></span>
+                <span class="lp-school">{{ $school_name }}</span>
+            </div>
+
+            <div class="lp-hero">
+                <h1 class="lp-system">Result Management System</h1>
+            </div>
+
+            <div class="lp-cards">
+                <div class="lp-glass lp-glass-features">
+                    <h2 class="lp-glass-title">What you can do</h2>
+                    <div class="lp-row">
+                        <span class="lp-dot"></span>
+                        <div><strong>Student Records</strong><span class="lp-desc">Full profiles for every student, organised by class</span></div>
+                    </div>
+                    <div class="lp-row">
+                        <span class="lp-dot"></span>
+                        <div><strong>Marks &amp; Approval</strong><span class="lp-desc">Class Teachers enter marks, the Headmaster reviews and approves</span></div>
+                    </div>
+                    <div class="lp-row">
+                        <span class="lp-dot"></span>
+                        <div><strong>PDF Reports</strong><span class="lp-desc">Student report cards and class result sheets, ready to print</span></div>
+                    </div>
+                    <div class="lp-row">
+                        <span class="lp-dot"></span>
+                        <div><strong>Performance Analytics</strong><span class="lp-desc">Class and subject comparisons for every examination</span></div>
+                    </div>
+                </div>
+
+                <div class="lp-glass lp-glass-help">
+                    <h2 class="lp-glass-title">Need quick help?</h2>
+                    <div class="lp-row">
+                        <span class="lp-num">01</span>
+                        <div><strong>Class Teacher?</strong><span class="lp-desc">Sign in with the username and password the Headmaster gave you.</span></div>
+                    </div>
+                    <div class="lp-row">
+                        <span class="lp-num">02</span>
+                        <div><strong>Forgot your password?</strong><span class="lp-desc"><a class="lp-link" href="{{ route('forgot_password') }}">Notify the Headmaster</a> to get a new temporary password.</span></div>
+                    </div>
+                    <div class="lp-row">
+                        <span class="lp-num">03</span>
+                        <div><strong>Headmaster?</strong><span class="lp-desc">Sign in to review, approve and print results.</span></div>
+                    </div>
                 </div>
             </div>
 
-            <h1 class="login-split-headline"><span class="accent-amber">Manage Results.</span> <span class="accent-teal">Measure Progress.</span> Drive Success.</h1>
-            <p class="login-split-sub">
-                From marks and performance to approved results and professional reports — all in one place.
-            </p>
-
-            <div class="login-split-features">
-                <div class="login-split-feature">
-                    <span class="login-split-feature-icon"><i class="bi bi-people"></i></span>
-                    <div>
-                        <div class="login-split-feature-title">Student Records</div>
-                        <div class="login-split-feature-desc">Full profiles for every student, organised by class</div>
-                    </div>
-                </div>
-                <div class="login-split-feature">
-                    <span class="login-split-feature-icon"><i class="bi bi-clipboard-check"></i></span>
-                    <div>
-                        <div class="login-split-feature-title">Marks &amp; Approval</div>
-                        <div class="login-split-feature-desc">Class Teachers enter marks, the Headmaster reviews and approves</div>
-                    </div>
-                </div>
-                <div class="login-split-feature">
-                    <span class="login-split-feature-icon"><i class="bi bi-file-earmark-pdf"></i></span>
-                    <div>
-                        <div class="login-split-feature-title">PDF Reports</div>
-                        <div class="login-split-feature-desc">Student report cards and class result sheets, ready to print</div>
-                    </div>
-                </div>
-                <div class="login-split-feature">
-                    <span class="login-split-feature-icon"><i class="bi bi-graph-up-arrow"></i></span>
-                    <div>
-                        <div class="login-split-feature-title">Performance Analytics</div>
-                        <div class="login-split-feature-desc">Class and subject comparisons for every examination</div>
-                    </div>
-                </div>
-            </div>
+            <div class="lp-footer">&copy; {{ $academic_year }} {{ $school_name }}. All rights reserved.</div>
         </div>
+    </section>
 
-        <div class="login-split-footer">&copy; {{ $academic_year }} {{ $school_name }}. All rights reserved.</div>
-    </div>
-
-    <div class="login-split-form-side">
+    <section class="lp-formside">
         @php $hasError = session()->has('danger'); @endphp
-        <div class="login-split-card{{ $hasError ? ' login-shake' : '' }}">
-            <h4 class="login-split-card-title">Sign in to the System</h4>
-            <p class="login-split-card-sub">Use your Class Teacher or Headmaster account to continue.</p>
+        <div class="lp-card{{ $hasError ? ' login-shake' : '' }}">
+            <div class="lp-card-head">
+                <div>
+                    <h2 class="lp-card-title">Sign in to the System</h2>
+                </div>
+                <span class="lp-pill">Sign In</span>
+            </div>
+
+            <div class="lp-tabs">
+                <span class="lp-tab is-active">Login</span>
+                <a class="lp-tab" href="{{ route('forgot_password') }}">Forgot Password</a>
+            </div>
 
             @foreach (['danger', 'success', 'warning', 'info'] as $msgType)
                 @if(session()->has($msgType))
@@ -70,31 +82,29 @@
 
             <form method="POST" action="{{ route('login') }}">
                 @csrf
-                <div class="mb-3">
-                    <label class="form-label">Username</label>
-                    <div class="login-input-icon">
-                        <i class="bi bi-person login-input-icon-glyph"></i>
-                        <input type="text" class="form-control" name="username" value="{{ old('username') }}" required autofocus placeholder="Enter your username">
-                    </div>
+                <div class="lp-field">
+                    <label class="visually-hidden" for="loginUsername">Username</label>
+                    <input type="text" class="lp-input" id="loginUsername" name="username" value="{{ old('username') }}" required autofocus placeholder="Username" autocomplete="username">
                 </div>
-                <div class="mb-2">
-                    <label class="form-label">Password</label>
-                    <div class="password-input-group login-input-icon">
-                        <i class="bi bi-lock login-input-icon-glyph"></i>
-                        <input type="password" class="form-control" name="password" id="loginPassword" required placeholder="Enter your password">
-                        <button type="button" class="password-toggle-btn" data-target="loginPassword" aria-label="Show password" tabindex="-1">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                    </div>
+                <div class="lp-field lp-pass">
+                    <label class="visually-hidden" for="loginPassword">Password</label>
+                    <input type="password" class="lp-input" name="password" id="loginPassword" required placeholder="Password" autocomplete="current-password">
+                    <button type="button" class="password-toggle-btn" data-target="loginPassword" aria-label="Show password" tabindex="-1">
+                        <i class="bi bi-eye"></i>
+                    </button>
                 </div>
-                <div class="text-end mb-3">
-                    <a href="{{ route('forgot_password') }}" class="touch-link" style="font-size:.85rem;">Forgot password?</a>
+                <div class="lp-forgot">
+                    <a href="{{ route('forgot_password') }}" class="touch-link">Forgot Password?</a>
                 </div>
-                <button type="submit" class="btn btn-success w-100 py-2 fw-semibold" data-loading-text="Signing in&hellip;">
-                    <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+                <button type="submit" class="lp-submit" data-loading-text="Signing in&hellip;">
+                    <span class="lp-submit-ico"><i class="bi bi-box-arrow-in-right"></i></span>
+                    <span class="lp-submit-txt">Sign In</span>
                 </button>
+                <div class="lp-divider"><span>Use your personal portal credentials</span></div>
             </form>
         </div>
-    </div>
+    </section>
+
+    <div class="lp-credit"><a href="https://ostexs.com" target="_blank" rel="noopener noreferrer">Developed by Ostex Global Technologies</a></div>
 </div>
 @endsection

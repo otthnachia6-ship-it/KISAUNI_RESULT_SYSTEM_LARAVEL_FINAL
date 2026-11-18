@@ -4,7 +4,7 @@
 <div class="login-page">
     <div class="login-card">
         <div class="text-center mb-4">
-            <img src="{{ $logo_url($logo_path) }}" style="height:70px; border-radius:12px;">
+            <img src="{{ $logo_url($logo_path) }}" style="width:70px; height:70px; object-fit:cover; border-radius:50%;">
             <h4 class="mt-2 mb-0 fw-bold">Forgot Password</h4>
             <small>{{ $school_name }}</small>
         </div>

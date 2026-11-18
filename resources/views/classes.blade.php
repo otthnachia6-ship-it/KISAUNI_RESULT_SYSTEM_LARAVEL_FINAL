@@ -109,9 +109,8 @@
                             @csrf
                             <button class="ibtn ibtn-danger" title="Remove empty class" aria-label="Remove {{ $c->name }}"><i class="bi bi-trash"></i></button>
                         </form>
-                        @else
-                        <span class="ibtn is-disabled" title="A class with students cannot be removed" aria-disabled="true"><i class="bi bi-trash"></i></span>
                         @endif
+                        <a href="{{ route('class_tools', ['class_id' => $c->id]) }}" class="ibtn ibtn-danger" title="Class tools" aria-label="Class tools for {{ $c->name }}"><i class="bi bi-eraser"></i></a>
                     </div></td>
                 </tr>
             @endforeach
@@ -123,7 +122,7 @@
 
 <p class="text-muted small mt-3 mb-0">
     <i class="bi bi-info-circle me-1"></i>
-    Use the pencil to change a class teacher (or choose "None" to leave the class without one). Only a class with no students can be removed.
+    Use the pencil to change a class teacher (or choose "None" to leave the class without one). Use the eraser for Class tools.
 </p>
 @endsection
 

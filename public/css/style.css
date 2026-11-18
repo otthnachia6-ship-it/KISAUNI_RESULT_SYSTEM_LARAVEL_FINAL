@@ -28,6 +28,26 @@ body {
     flex-shrink: 0;   /* fixed width: wide page content must never squeeze the menu */
 }
 
+/* ---------- Desktop and tablet: the menu stays in place while only the page scrolls ----------
+   If the menu is taller than the window (the Headmaster's is), it scrolls inside itself, so every item
+   can always be reached, however far down the page is. Phones use the slide-in drawer below. */
+@media (min-width: 768px) {
+    .sidebar {
+        position: sticky;
+        top: 0;
+        align-self: flex-start;
+        height: 100vh;
+        height: 100dvh;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,.25) transparent;
+    }
+    .sidebar::-webkit-scrollbar { width: 6px; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.25); border-radius: 6px; }
+}
+
 /* ---------- Mobile: sidebar becomes a slide-in drawer ---------- */
 @media (max-width: 767.98px) {
     .sidebar {
@@ -63,7 +83,7 @@ body {
     padding: 1.1rem 1rem;
     border-bottom: 1px solid rgba(255,255,255,.08);
 }
-.sidebar .brand img { height: 42px; margin-right: .5rem; border-radius: 8px; }
+.sidebar .brand img { flex: none; width: 42px; height: 42px; margin-right: .6rem; border-radius: 50%; object-fit: cover; }
 .sidebar a.nav-link {
     color: rgba(226,232,255,.78);
     padding: .55rem .9rem;
@@ -790,200 +810,204 @@ html[data-theme="dark"] .rank-badge--gold { background: #3a2e0c; color: #fbbf24;
 .login-card a { color: var(--accent); }
 .login-footnote { color: rgba(226,232,255,.5); }
 
-/* ---------- Login (split branding + form layout) ---------- */
-.login-split {
-    min-height: 100vh;
-    min-height: 100dvh; /* follows the visible area when mobile address bar shows/hides; 100vh above is the fallback */
-    display: flex;
-    flex-direction: column;
-    /* The whole page is one continuous brand-navy canvas now (not a
-       two-tone split) - only the form card below floats on it in white,
-       matching the reference layout. */
-    background: linear-gradient(135deg, var(--brand-navy), var(--brand-dark) 55%, var(--brand));
+/* ---------- Class tools (Classes menu) ---------- */
+.tool { border: 1px solid var(--border); border-radius: 10px; background: #fff; margin-bottom: .6rem; overflow: hidden; }
+.tool-radio { position: absolute; opacity: 0; pointer-events: none; }
+.tool-head { display: flex; align-items: center; gap: .6rem; padding: .8rem 1rem; margin: 0; cursor: pointer; font-weight: 600; font-size: .92rem; min-height: 44px; }
+.tool-head::before { content: ""; flex: 0 0 auto; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #94a3b8; background: #fff; }
+.tool-radio:checked + .tool-head { background: #f3f6fd; }
+.tool-radio:checked + .tool-head::before { border-color: var(--brand-blue); background: radial-gradient(circle, var(--brand-blue) 45%, #fff 50%); }
+.tool-radio:focus-visible + .tool-head { outline: 2px solid var(--brand-blue); outline-offset: -2px; }
+.tool--danger .tool-radio:checked + .tool-head { background: #fef2f2; }
+.tool--danger .tool-radio:checked + .tool-head::before { border-color: #dc2626; background: radial-gradient(circle, #dc2626 45%, #fff 50%); }
+.tool-body { display: none; padding: .25rem 1rem 1rem; }
+.tool-radio:checked ~ .tool-body { display: block; }
+.tool-check { display: flex; align-items: center; gap: .6rem; padding: .45rem 0; font-size: .9rem; min-width: 0; }
+.tool-check span { min-width: 0; overflow-wrap: anywhere; }
+.tool-check small { margin-left: auto; color: #64748b; white-space: nowrap; }
+.plan-list { list-style: none; margin: 0; padding: 0; }
+.plan-list li { display: flex; justify-content: space-between; gap: 1rem; padding: .55rem 0; border-bottom: 1px solid var(--border); font-size: .92rem; }
+.plan-list li:last-child { border-bottom: 0; }
+.plan-list strong { font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; }
+
+/* ---------- Version line at the very bottom of every signed-in page ---------- */
+.app-footer { margin-top: auto; padding: .85rem 1.5rem; border-top: 1px solid var(--border); text-align: center; font-size: .78rem; color: #94a3b8; }
+@media print { .app-footer { display: none; } }
+
+/* ---------- Login page (two panels: school welcome + sign-in) ----------
+   Colours: Kisauni's own navy canvas, white sign-in card, blue and sky accents.
+   Three clearly separated layers, so no rule can leak into a screen size it was not written for
+   (this page had that bug twice before):
+   1) component styling (colours, type, cards, inputs): no layout, applies everywhere;
+   2) stacked layout  (<= 991.98px: phones, tablets, Android "Desktop site" ~980px);
+   3) side-by-side layout (>= 992px).
+   Stacked order: logo and school name, "RESULT MANAGEMENT SYSTEM", "What you can do", "Need quick help?",
+   sign-in form, copyright, developer line. */
+.lp {
+    color: #e2e8ff;
+    background:
+        radial-gradient(circle 360px at 100% 0, rgba(56,189,248,.18), transparent 70%),
+        linear-gradient(135deg, var(--brand-navy), var(--brand-dark) 55%, var(--brand));
 }
-/* Below the desktop breakpoint, the two panels stack vertically. Without
-   this, each panel's flex-basis (58%/42%, meant for side-by-side WIDTH on
-   desktop) gets reinterpreted as a share of the viewport HEIGHT once
-   stacked - forcing the brand panel to stretch to 58vh and the form panel
-   to 42vh regardless of how much content they actually have, which is what
-   left a large empty gap between the feature cards and the login card on
-   phones. Sizing each panel to its own content instead removes that gap. */
-/* The stacked (<992px) rules for this page now live in ONE block at the end
-   of the login section ("Login page on phones and tablets"). */
-/* (Phone-specific headline/card-text sizing moved below, after the base
-   .login-split-headline/.login-split-sub/.login-split-card-title rules,
-   so it isn't beaten by them via source order - same class of bug as the
-   flex-basis fix above.) */
-/* Root-cause fix: .login-split-brand/.login-split-form-side further down
-   this file each carry their own unconditional `flex: 1 1 58%` / `flex: 1
-   1 42%` (needed for the side-by-side desktop layout). Because those rules
-   have no media guard and come later in the cascade, they were always
-   beating the max-width:991.98px override above regardless of screen size
-   - so on mobile/tablet (and "Desktop Site" mode on a phone, which is
-   still <992px wide) the panels kept their 58%/42% height shares instead
-   of sizing to their own content, leaving a large dead gap before the
-   login card. The desktop-only flex-basis now lives here instead, inside
-   the same (min-width:992px) block as the row layout, so there is exactly
-   one place that turns it on and it can never leak into narrower widths. */
+
+.lp-logo { flex: none; display: inline-block; width: 56px; height: 56px; border-radius: 50%; box-shadow: 0 8px 22px rgba(0,0,0,.4); }
+.lp-logo img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.lp-school { font-weight: 800; font-size: 1.05rem; line-height: 1.2; color: #fff; text-transform: uppercase; letter-spacing: .02em; }
+
+.lp-system { margin: 0; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: .2em; line-height: 1.5; color: #fff; }
+
+.lp-glass {
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); border-radius: 20px;
+    padding: 1.1rem; box-shadow: 0 18px 40px -18px rgba(2,6,23,.55);
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+}
+.lp-glass-title { margin: .15rem .3rem .85rem; font-size: .74rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: rgba(238,242,255,.72); }
+.lp-row {
+    display: flex; align-items: flex-start; gap: .85rem; margin-bottom: .6rem; padding: .75rem .9rem;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); border-radius: 14px;
+}
+.lp-row:last-child { margin-bottom: 0; }
+.lp-row strong { display: block; font-size: .92rem; font-weight: 700; color: #fff; }
+.lp-desc { display: block; margin-top: .1rem; font-size: .82rem; line-height: 1.4; color: rgba(238,242,255,.75); }
+.lp-dot { flex: none; width: 14px; height: 14px; margin-top: .22rem; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.18); }
+.lp-num {
+    flex: none; display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: 12px; font-size: .82rem; font-weight: 800;
+    background: rgba(56,189,248,.15); border: 1px solid rgba(56,189,248,.25); color: var(--accent);
+}
+.lp-link { color: var(--accent); font-weight: 700; text-decoration: none; }
+.lp-link:hover { text-decoration: underline; }
+.lp-footer { font-size: .8rem; color: rgba(226,232,255,.55); }
+.lp-credit { font-size: .78rem; color: rgba(226,232,255,.65); }
+.lp-credit a { display: inline-block; padding: .35rem .6rem; color: inherit; text-decoration: none; }
+.lp-credit a:hover, .lp-credit a:focus-visible { color: #fff; text-decoration: underline; }
+
+.lp-card { background: #fff; color: #0f172a; border-radius: 20px; padding: 1.5rem 1.25rem; box-shadow: 0 30px 60px -16px rgba(2,6,23,.45); }
+.lp-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.lp-card-title { margin: 0 0 .25rem; font-size: 1.35rem; font-weight: 800; color: var(--brand-dark); }
+.lp-pill { flex: none; padding: .45rem .95rem; border-radius: 999px; background: #e8eefc; color: #1e3a8a; font-size: .8rem; font-weight: 700; }
+.lp-tabs { display: flex; gap: 4px; margin: 1.15rem 0 1.1rem; padding: 5px; background: #eef2fa; border: 1px solid #e0e6f3; border-radius: 999px; }
+.lp-tab {
+    flex: 1; padding: .7rem .5rem; text-align: center; border-radius: 999px;
+    font-size: .9rem; font-weight: 700; color: #1e3a8a; text-decoration: none;
+}
+a.lp-tab:hover { background: rgba(37,99,235,.08); text-decoration: none; }
+.lp-tab.is-active { color: #fff; background: linear-gradient(90deg, var(--brand-blue), var(--accent)); box-shadow: 0 6px 14px rgba(37,99,235,.28); }
+.lp-field { margin-bottom: 1rem; }
+.lp-input {
+    display: block; width: 100%; height: 56px; padding: 0 1rem; font-size: 1rem; color: #0f172a;
+    background: #fff; border: 1px solid #d5dcea; border-radius: 8px;
+}
+.lp-input::placeholder { color: #475569; }
+.lp-input:focus { outline: none; border-color: var(--brand-blue); box-shadow: 0 0 0 3px rgba(37,99,235,.18); }
+.lp-pass { display: flex; }
+.lp-pass .lp-input { flex: 1; min-width: 0; border-radius: 8px 0 0 8px; }
+.lp-pass .password-toggle-btn {
+    position: static; transform: none; flex: none; width: 56px; height: 56px; padding: 0;
+    justify-content: center; font-size: 1.15rem; color: #0f172a;
+    background: #eef1f6; border: 1px solid #d5dcea; border-left: 0; border-radius: 0 8px 8px 0;
+}
+.lp-pass .password-toggle-btn:hover { color: var(--brand-blue); }
+.lp-forgot { margin: -.15rem 0 1rem; text-align: right; }
+.lp-forgot a { font-size: .88rem; font-weight: 700; color: var(--brand-blue); text-decoration: none; }
+.lp-forgot a:hover { text-decoration: underline; }
+.lp-submit {
+    display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; padding: 0;
+    overflow: hidden; cursor: pointer; border: 0; border-radius: 14px; color: #fff;
+    font-size: 1rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+    background: linear-gradient(90deg, var(--brand-blue), var(--accent)); box-shadow: 0 12px 24px -8px rgba(37,99,235,.5);
+    transition: transform .15s ease, filter .2s ease, box-shadow .2s ease;
+}
+.lp-submit:hover { filter: brightness(1.07); transform: translateY(-1px); }
+.lp-submit:active { transform: translateY(0); }
+.lp-submit:disabled { opacity: .85; cursor: wait; }
+.lp-submit-ico { align-self: stretch; flex: none; display: flex; align-items: center; justify-content: center; width: 52px; background: rgba(15,27,61,.22); }
+.lp-submit-txt { flex: 1; padding-right: 52px; text-align: center; }
+.lp-divider { position: relative; margin: 1.5rem 0 .25rem; text-align: center; }
+.lp-divider::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid #e2e8f0; }
+.lp-divider span { position: relative; display: inline-block; padding: 0 .9rem; background: #fff; font-size: .82rem; color: #64748b; }
+
+/* 2) Stacked layout: phones, tablets, and Android "Desktop site" (~980px layout viewport) */
+@media (max-width: 991.98px) {
+    .lp {
+        min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center;
+        justify-content: center; padding: 1.25rem 1rem 1.5rem;
+    }
+    /* the welcome panel's pieces take part in the page order directly */
+    .lp-brand, .lp-brand-inner, .lp-cards { display: contents; }
+    .lp-top, .lp-hero, .lp-glass, .lp-formside, .lp-footer, .lp-credit { width: 100%; max-width: 520px; }
+    .lp-top { order: 1; display: flex; align-items: center; gap: .8rem; margin-bottom: 1.1rem; }
+    .lp-hero { order: 2; margin-bottom: 1.25rem; }
+    .lp-glass-features { order: 3; margin-bottom: 1.25rem; }
+    .lp-glass-help { order: 4; margin-bottom: 1.25rem; }
+    .lp-formside { order: 5; margin-bottom: 1.25rem; }
+    .lp-footer { order: 6; margin-top: 1.5rem; text-align: center; }
+    .lp-credit { order: 7; margin-top: .6rem; text-align: center; }
+    .lp-card-title { text-align: center; }
+    .lp-card-head { justify-content: center; }
+    .lp-pill { display: none; }
+}
+
+/* Touch screens with a ~700-991px layout viewport: tablets in portrait and phones using Chrome's "Desktop site"
+   (layout viewport ~980px, shrunk to fit the phone, so everything sized for 360px looks tiny). Only the SIZE of
+   existing elements is raised (about 1.3x); order, colours and content are untouched. A mouse on a narrow
+   window, every viewport >= 992px, and a phone held sideways (short viewport) are not affected. */
+@media screen and (pointer: coarse) and (min-width: 700px) and (max-width: 991.98px) and (min-height: 640px) {
+    .lp { padding: 1.5rem 1.5rem 2rem; }
+    .lp-top, .lp-hero, .lp-glass, .lp-formside, .lp-footer, .lp-credit { max-width: 680px; }
+    .lp-logo { width: 76px; height: 76px; }
+    .lp-school { font-size: 1.5rem; }
+    .lp-system { font-size: 1.3rem; }
+    .lp-glass { padding: 1.5rem; }
+    .lp-glass-title { font-size: .95rem; }
+    .lp-row { padding: 1rem 1.15rem; }
+    .lp-row strong { font-size: 1.2rem; }
+    .lp-desc { font-size: 1.05rem; }
+    .lp-dot { width: 18px; height: 18px; margin-top: .3rem; }
+    .lp-num { width: 52px; height: 52px; font-size: 1.05rem; }
+    .lp-card { padding: 1.75rem 2rem 2rem; }
+    .lp-card-title { font-size: 1.85rem; }
+    .lp-tab { font-size: 1.15rem; padding: .95rem .5rem; }
+    .lp-input { height: 72px; font-size: 1.25rem; }
+    .lp-pass .password-toggle-btn { width: 72px; height: 72px; font-size: 1.4rem; }
+    .lp-forgot a { font-size: 1.1rem; }
+    .lp-submit { height: 72px; font-size: 1.3rem; }
+    .lp-submit-ico { width: 72px; font-size: 1.4rem; }
+    .lp-submit-txt { padding-right: 72px; }
+    .lp-divider span { font-size: 1.05rem; }
+    .lp-footer { font-size: 1rem; }
+    .lp-credit { font-size: 1rem; }
+}
+
+/* 3) Side-by-side layout: computers (>= 992px) */
 @media (min-width: 992px) {
-    .login-split { flex-direction: row; align-items: center; }
-    .login-split-brand { flex: 1 1 58%; }
-    .login-split-form-side { flex: 1 1 42%; }
+    .lp {
+        min-height: 100vh; min-height: 100dvh; display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); grid-template-rows: 1fr auto;
+        grid-template-areas: "brand form" "brand credit";
+    }
+    .lp-brand { grid-area: brand; display: flex; padding: 2.25rem 2.25rem 1.75rem; }
+    .lp-brand-inner { display: flex; flex-direction: column; width: 100%; max-width: 860px; }
+    .lp-top { display: flex; align-items: center; gap: 1.1rem; }
+    .lp-logo { width: 84px; height: 84px; }
+    .lp-school { font-size: 1.75rem; line-height: 1.15; max-width: 520px; }
+    .lp-hero { margin-top: 3.25rem; }
+    .lp-system { font-size: clamp(1.15rem, 1.9vw, 1.75rem); letter-spacing: .2em; }
+    .lp-cards { display: grid; grid-template-columns: 1fr; gap: 1.1rem; margin-top: 1.75rem; }
+    .lp-glass { padding: 1.35rem; }
+    .lp-footer { margin-top: auto; padding-top: 1.75rem; }
+    .lp-formside { grid-area: form; display: flex; align-items: center; justify-content: center; padding: 2rem 3rem; }
+    .lp-card { width: 100%; max-width: 480px; padding: 2.5rem 2.25rem; }
+    .lp-card-title { font-size: 1.5rem; }
+    .lp-credit { grid-area: credit; padding: 1rem 1.5rem 1.4rem; text-align: center; }
 }
-
-.login-split-brand {
-    position: relative;
-    overflow: hidden;
-    color: #eef2ff;
-    padding: 4.5rem 3rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .lp-pill { display: none; }
+    .lp-formside { padding: 2rem 2rem; }
 }
-/* One quiet decorative touch - a soft glow behind the headline, nothing
-   repeated elsewhere on the page. */
-.login-split-brand::before {
-    content: "";
-    position: absolute;
-    top: -120px; right: -120px;
-    width: 360px; height: 360px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(56,189,248,.18), transparent 70%);
-    pointer-events: none;
+@media (min-width: 1200px) {
+    .lp-cards { grid-template-columns: 1fr 1fr; }
 }
-.login-split-brand-inner { position: relative; z-index: 1; max-width: 560px; }
-
-.login-split-mark { display: flex; align-items: center; gap: .8rem; margin-bottom: 3.5rem; }
-.login-split-mark img { height: 48px; width: 48px; object-fit: contain; border-radius: 10px; }
-.login-split-mark-name { font-weight: 800; font-size: 1.05rem; letter-spacing: .01em; }
-.login-split-mark-tag { font-size: .78rem; color: rgba(226,232,255,.6); text-transform: uppercase; letter-spacing: .06em; }
-
-.login-split-headline {
-    font-size: 2.35rem;
-    font-weight: 800;
-    line-height: 1.25;
-    margin-bottom: 1.2rem;
-    max-width: 460px;
-}
-.login-split-sub {
-    color: rgba(226,232,255,.72);
-    font-size: 1.05rem;
-    line-height: 1.65;
-    max-width: 440px;
-    margin-bottom: 3.2rem;
-}
-/* Gradient word-accents for the headline, matching the reference palette:
-   warm amber/orange for one key word, cool teal/blue for another. */
-.login-split-headline .accent-amber {
-    background: linear-gradient(120deg, #fbbf24, #f97316);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-}
-.login-split-headline .accent-teal {
-    background: linear-gradient(120deg, #34d399, #38bdf8);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-}
-
-.login-split-features {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.1rem;
-}
-@media (min-width: 560px) {
-    .login-split-features { grid-template-columns: 1fr 1fr; }
-}
-.login-split-feature { display: flex; align-items: flex-start; gap: .7rem; padding: .5rem; margin: -.5rem; border-radius: 10px; transition: transform .18s var(--ease), background .18s var(--ease); }
-.login-split-feature:hover { transform: translateY(-2px); background: rgba(255,255,255,.05); }
-.login-split-feature-icon {
-    flex: none;
-    width: 38px; height: 38px;
-    border-radius: 10px;
-    background: rgba(56,189,248,.15);
-    border: 1px solid rgba(56,189,248,.25);
-    color: var(--accent);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1rem;
-    transition: transform .18s var(--ease);
-}
-.login-split-feature:hover .login-split-feature-icon { transform: scale(1.08); }
-.login-split-feature-title { font-weight: 700; font-size: .92rem; color: #fff; }
-.login-split-feature-desc { font-size: .8rem; color: rgba(226,232,255,.6); line-height: 1.4; margin-top: .1rem; }
-
-.login-split-footer {
-    position: relative; z-index: 1;
-    font-size: .8rem;
-    color: rgba(226,232,255,.45);
-    margin-top: 2.5rem;
-}
-
-.login-split-form-side {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4.5rem 1.5rem;
-}
-.login-split-card {
-    width: 100%;
-    max-width: 400px;
-    background: #fff;
-    border-radius: 16px;
-    padding: 2.75rem;
-    box-shadow: 0 30px 60px -12px rgba(2,6,23,.45);
-}
-.login-split-card-title { font-weight: 800; color: var(--brand-dark); margin-bottom: .3rem; }
-.login-split-card-sub { color: #64748b; font-size: .88rem; margin-bottom: 1.5rem; }
-/* Phones specifically (not tablets): the desktop headline size (2.35rem)
-   was wrapping into 4-5 very short lines on a narrow phone screen, reading
-   as an awkward vertical stack of single words. Shrinking it (and the
-   subtitle/card text) to fit more words per line fixes that without
-   touching the desktop or tablet layout at all. Also center the login
-   card's own title/subtitle text on phones - on desktop it sits
-   left-aligned next to the brand panel, which reads fine side-by-side,
-   but stacked full-width on a phone the left-aligned title/subtitle
-   looked like they were "stuck to one side" instead of belonging to a
-   centered card. Deliberately placed here, after the base rules above,
-   so it isn't beaten by them via source order (same class of bug as the
-   earlier flex-basis fix). */
-/* Widened from the original <=575.98px-only cutoff: real phones running
-   Chrome's "Request Desktop Site" report a layout viewport of ~980px
-   (Chrome's fixed default for that mode, regardless of the physical
-   screen), which sits ABOVE 575.98px but still below 992px (so it still
-   gets the stacked layout, not the desktop row layout). These rules were
-   never reaching that very common real-world case. Using the same
-   991.98px cutoff as the stacked-layout switch above means "anything
-   that isn't full side-by-side desktop" now consistently gets the
-   larger card / smaller headline / centered card text - covering real
-   phones, tablets, AND Desktop-Site-on-a-phone in one place. */
-.login-split-card .form-label { color: #334155; font-size: .88rem; font-weight: 600; }
-.login-split-card .btn-success {
-    background: linear-gradient(90deg, var(--brand-blue), var(--accent));
-    background-size: 160% 100%;
-    background-position: 0% 0%;
-    border: none;
-    transition: background-position .35s ease, transform .15s ease, box-shadow .25s ease;
-}
-.login-split-card .btn-success:hover {
-    background-position: 100% 0%;
-    transform: translateY(-1px);
-    box-shadow: 0 10px 24px rgba(37,99,235,.3);
-}
-.login-split-card .btn-success:active { transform: translateY(0); }
-.login-split-card a { color: var(--brand-blue); text-decoration: none; font-weight: 600; }
-.login-split-card a:hover { text-decoration: underline; }
-
-/* Left-hand icon inside the Username/Password fields on the login form */
-.login-input-icon { position: relative; }
-.login-input-icon .form-control { padding-left: 2.5rem; }
-.login-input-icon-glyph {
-    position: absolute;
-    top: 50%; left: .8rem;
-    transform: translateY(-50%);
-    color: #94a3b8;
-    pointer-events: none;
-    font-size: .95rem;
-}
-/* Password field also has the show/hide toggle on the right - keep that
-   padding (already set by .password-input-group input) alongside the new
-   left padding above. */
 
 /* A brief, one-time shake on the login card when the page reloads after a
    failed sign-in - a quick, unmistakable "that didn't work" signal instead
@@ -1146,90 +1170,11 @@ html[data-theme="dark"] .modal-backdrop { opacity: .6; }
     }
 }
 
-/* ---------- Login / Forgot password: easy-to-tap controls on phones ----------
-   The show/hide-password eye and the "Forgot password?" / "Back to Login" links were about
-   15-22px high. The eye icon stays the same size, but the area you can tap now fills the right
-   end of the field (44px wide, as tall as the field). The two links get a 44px-high tap area.
-   Applies to small screens and to any touch screen (including a large phone held sideways);
-   a computer with a mouse keeps the current look. Only these two pages are affected; ordinary
-   links inside sentences are not changed. */
+/* ---------- Login / Forgot password: easy-to-tap links on phones ----------
+   The "Forgot password?" / "Back to Login" links were about 15-22px high; they now get a 44px-high
+   tap area on small screens and on any touch screen. A computer with a mouse keeps the current look. */
 @media screen and (max-width: 767.98px), screen and (pointer: coarse) {
-    .login-split-card .password-input-group input { padding-right: 2.75rem; }
-    .login-split-card .password-toggle-btn {
-        top: 0; bottom: 0; right: 0; transform: none;
-        width: 44px; padding: 0; justify-content: center;
-    }
     .touch-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 .5rem; }
-}
-
-/* ---------- Login page on phones and tablets: sign-in form first ----------
-   On small screens the long welcome panel (headline + 4 feature cards) came first, so the form was
-   over a screen and a half down, and the card itself had a large empty area above and below the
-   fields (min-height 640px). Now the school logo/name is a slim header, the sign-in card comes right
-   under it, and the welcome text and feature cards follow below. Same colours, same wording, same
-   content; only the order and the spacing change. Computers (wide screens) keep the side-by-side look. */
-@media screen and (max-width: 991.98px) {
-    /* justify-content:center keeps the content vertically centred when the viewport is taller than
-       the content (tablet portrait, phone in "Desktop site" mode); taller content just scrolls. */
-    .login-split { position: relative; overflow: hidden; align-items: center; justify-content: center; padding: 1.25rem 1rem 2rem; }
-    .login-split::before {
-        content: ""; position: absolute; top: -120px; right: -120px; width: 360px; height: 360px;
-        border-radius: 50%; background: radial-gradient(circle, rgba(56, 189, 248, .18), transparent 70%); pointer-events: none;
-    }
-    /* let the welcome panel's pieces take part in the page order directly */
-    .login-split-brand, .login-split-brand-inner { display: contents; }
-    .login-split-brand::before { display: none; }
-    .login-split-mark, .login-split-form-side, .login-split-headline, .login-split-sub,
-    .login-split-features, .login-split-footer { position: relative; width: 100%; max-width: 520px; }
-    /* Visual order when stacked: logo, headline, text, four cards, then the sign-in form, then the footer. */
-    .login-split-mark { order: 1; margin-bottom: 1.1rem; }
-    .login-split-mark img { height: 40px; width: 40px; }
-    .login-split-mark-name { font-size: .95rem; }
-    .login-split-form-side { order: 5; padding: 0; flex: none; }
-    .login-split-card { max-width: none; display: flex; flex-direction: column; justify-content: flex-start; padding: 1.5rem 1.25rem; }
-    .login-split-card-title, .login-split-card-sub { text-align: center; }
-    .login-split-card-title { font-size: 1.4rem; }
-    .login-split-card-sub { margin-bottom: 1.1rem; }
-    .login-split-headline { order: 2; margin: 0 0 .7rem; font-size: 1.45rem; line-height: 1.3; }
-    .login-split-sub { order: 3; margin-bottom: 1.5rem; font-size: .92rem; line-height: 1.55; }
-    .login-split-features { order: 4; margin-bottom: 2rem; }
-    .login-split-footer { order: 6; margin-top: 1.75rem; text-align: center; }
-}
-
-/* ---------- Login on touch screens with a ~700-991px layout viewport ----------
-   Covers tablets in portrait and phones using Chrome's "Desktop site" (layout viewport ~980px, shrunk to
-   fit the phone, so everything sized for 360px looks tiny). Only the SIZE of the existing elements is
-   raised (about 1.3x); colours, fonts, order and content are untouched. pointer:coarse means a mouse
-   user on a narrow desktop window, every viewport >=992px, and a phone held sideways (short viewport)
-   are not affected. Nothing has a fixed
-   height, so taller content simply scrolls. */
-@media screen and (pointer: coarse) and (min-width: 700px) and (max-width: 991.98px) and (min-height: 640px) {
-    .login-split { padding: 1.5rem 1.5rem 2rem; }
-    .login-split-mark, .login-split-form-side, .login-split-headline, .login-split-sub,
-    .login-split-features, .login-split-footer { max-width: 680px; }
-    .login-split-mark { margin-bottom: 1.2rem; }
-    .login-split-mark img { height: 52px; width: 52px; }
-    .login-split-mark-name { font-size: 1.25rem; }
-    .login-split-mark-tag { font-size: 1rem; }
-    .login-split-card { padding: 1.75rem 2rem 2rem; }
-    .login-split-card-title { font-size: 1.85rem; }
-    .login-split-card-sub { font-size: 1.1rem; margin-bottom: 1.25rem; }
-    .login-split-card .form-label { font-size: 1.1rem; }
-    .login-split-card .form-control { font-size: 1.2rem; padding-top: .6rem; padding-bottom: .6rem; }
-    .login-input-icon .form-control { padding-left: 3.1rem; }
-    .login-input-icon-glyph { font-size: 1.2rem; left: 1rem; }
-    .login-split-card .password-input-group input { padding-right: 3.5rem; }
-    .login-split-card .password-toggle-btn { width: 52px; font-size: 1.2rem; }
-    /* the "Forgot password?" size is set inline in the page, so it needs !important to be raised */
-    .login-split-card .touch-link { font-size: 1.1rem !important; min-height: 48px; }
-    .login-split-card .btn-success { font-size: 1.25rem; min-height: 58px; display: flex; align-items: center; justify-content: center; gap: .35rem; }
-    .login-split-headline { font-size: 2rem; }
-    .login-split-sub { font-size: 1.2rem; margin-bottom: 1.25rem; }
-    .login-split-features { margin-bottom: 2rem; }
-    .login-split-feature-icon { width: 48px; height: 48px; font-size: 1.25rem; }
-    .login-split-feature-title { font-size: 1.2rem; }
-    .login-split-feature-desc { font-size: 1.05rem; }
-    .login-split-footer { font-size: 1rem; }
 }
 
 /* ---------- Compact buttons: medium size on ALL screens (computer and phone) ----------

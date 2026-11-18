@@ -100,7 +100,7 @@
         </div>
     </nav>
 
-    <main class="flex-grow-1" style="min-width:0;">
+    <main class="flex-grow-1 d-flex flex-column" style="min-width:0;">
         <div class="topbar d-flex justify-content-between align-items-center no-print">
             <button id="sidebarToggle" class="btn btn-sm btn-outline-secondary d-md-none"><i class="bi bi-list"></i></button>
             <nav class="crumbs" aria-label="Breadcrumb">
@@ -139,9 +139,11 @@
             @endforeach
         </div>
 
-        <div class="p-3 p-md-4 page-enter">
+        <div class="p-3 p-md-4 page-enter flex-grow-1" style="min-width:0;">
             @yield('content')
         </div>
+
+        <footer class="app-footer no-print">{{ $school_name }} Result System &middot; Version {{ config('app.version') }}</footer>
     </main>
 </div>
 

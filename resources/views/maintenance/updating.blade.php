@@ -18,7 +18,7 @@
             width: 100%; max-width: 460px; background: #fff; border: 1px solid var(--border);
             border-radius: 12px; padding: 2rem 1.75rem; text-align: center;
         }
-        .logo { width: 72px; height: 72px; object-fit: contain; margin-bottom: .75rem; }
+        .logo { width: 72px; height: 72px; object-fit: cover; border-radius: 50%; margin-bottom: .75rem; }
         .school { font-size: .8rem; font-weight: 700; letter-spacing: .06em; color: var(--navy); margin: 0 0 1.25rem; }
         h1 { font-size: 1.35rem; margin: 0 0 .5rem; }
         p { margin: 0 0 .75rem; line-height: 1.55; color: var(--muted); font-size: .95rem; }
