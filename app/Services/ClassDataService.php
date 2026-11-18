@@ -199,10 +199,20 @@ class ClassDataService
         return $plan;
     }
 
-    /** Safety copy of the database. Returns null when none could be made. */
+    /**
+     * Safety copy of the database, made before anything is changed.
+     * On a real (MySQL) database a failure stops the action and says why; the in-memory test database is exempt.
+     */
     public static function safetyBackup(string $label): ?string
     {
-        return DatabaseBackupService::safetyBackup($label);
+        try {
+            return DatabaseBackupService::run($label, true)['file'];
+        } catch (\Throwable $e) {
+            if (DB::connection()->getDriverName() === 'sqlite') {
+                return null;
+            }
+            throw new RuntimeException('Safety backup failed, nothing was changed. Reason: ' . $e->getMessage(), 0, $e);
+        }
     }
 
     /** Applies a validated plan. Throws RuntimeException when nothing was changed. */
@@ -211,9 +221,7 @@ class ClassDataService
         if (empty($plan['ok'])) {
             throw new RuntimeException($plan['error'] ?? 'Nothing to do.');
         }
-        if (self::safetyBackup('before-class-tool') === null && DB::connection()->getDriverName() !== 'sqlite') {
-            throw new RuntimeException('A safety backup could not be made, so nothing was changed.');
-        }
+        self::safetyBackup('before-class-tool');
 
         $p = $plan['params'];
         $name = $class->name;
