@@ -94,6 +94,8 @@ Route::middleware(['auth', 'no_cache'])->group(function () {
         // Class tools (Headmaster): fix or permanently remove a class's data
         Route::get('/classes/{class_id}/tools', [ClassToolsController::class, 'show'])->name('class_tools');
         Route::post('/classes/{class_id}/tools/preview', [ClassToolsController::class, 'preview'])->name('class_tools_preview');
+        Route::get('/classes/{class_id}/tools/marks/{exam_id}', [ClassToolsController::class, 'marks'])->name('class_tools_marks');
+        Route::post('/classes/{class_id}/tools/marks/{exam_id}', [ClassToolsController::class, 'saveMarks'])->name('class_tools_marks_save');
         Route::post('/classes/{class_id}/tools/run', [ClassToolsController::class, 'run'])->name('class_tools_run');
 
         // Students restore & purge

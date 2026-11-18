@@ -6,6 +6,7 @@ use App\Models\Examination;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use RuntimeException;
 
 /**
@@ -26,10 +27,12 @@ class ClassDataService
     public const STUDENTS = 'students';
     public const CLASS_KEEP = 'class_keep';
     public const CLASS_ALL = 'class_all';
+    public const EDIT_MARKS = 'edit_marks';
 
     public static function actions(): array
     {
         return [
+            self::EDIT_MARKS => 'Correct marks and approve again',
             self::RESULTS => 'Delete results of selected examinations',
             self::MOVE_EXAM => 'Move results to the correct examination',
             self::STUDENTS => 'Delete students only (class stays)',
@@ -197,6 +200,115 @@ class ClassDataService
         $plan['lines'][] = ['Their results deleted', (string) self::marksOfStudents($ids)];
         $plan['ok'] = true;
         return $plan;
+    }
+
+    // ------------------------------------------------------------ correct marks
+
+    /** True when the class has results (or a status) for this examination. */
+    public static function hasExam(SchoolClass $class, int $examId): bool
+    {
+        return collect(self::overview($class)['exams'])->contains('id', $examId);
+    }
+
+    /**
+     * The marks table of one examination of one class: subjects as columns, students as rows
+     * (students now in the class, plus anyone whose marks for this examination are kept under it).
+     */
+    public static function marksGrid(SchoolClass $class, int $examId): array
+    {
+        $subjects = DB::table('subjects as sub')->join('class_subjects as cs', 'cs.subject_id', '=', 'sub.id')
+            ->where('cs.class_id', $class->id)->select('sub.id', 'sub.name')->orderBy('sub.name')->get();
+
+        $scores = [];
+        foreach (DB::table('marks')->where('class_id', $class->id)->where('exam_id', $examId)->get(['student_id', 'subject_id', 'score']) as $m) {
+            $scores[$m->student_id][$m->subject_id] = $m->score;
+        }
+
+        $students = Student::where(function ($q) use ($class, $scores) {
+            $q->where(fn ($w) => $w->where('class_id', $class->id)->where('active', 1))->orWhereIn('id', array_keys($scores));
+        })->orderByRaw('LOWER(full_name)')->get(['id', 'full_name', 'reg_no']);
+
+        return [
+            'subjects' => $subjects,
+            'students' => $students,
+            'scores' => $scores,
+            'status' => DB::table('exam_class_status')->where('class_id', $class->id)->where('exam_id', $examId)->value('status'),
+        ];
+    }
+
+    /**
+     * Saves corrected marks (only cells that really changed) and approves the class's results again.
+     * Nothing is saved when any entry is invalid.
+     *
+     * @param  array<int|string, array<int|string, mixed>>  $input  marks[student_id][subject_id]
+     * @return int number of marks changed (0 = nothing saved, status untouched)
+     * @throws InvalidArgumentException with a readable list of bad entries
+     */
+    public static function saveMarks($user, SchoolClass $class, int $examId, array $input): int
+    {
+        $grid = self::marksGrid($class, $examId);
+        $names = $grid['students']->keyBy('id');
+        $subjects = $grid['subjects']->keyBy('id');
+
+        $changes = [];
+        $bad = [];
+        foreach ($grid['students'] as $st) {
+            foreach ($subjects as $sid => $sub) {
+                if (!isset($input[$st->id]) || !is_array($input[$st->id]) || !array_key_exists($sid, $input[$st->id])) {
+                    continue;
+                }
+                $raw = trim((string) $input[$st->id][$sid]);
+                $new = null;
+                if ($raw !== '') {
+                    if (!is_numeric($raw) || (float) $raw < 0 || (float) $raw > 100) {
+                        $bad[] = "{$st->full_name} - {$sub->name}: \"{$raw}\" (0 to 100)";
+                        continue;
+                    }
+                    $new = (float) $raw;
+                }
+                $old = $grid['scores'][$st->id][$sid] ?? null;
+                $same = ($old === null && $new === null) || ($old !== null && $new !== null && abs((float) $old - $new) < 1e-9);
+                if (!$same) {
+                    $changes[] = ['student' => $st->id, 'subject' => $sid, 'old' => $old, 'new' => $new, 'exists' => isset($grid['scores'][$st->id]) && array_key_exists($sid, $grid['scores'][$st->id])];
+                }
+            }
+        }
+
+        if ($bad) {
+            throw new InvalidArgumentException(implode("\n", array_slice($bad, 0, 8)) . (count($bad) > 8 ? "\n+" . (count($bad) - 8) . ' more' : ''));
+        }
+        if (!$changes) {
+            return 0;
+        }
+
+        self::safetyBackup('before-marks-edit');
+
+        $now = SchoolService::nowStr();
+        DB::transaction(function () use ($changes, $class, $examId, $user, $now) {
+            foreach ($changes as $c) {
+                $row = ['score' => $c['new'], 'class_id' => $class->id, 'entered_by' => $user->id, 'updated_at' => $now];
+                if ($c['exists']) {
+                    DB::table('marks')->where('student_id', $c['student'])->where('exam_id', $examId)->where('subject_id', $c['subject'])->update($row);
+                } else {
+                    DB::table('marks')->insert($row + ['student_id' => $c['student'], 'exam_id' => $examId, 'subject_id' => $c['subject']]);
+                }
+            }
+            $approval = ['status' => 'approved', 'approved_by' => $user->id, 'approved_at' => $now];
+            $has = DB::table('exam_class_status')->where('class_id', $class->id)->where('exam_id', $examId)->exists();
+            $has
+                ? DB::table('exam_class_status')->where('class_id', $class->id)->where('exam_id', $examId)->update($approval)
+                : DB::table('exam_class_status')->insert($approval + ['class_id' => $class->id, 'exam_id' => $examId]);
+        });
+
+        $lines = array_map(fn ($c) => ($names[$c['student']]->full_name ?? $c['student']) . ' / ' . ($subjects[$c['subject']]->name ?? $c['subject'])
+            . ': ' . ($c['old'] ?? '-') . ' -> ' . ($c['new'] ?? '-'), $changes);
+        $text = implode('; ', $lines);
+        if (strlen($text) > 3000) {
+            $text = substr($text, 0, 3000) . '...';
+        }
+        SchoolService::logAction($user, 'CLASS_TOOL_EDIT_MARKS', "{$class->name} | exam={$examId} | " . count($changes) . " change(s): {$text}");
+
+        return count($changes);
     }
 
     /**

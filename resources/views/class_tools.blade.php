@@ -13,6 +13,23 @@
     @php $picked = old('action'); @endphp
 
     <div class="tool">
+        <input class="tool-radio" type="radio" name="action" id="act-edit" value="edit_marks" @checked($picked === 'edit_marks')>
+        <label class="tool-head" for="act-edit">{{ $actions['edit_marks'] }}</label>
+        <div class="tool-body">
+            @if(count($data['exams']))
+            <label class="form-label small mb-1" for="editExam">Examination</label>
+            <select id="editExam" name="edit_exam" class="form-select">
+                @foreach($data['exams'] as $e)
+                    <option value="{{ $e['id'] }}" @selected((int) old('edit_exam') === $e['id'])>{{ $e['label'] }}</option>
+                @endforeach
+            </select>
+            @else
+                <div class="small text-muted">No results in this class.</div>
+            @endif
+        </div>
+    </div>
+
+    <div class="tool">
         <input class="tool-radio" type="radio" name="action" id="act-results" value="results" @checked($picked === 'results')>
         <label class="tool-head" for="act-results">{{ $actions['results'] }}</label>
         <div class="tool-body">

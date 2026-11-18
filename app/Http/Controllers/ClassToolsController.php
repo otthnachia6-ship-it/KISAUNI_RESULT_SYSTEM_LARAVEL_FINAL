@@ -6,6 +6,7 @@ use App\Models\SchoolClass;
 use App\Services\ClassDataService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use InvalidArgumentException;
 use RuntimeException;
 
 /** Headmaster-only "Class tools", opened from the Classes menu. */
@@ -31,6 +32,15 @@ class ClassToolsController extends Controller
     public function preview(Request $request, $class_id)
     {
         $class = $this->classOrFail($class_id);
+
+        if ($request->input('action') === ClassDataService::EDIT_MARKS) {
+            $examId = (int) $request->input('edit_exam');
+            if (!ClassDataService::hasExam($class, $examId)) {
+                return redirect()->route('class_tools', $class->id)->with('danger', 'Choose an examination.')->withInput();
+            }
+            return redirect()->route('class_tools_marks', [$class->id, $examId]);
+        }
+
         $plan = ClassDataService::plan($class, $request->all());
 
         if (!$plan['ok']) {
@@ -56,5 +66,34 @@ class ClassToolsController extends Controller
         }
 
         return redirect()->route('class_tools', $class->id)->with('info', 'Done.');
+    }
+
+    public function marks($class_id, $exam_id)
+    {
+        $class = $this->classOrFail($class_id);
+        abort_unless(ClassDataService::hasExam($class, (int) $exam_id), 404);
+
+        return view('class_tools_marks', [
+            'class' => $class,
+            'exam' => \App\Models\Examination::findOrFail($exam_id),
+            'grid' => ClassDataService::marksGrid($class, (int) $exam_id),
+        ]);
+    }
+
+    public function saveMarks(Request $request, $class_id, $exam_id)
+    {
+        $class = $this->classOrFail($class_id);
+        abort_unless(ClassDataService::hasExam($class, (int) $exam_id), 404);
+
+        try {
+            $changed = ClassDataService::saveMarks(Auth::user(), $class, (int) $exam_id, (array) $request->input('marks', []));
+        } catch (InvalidArgumentException $e) {
+            return redirect()->route('class_tools_marks', [$class->id, $exam_id])->with('danger', $e->getMessage())->withInput();
+        } catch (RuntimeException $e) {
+            return redirect()->route('class_tools_marks', [$class->id, $exam_id])->with('danger', $e->getMessage())->withInput();
+        }
+
+        return redirect()->route('class_tools_marks', [$class->id, $exam_id])
+            ->with($changed ? 'success' : 'info', $changed ? "Saved and approved ({$changed} changed)." : 'No changes.');
     }
 }
