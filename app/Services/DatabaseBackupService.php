@@ -227,12 +227,18 @@ class DatabaseBackupService
 
     private static function findMysqldump(): ?string
     {
-        $configured = config('kisauni.backup.mysqldump_path');
-        if ($configured) {
-            return is_file($configured) && is_executable($configured) ? $configured : null;
+        // On shared hosting a web request is often confined by open_basedir, so even looking for the
+        // program raises a warning. That is not a failure: no program found means the PHP dumper is used.
+        try {
+            $configured = config('kisauni.backup.mysqldump_path');
+            if ($configured) {
+                return is_file($configured) && is_executable($configured) ? $configured : null;
+            }
+            $finder = new ExecutableFinder();
+            return $finder->find('mysqldump') ?: $finder->find('mariadb-dump');
+        } catch (Throwable) {
+            return null;
         }
-        $finder = new ExecutableFinder();
-        return $finder->find('mysqldump') ?: $finder->find('mariadb-dump');
     }
 
     private static function dumpWithMysqldump(string $binary, array $cfg, string $partialPath): void
