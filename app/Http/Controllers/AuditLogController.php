@@ -14,7 +14,7 @@ class AuditLogController extends Controller
 
         return view('audit_logs', [
             'logs' => $logs,
-            'retention_days' => SchoolService::AUDIT_LOG_RETENTION_DAYS,
+            'retention_days' => SchoolService::auditLogRetentionDays(),
         ]);
     }
 }

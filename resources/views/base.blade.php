@@ -96,7 +96,10 @@
             <div class="nav-section">Account</div>
             <a class="nav-link" href="{{ route('profile') }}"><i class="bi bi-person-circle me-2"></i>Profile</a>
             <a class="nav-link" href="{{ route('change_password') }}"><i class="bi bi-key me-2"></i>Change Password</a>
-            <a class="nav-link nav-logout" href="{{ route('logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a>
+            <form method="POST" action="{{ route('logout') }}" id="logoutForm" class="m-0">
+                @csrf
+                <button type="submit" class="nav-link nav-logout w-100 text-start border-0"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
+            </form>
         </div>
     </nav>
 
@@ -132,7 +135,8 @@
                 @if(session()->has($msgType))
                 <div class="app-toast app-toast-{{ $msgType }}">
                     <i class="bi @if($msgType=='success' || $msgType=='info') bi-check-circle-fill @elseif($msgType=='danger') bi-x-circle-fill @else bi-exclamation-triangle-fill @endif"></i>
-                    <span>{{ session($msgType) }}</span>
+                    {{-- escaped first, then each new line shown as a line break --}}
+                    <span>{!! nl2br(e(session($msgType))) !!}</span>
                     <button type="button" class="app-toast-close" onclick="this.parentElement.remove()">&times;</button>
                 </div>
                 @endif

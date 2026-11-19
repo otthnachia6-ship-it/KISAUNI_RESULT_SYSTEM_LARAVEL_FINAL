@@ -1164,11 +1164,15 @@ html[data-theme="dark"] .modal-backdrop { opacity: .6; }
     /* recent-activity lines on the dashboard: show the whole text (wrap) instead of cutting it with "..." */
     .activity-row .text-truncate { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
     .app-confirm-modal .btn-close { padding: .75rem; }
+    /* Logout is a button inside a POST form: the form is what sticks to the bottom. */
+    .sidebar #logoutForm { position: sticky; bottom: 0; z-index: 1; }
     .sidebar .nav-link.nav-logout {
-        position: sticky; bottom: 0; z-index: 1;
         background: var(--brand-dark); border-top: 1px solid rgba(255, 255, 255, .12);
     }
 }
+
+/* Logout button looks exactly like the other sidebar links. */
+.sidebar button.nav-link { background: none; font: inherit; cursor: pointer; }
 
 /* ---------- Login / Forgot password: easy-to-tap links on phones ----------
    The "Forgot password?" / "Back to Login" links were about 15-22px high; they now get a 44px-high

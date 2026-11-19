@@ -6,6 +6,14 @@ return [
     'idle_timeout_minutes'  => (int) env('IDLE_TIMEOUT_MINUTES', 10),
     'max_login_attempts'    => (int) env('MAX_LOGIN_ATTEMPTS', 5),
     'login_lockout_minutes' => (int) env('LOGIN_LOCKOUT_MINUTES', 5),
+    // Wrong passwords are counted per username AND device (IP address), so a stranger
+    // cannot lock a teacher out of the school's shared Wi-Fi. This second, larger limit
+    // stops one device from guessing across many usernames.
+    'max_login_attempts_per_ip' => (int) env('MAX_LOGIN_ATTEMPTS_PER_IP', 50),
+    // Shortest password accepted when a password is set or changed (existing passwords keep working).
+    'min_password_length'   => (int) env('MIN_PASSWORD_LENGTH', 6),
+    // How long audit-log entries are kept. Old entries are removed at most once a day.
+    'audit_log_retention_days' => (int) env('AUDIT_LOG_RETENTION_DAYS', 5),
     // Automatic database backup (php artisan db:backup, run from cron).
     // Not a user-facing feature: no routes, menus or downloads.
     'backup' => [

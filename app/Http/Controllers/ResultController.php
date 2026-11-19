@@ -59,6 +59,14 @@ class ResultController extends Controller
             $remarks = trim((string) $request->input('remarks', ''));
             $nowStr = SchoolService::nowStr();
 
+            // Only results the class teacher has SUBMITTED can be approved or returned: a class
+            // still in draft may have missing marks, and an approved one is corrected in Class tools.
+            if (in_array($action, ['approve', 'return'], true)
+                && !($statusRow && in_array($statusRow->status, ['submitted', 'under_review'], true))) {
+                return redirect()->route('review_results', ['exam_id' => $examId, 'class_id' => $classId])
+                    ->with('warning', 'Only results that the Class Teacher has submitted can be approved or returned. Nothing was changed.');
+            }
+
             if ($action === 'approve') {
                 if ($statusRow) {
                     $statusRow->update([
@@ -236,12 +244,12 @@ class ResultController extends Controller
         $overview = [];
         if ($examId) {
             $classes = SchoolClass::orderBy('sort_order')->get();
+            // every class's status in ONE query instead of one per class
+            $statuses = ExamClassStatus::where('exam_id', $examId)->pluck('status', 'class_id');
             foreach ($classes as $cls) {
                 [$subjects, $res] = SchoolService::computeClassResults($cls->id, $examId, null, true, false);
                 $averages = array_filter(array_column($res, 'average'), fn($a) => $a !== null);
                 $classAvg = !empty($averages) ? round(array_sum($averages) / count($averages), 1) : null;
-                $statusRow = ExamClassStatus::where('exam_id', $examId)->where('class_id', $cls->id)->first();
-
                 $topStudent = null;
                 foreach ($res as $r) {
                     if (($r['position'] ?? null) === 1) {
@@ -254,7 +262,7 @@ class ResultController extends Controller
                     'cls' => $cls,
                     'student_count' => count($res),
                     'class_average' => $classAvg,
-                    'status' => $statusRow ? $statusRow->status : 'draft',
+                    'status' => $statuses[$cls->id] ?? 'draft',
                     'top_student' => $topStudent,
                 ];
             }

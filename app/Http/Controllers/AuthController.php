@@ -6,12 +6,14 @@ use App\Models\SchoolClass;
 use App\Models\User;
 use App\Services\LegacyPasswordService;
 use App\Services\SchoolService;
+use App\Support\PasswordPolicy;
 use App\Support\UploadedImage;
-use Carbon\Carbon;
+use App\Http\Middleware\EnsureAuthenticated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AuthController extends Controller
 {
@@ -37,25 +39,23 @@ class AuthController extends Controller
             return $this->showLogin();
         }
 
-        $username = trim($request->input('username', ''));
+        $username = trim((string) $request->input('username', ''));
         $password = (string) $request->input('password', '');
+
+        // 1. Brute-force protection, BEFORE any password work (so a locked attempt costs nothing).
+        //    Counted per exact username + device (IP): a stranger cannot lock a teacher out,
+        //    and teachers sharing the school Wi-Fi do not lock each other out.
+        //    A larger per-device limit stops guessing across many usernames.
+        //    The same message is shown whether or not the username exists.
+        [$accountKey, $deviceKey] = $this->loginThrottleKeys($request, $username);
+        foreach ([[$deviceKey, $this->maxAttemptsPerDevice()], [$accountKey, $this->maxAttemptsPerAccount()]] as [$key, $max]) {
+            if (RateLimiter::tooManyAttempts($key, $max)) {
+                return back()->withInput($request->only('username'))->with('danger', $this->lockedMessage(RateLimiter::availableIn($key)));
+            }
+        }
 
         // Exact-case lookup (damtu and DAMTU are different accounts).
         $user = User::findByUsername($username);
-
-        // 1. Brute-force lockout check
-        if ($user && $user->locked_until) {
-            $lockedUntil = Carbon::parse($user->locked_until, 'Africa/Dar_es_Salaam');
-            $now = SchoolService::now();
-            if ($now->lt($lockedUntil)) {
-                // absolute:true keeps this positive under Carbon 3's new
-                // signed diffIn*() behaviour.
-                $minutesLeft = max(1, (int) ceil($lockedUntil->diffInSeconds($now, true) / 60));
-                return back()->with('danger', "Too many failed attempts. This account is locked - try again in about {$minutesLeft} minute(s).");
-            }
-            // Lock expired -> reset
-            $user->update(['failed_login_attempts' => 0, 'locked_until' => null]);
-        }
 
         // 2. Password verification
         $passwordOk = false;
@@ -92,42 +92,43 @@ class AuthController extends Controller
         }
 
         if (!$user || !$passwordOk) {
-            if ($user) {
-                $maxAttempts = config('kisauni.max_login_attempts');
-                $lockoutMinutes = config('kisauni.login_lockout_minutes');
-                $attempts = ($user->failed_login_attempts ?? 0) + 1;
+            $decaySeconds = $this->lockoutMinutes() * 60;
+            RateLimiter::hit($deviceKey, $decaySeconds);
+            RateLimiter::hit($accountKey, $decaySeconds);
 
-                if ($attempts >= $maxAttempts) {
-                    $lockedUntilStr = SchoolService::now()->addMinutes($lockoutMinutes)->format('Y-m-d H:i:s');
-                    $user->update([
-                        'failed_login_attempts' => $attempts,
-                        'locked_until' => $lockedUntilStr,
-                    ]);
+            if ($user) {
+                // Kept for the record (shown nowhere as a lock): how many wrong passwords in a row.
+                $attempts = ((int) $user->failed_login_attempts) + 1;
+                $user->update(['failed_login_attempts' => $attempts]);
+            }
+
+            if (RateLimiter::tooManyAttempts($accountKey, $this->maxAttemptsPerAccount())) {
+                if ($user) {
                     SchoolService::logAction(
                         $user,
                         'LOGIN_LOCKED',
-                        "{$user->username} account locked for {$lockoutMinutes} minutes after {$attempts} failed login attempts"
+                        "{$user->username} blocked for {$this->lockoutMinutes()} minutes on device {$request->ip()} after repeated wrong passwords"
                     );
-                    return back()->with('danger', "Too many failed attempts. This account is now locked for {$lockoutMinutes} minutes.");
-                } else {
-                    $user->update(['failed_login_attempts' => $attempts]);
-                    return back()->with('danger', 'Incorrect username or password.');
                 }
+                return back()->withInput($request->only('username'))->with('danger', $this->lockedMessage(RateLimiter::availableIn($accountKey)));
             }
-            return back()->with('danger', 'Incorrect username or password.');
+
+            return back()->withInput($request->only('username'))->with('danger', 'Incorrect username or password.');
         }
 
         if (!$user->active) {
             return back()->with('danger', 'This account has been deactivated. Please contact the Headmaster.');
         }
 
-        // Clear failed attempts
+        // Correct password: forget earlier failures for this username on this device.
+        RateLimiter::clear($accountKey);
         if ($user->failed_login_attempts || $user->locked_until) {
             $user->update(['failed_login_attempts' => 0, 'locked_until' => null]);
         }
 
         Auth::login($user, false);
         session(['last_activity' => SchoolService::now()->timestamp]);
+        EnsureAuthenticated::remember($request, $user);
 
         if ($upgradedLegacyHash) {
             SchoolService::logAction($user, 'PASSWORD_HASH_UPGRADED', "{$user->username} password migrated from the old system format");
@@ -140,6 +141,37 @@ class AuthController extends Controller
         }
 
         return redirect()->route('dashboard');
+    }
+
+    /** @return array{0:string,1:string} [username+device key, device key] */
+    private function loginThrottleKeys(Request $request, string $username): array
+    {
+        $ip = (string) $request->ip();
+
+        // sha1 of the EXACT username: damtu and DAMTU are counted separately.
+        return ['login:account:' . sha1($username) . '|' . $ip, 'login:device:' . $ip];
+    }
+
+    private function maxAttemptsPerAccount(): int
+    {
+        return max(1, (int) config('kisauni.max_login_attempts', 5));
+    }
+
+    private function maxAttemptsPerDevice(): int
+    {
+        return max($this->maxAttemptsPerAccount(), (int) config('kisauni.max_login_attempts_per_ip', 50));
+    }
+
+    private function lockoutMinutes(): int
+    {
+        return max(1, (int) config('kisauni.login_lockout_minutes', 5));
+    }
+
+    private function lockedMessage(int $secondsLeft): string
+    {
+        $minutes = max(1, (int) ceil($secondsLeft / 60));
+
+        return "Too many failed attempts. Please wait about {$minutes} minute(s) and try again.";
     }
 
     public function logout()
@@ -204,14 +236,21 @@ class AuthController extends Controller
         if (!Hash::check($current, $user->password) && !password_verify($current, $user->password)) {
             return back()->with('danger', 'Your current password is incorrect.');
         }
-        if (mb_strlen($new) < 4) {
-            return back()->with('danger', 'New password must be at least 4 characters long.');
+        if (!$newUsername) {
+            return back()->with('danger', 'Username cannot be empty.');
+        }
+        if (mb_strlen($newUsername) > 191) {
+            return back()->with('danger', 'Username is too long.');
+        }
+        if ($error = PasswordPolicy::error($new, $newUsername)) {
+            return back()->with('danger', 'New ' . lcfirst($error));
         }
         if ($new !== $confirm) {
             return back()->with('danger', 'New password and confirmation do not match.');
         }
-        if (!$newUsername) {
-            return back()->with('danger', 'Username cannot be empty.');
+        if ($new === $current) {
+            // Important on first login: the temporary password given by the Headmaster must be replaced.
+            return back()->with('danger', 'Your new password must be different from your current password.');
         }
 
         $duplicate = User::usernameTaken($newUsername, $user->id);
@@ -225,6 +264,9 @@ class AuthController extends Controller
             'username' => $newUsername,
             'must_change_password' => 0,
         ]);
+        // This session stays signed in; any other open session of this account is signed out.
+        $request->session()->regenerate();
+        EnsureAuthenticated::remember($request, $user);
 
         $detail = 'User changed own password';
         if ($newUsername !== $oldUsername) {

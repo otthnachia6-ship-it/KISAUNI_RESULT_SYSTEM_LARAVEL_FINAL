@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 
 class MediaController extends Controller
@@ -18,6 +19,12 @@ class MediaController extends Controller
         $safeName = basename($filename);
         $type = self::TYPES[strtolower(pathinfo($safeName, PATHINFO_EXTENSION))] ?? null;
         if ($type === null) {
+            abort(404);
+        }
+
+        // The school logo is shown on the login page, so it stays public.
+        // Staff profile photos are only for signed-in users.
+        if (!str_starts_with($safeName, 'logo_') && !Auth::check()) {
             abort(404);
         }
 

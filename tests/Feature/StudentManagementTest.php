@@ -70,7 +70,9 @@ class StudentManagementTest extends TestCase
     public function test_register_form_is_one_card_with_all_fields_inside_the_form(): void
     {
         $html = $this->actingAs($this->hm)->get('/students/add')->assertOk()->getContent();
-        $form = substr($html, strpos($html, '<form method="POST"'), strpos($html, '</form>', strpos($html, '<form method="POST"')) - strpos($html, '<form method="POST"'));
+        // the student form (the sidebar also has a small POST form for Logout)
+        $start = strpos($html, '<form method="POST"', strpos($html, 'student-form-card') ?: 0);
+        $form = substr($html, $start, strpos($html, '</form>', $start) - $start);
         foreach (['name="reg_no"', 'name="full_name"', 'name="gender"', 'name="class_id"', 'Register Student'] as $needle) {
             $this->assertStringContainsString($needle, $form, "{$needle} must be inside the form");
         }

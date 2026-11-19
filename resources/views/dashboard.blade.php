@@ -306,15 +306,15 @@
 <script src="{{ asset('vendor/chartjs/4.4.4/chart.umd.js') }}"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const palette = {!! json_encode($chart_colors) !!};
+    const palette = @json($chart_colors);
     const classCtx = document.getElementById("classChart");
     if (classCtx) {
         new Chart(classCtx, {
             type: "doughnut",
             data: {
-                labels: {!! json_encode($cbNames) !!},
+                labels: @json($cbNames),
                 datasets: [{
-                    data: {!! json_encode($cbCounts) !!},
+                    data: @json($cbCounts),
                     backgroundColor: palette,
                     borderWidth: 2,
                     borderColor: "#fff"

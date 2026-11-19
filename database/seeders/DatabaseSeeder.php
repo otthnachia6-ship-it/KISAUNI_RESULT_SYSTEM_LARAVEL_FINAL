@@ -11,6 +11,7 @@ use App\Services\SchoolService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -84,10 +85,18 @@ class DatabaseSeeder extends Seeder
         }
 
         // 5. Seed default headmaster
+        // No fixed password in the code (it would be public on GitHub): use INITIAL_HEADMASTER_PASSWORD
+        // from .env, or a random one that is shown ONCE in the terminal. It must be changed at first login.
         if (User::where('role', SchoolService::ROLE_HEADMASTER)->count() === 0) {
+            $initialPassword = (string) env('INITIAL_HEADMASTER_PASSWORD', '');
+            if ($initialPassword === '') {
+                $initialPassword = Str::password(12, true, true, false);
+                $this->command?->warn("Headmaster account created. Username: headmaster  Temporary password: {$initialPassword}");
+                $this->command?->warn('Write it down now - it is not stored anywhere else. You must change it at first login.');
+            }
             User::create([
                 'username' => 'headmaster',
-                'password' => Hash::make('admin123'),
+                'password' => Hash::make($initialPassword),
                 'full_name' => 'Head Master',
                 'role' => SchoolService::ROLE_HEADMASTER,
                 'active' => 1,

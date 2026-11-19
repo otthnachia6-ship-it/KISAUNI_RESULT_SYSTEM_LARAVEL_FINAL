@@ -115,18 +115,41 @@ class MarksController extends Controller
             $invalidEntries = [];
             $nowStr = SchoolService::nowStr();
 
+            // Load every existing mark of these students for this exam in ONE query,
+            // instead of one query per student per subject.
+            $existingMarks = $students->isEmpty() ? collect() : DB::table('marks')
+                ->where('exam_id', $examId)
+                ->whereIn('student_id', $students->pluck('id'))
+                ->get(['id', 'student_id', 'subject_id', 'score', 'class_id'])
+                ->keyBy(fn ($m) => $m->student_id . '_' . $m->subject_id);
+
+            $toInsert = [];
+            $toUpdate = [];
+
             foreach ($students as $st) {
                 foreach ($subjects as $sub) {
                     $field = "score_{$st->id}_{$sub->id}";
+                    $existing = $existingMarks->get($st->id . '_' . $sub->id);
+
+                    // A box that was not on the page at all (e.g. a pupil added after the page was
+                    // opened, or a very large form cut short by the server) is left exactly as it is.
+                    if (!$request->has($field)) {
+                        continue;
+                    }
+
                     $val = trim((string) $request->input($field, ''));
                     $score = null;
+                    $invalid = false;
 
                     if ($val !== '') {
-                        if (!is_numeric($val)) {
+                        $num = str_replace(',', '.', $val); // "45,5" is accepted like "45.5"
+                        if (!is_numeric($num)) {
+                            $invalid = true;
                             $invalidEntries[] = "{$st->full_name} - {$sub->name}: \"{$val}\" is not a number";
                         } else {
-                            $parsed = (float) $val;
+                            $parsed = round((float) $num, 2);
                             if ($parsed < 0 || $parsed > 100) {
+                                $invalid = true;
                                 $invalidEntries[] = "{$st->full_name} - {$sub->name}: {$val} (must be between 0 and 100)";
                             } else {
                                 $score = $parsed;
@@ -134,20 +157,21 @@ class MarksController extends Controller
                         }
                     }
 
-                    $existing = Mark::where('student_id', $st->id)
-                        ->where('exam_id', $examId)
-                        ->where('subject_id', $sub->id)
-                        ->first();
+                    // A typing mistake is never saved and never wipes out a mark that was already saved.
+                    if ($invalid) {
+                        continue;
+                    }
 
                     if ($existing) {
-                        $existing->update([
-                            'score' => $score,
-                            'entered_by' => $user->id,
-                            'updated_at' => $nowStr,
-                            'class_id' => $classId,
-                        ]);
+                        // Only write rows that really changed (score, or the class the mark belongs to).
+                        $oldScore = $existing->score === null ? null : (float) $existing->score;
+                        $sameScore = ($oldScore === null && $score === null)
+                            || ($oldScore !== null && $score !== null && abs($oldScore - $score) < 1e-9);
+                        if (!$sameScore || (int) $existing->class_id !== (int) $classId) {
+                            $toUpdate[$existing->id] = $score;
+                        }
                     } else {
-                        Mark::create([
+                        $toInsert[] = [
                             'student_id' => $st->id,
                             'exam_id' => $examId,
                             'subject_id' => $sub->id,
@@ -155,22 +179,37 @@ class MarksController extends Controller
                             'score' => $score,
                             'entered_by' => $user->id,
                             'updated_at' => $nowStr,
-                        ]);
+                        ];
                     }
                 }
             }
 
-            // Upsert status to 'draft'
-            $statusRecord = ExamClassStatus::where('exam_id', $examId)->where('class_id', $classId)->first();
-            if ($statusRecord) {
-                $statusRecord->update(['status' => 'draft']);
-            } else {
-                ExamClassStatus::create([
-                    'exam_id' => $examId,
-                    'class_id' => $classId,
-                    'status' => 'draft',
-                ]);
-            }
+            // Save everything together: either all marks and the status are saved, or nothing is.
+            DB::transaction(function () use ($toUpdate, $toInsert, $examId, $classId, $user, $nowStr) {
+                foreach ($toUpdate as $markId => $score) {
+                    DB::table('marks')->where('id', $markId)->update([
+                        'score' => $score,
+                        'entered_by' => $user->id,
+                        'updated_at' => $nowStr,
+                        'class_id' => $classId,
+                    ]);
+                }
+                foreach (array_chunk($toInsert, 500) as $chunk) {
+                    DB::table('marks')->insert($chunk);
+                }
+
+                // Upsert status to 'draft'
+                $statusRecord = ExamClassStatus::where('exam_id', $examId)->where('class_id', $classId)->first();
+                if ($statusRecord) {
+                    $statusRecord->update(['status' => 'draft']);
+                } else {
+                    ExamClassStatus::create([
+                        'exam_id' => $examId,
+                        'class_id' => $classId,
+                        'status' => 'draft',
+                    ]);
+                }
+            });
 
             SchoolService::logAction($user, 'ENTER_MARKS', "exam={$examId} class={$classId}");
 
@@ -181,7 +220,7 @@ class MarksController extends Controller
                 }
                 $noun = count($invalidEntries) === 1 ? 'entry' : 'entries';
                 return redirect()->route('marks', ['exam_id' => $examId, 'class_id' => $classId])
-                    ->with('warning', "Marks saved, but " . count($invalidEntries) . " {$noun} could not be used (left blank) - please correct and re-save: {$preview}");
+                    ->with('warning', "Marks saved, but " . count($invalidEntries) . " {$noun} could not be used (the previous value was kept) - please correct and re-save: {$preview}");
             }
 
             return redirect()->route('marks', ['exam_id' => $examId, 'class_id' => $classId])
@@ -209,14 +248,29 @@ class MarksController extends Controller
             return redirect()->route('marks_select')->with('danger', 'You do not have permission to do that.');
         }
 
-        $subjectCount = DB::table('class_subjects')->where('class_id', $classId)->count();
-        $studentCount = Student::where('class_id', $classId)->where('active', 1)->count();
-        $enteredCount = Mark::where('exam_id', $examId)
-            ->where('class_id', $classId)
+        if (!Examination::whereKey($examId)->exists() || !SchoolClass::whereKey($classId)->exists()) {
+            abort(404);
+        }
+
+        // Results already with the Headmaster (or approved) cannot be sent again: that would
+        // silently turn "Approved" back into "Submitted" and hold back everyone's reports.
+        $currentStatus = ExamClassStatus::where('exam_id', $examId)->where('class_id', $classId)->value('status');
+        if (in_array($currentStatus, ['submitted', 'under_review', 'approved'], true)) {
+            return redirect()->route('marks', ['exam_id' => $examId, 'class_id' => $classId])
+                ->with('info', 'These results have already been submitted' . ($currentStatus === 'approved' ? ' and approved' : '') . '. Nothing was changed.');
+        }
+
+        // Count only marks of pupils who are in the class NOW and of subjects the class takes NOW
+        // (marks of removed pupils or dropped subjects must not make up for missing ones).
+        $subjectIds = DB::table('class_subjects')->where('class_id', $classId)->pluck('subject_id');
+        $studentIds = Student::where('class_id', $classId)->where('active', 1)->pluck('id');
+        $enteredCount = ($subjectIds->isEmpty() || $studentIds->isEmpty()) ? 0 : Mark::where('exam_id', $examId)
+            ->whereIn('student_id', $studentIds)
+            ->whereIn('subject_id', $subjectIds)
             ->whereNotNull('score')
             ->count();
 
-        $expectedCount = $subjectCount * $studentCount;
+        $expectedCount = $subjectIds->count() * $studentIds->count();
         if ($expectedCount > 0 && $enteredCount < $expectedCount) {
             $missing = $expectedCount - $enteredCount;
             return redirect()->route('marks', ['exam_id' => $examId, 'class_id' => $classId])->with(

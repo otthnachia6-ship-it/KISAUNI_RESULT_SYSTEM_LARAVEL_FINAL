@@ -272,7 +272,13 @@ function idleTimeoutInit() {
     setInterval(function () {
         const idleFor = Date.now() - lastActivity;
         if (idleFor >= IDLE_MS) {
-            window.location.href = "/logout";
+            // Logout is POST-only (CSRF protected): submit the sidebar's logout form.
+            const logoutForm = document.getElementById("logoutForm");
+            if (logoutForm) {
+                logoutForm.submit();
+            } else {
+                window.location.href = "/login";
+            }
         } else if (idleFor >= IDLE_MS - WARN_MS) {
             warningShown = true;
             const secondsLeft = Math.ceil((IDLE_MS - idleFor) / 1000);

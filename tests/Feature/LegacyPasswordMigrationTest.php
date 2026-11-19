@@ -146,7 +146,7 @@ class LegacyPasswordMigrationTest extends TestCase
         for ($i = 0; $i < 5; $i++) {
             $this->post('/login', ['username' => 'thamra', 'password' => 'bad' . $i]);
         }
-        $this->assertNotNull($u->fresh()->locked_until);
+        $this->assertSame(5, (int) $u->fresh()->failed_login_attempts);
         // once locked, even the right password is refused and no scrypt work is done
         $t = microtime(true);
         $this->post('/login', ['username' => 'thamra', 'password' => self::SCRYPT_A['pw']])->assertSessionHas('danger');

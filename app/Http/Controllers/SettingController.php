@@ -16,19 +16,31 @@ class SettingController extends Controller
         $user = Auth::user();
 
         if ($request->isMethod('post')) {
-            $schoolName = trim($request->input('school_name', ''));
-            $academicYear = trim($request->input('academic_year', ''));
+            $schoolName = trim((string) $request->input('school_name', ''));
+            $academicYear = trim((string) $request->input('academic_year', ''));
+
+            // Validate everything first, so a bad value never leaves settings half-saved.
+            // An empty academic year would make the exams, marks and reports pages look empty.
+            if ($schoolName === '') {
+                return back()->withInput()->with('danger', 'School name cannot be empty.');
+            }
+            if (!preg_match('/^\d{4}([\/-]\d{4})?$/', $academicYear)) {
+                return back()->withInput()->with('danger', 'Academic year must be a year such as 2026 (or 2026/2027).');
+            }
+
+            $ext = null;
+            if ($request->hasFile('logo')) {
+                $ext = UploadedImage::extension($request->file('logo')); // decided from the real file content, not its name
+                if ($ext === null) {
+                    return back()->withInput()->with('danger', 'Only PNG or JPG files are allowed for the logo.');
+                }
+            }
 
             Setting::set('school_name', $schoolName);
             Setting::set('academic_year', $academicYear);
 
-            if ($request->hasFile('logo')) {
+            if ($ext !== null) {
                 $file = $request->file('logo');
-                $ext = UploadedImage::extension($file); // decided from the real file content, not its name
-                if ($ext === null) {
-                    return back()->with('danger', 'Only PNG or JPG files are allowed for the logo.');
-                }
-
                 $uploadDir = storage_path('app/uploads');
                 if (!File::exists($uploadDir)) {
                     File::makeDirectory($uploadDir, 0755, true, true);

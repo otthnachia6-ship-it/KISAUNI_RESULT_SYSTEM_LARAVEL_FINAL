@@ -61,12 +61,12 @@ class UsernameCaseSensitivityTest extends TestCase
     {
         $this->post('/login', ['username' => 'damtu', 'password' => 'Pass-one#1'])->assertRedirect(route('dashboard'));
         $this->assertAuthenticatedAs($this->damtu);
-        $this->get('/logout');
+        $this->post('/logout');
         $this->assertGuest();
 
         $this->post('/login', ['username' => 'DAMTU', 'password' => 'Pass-two#2'])->assertRedirect(route('dashboard'));
         $this->assertAuthenticatedAs($this->damtuUpper);
-        $this->get('/logout');
+        $this->post('/logout');
         $this->assertGuest();
     }
 
@@ -85,14 +85,13 @@ class UsernameCaseSensitivityTest extends TestCase
         for ($i = 0; $i < 5; $i++) {
             $this->post('/login', ['username' => 'damtu', 'password' => 'wrong']);
         }
-        $this->assertNotNull($this->damtu->fresh()->locked_until, 'damtu should be locked');
-        $this->assertSame(0, (int) $this->damtuUpper->fresh()->failed_login_attempts);
-        $this->assertNull($this->damtuUpper->fresh()->locked_until, 'DAMTU must not be locked by damtu\'s failures');
+        $this->assertSame(5, (int) $this->damtu->fresh()->failed_login_attempts, 'damtu should have 5 failures');
+        $this->assertSame(0, (int) $this->damtuUpper->fresh()->failed_login_attempts, 'DAMTU must not be affected by damtu\'s failures');
 
         // DAMTU can still log in; damtu cannot (even with the right password).
         $this->post('/login', ['username' => 'DAMTU', 'password' => 'Pass-two#2'])->assertRedirect(route('dashboard'));
         $this->assertAuthenticatedAs($this->damtuUpper);
-        $this->get('/logout');
+        $this->post('/logout');
         $this->post('/login', ['username' => 'damtu', 'password' => 'Pass-one#1']);
         $this->assertGuest();
     }
@@ -104,7 +103,7 @@ class UsernameCaseSensitivityTest extends TestCase
 
         $this->post('/login', ['username' => 'عارف', 'password' => 'Arif-ar#2'])->assertRedirect(route('dashboard'));
         $this->assertAuthenticatedAs($this->arifAr);
-        $this->get('/logout');
+        $this->post('/logout');
 
         $this->post('/login', ['username' => 'Arif', 'password' => 'Arif-ar#2']);
         $this->assertGuest();

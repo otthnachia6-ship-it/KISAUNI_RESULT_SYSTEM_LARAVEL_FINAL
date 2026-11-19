@@ -12,6 +12,7 @@ use App\Models\Student;
 use App\Models\Subject;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class SchoolService
@@ -96,7 +97,8 @@ class SchoolService
 
     public const EXAM_TYPES = ['MID TERM', 'FIRST TERM', 'SECOND MID TERM', 'SECOND TERM'];
 
-    public const AUDIT_LOG_RETENTION_DAYS = 3;
+    /** Default only; the real value is config('kisauni.audit_log_retention_days') (AUDIT_LOG_RETENTION_DAYS in .env). */
+    public const AUDIT_LOG_RETENTION_DAYS = 5;
 
     public const MALE_NAMES = [
         'mohamed', 'muhammad', 'mohammed', 'ally', 'ali', 'hassan', 'hussein',
@@ -232,12 +234,20 @@ class SchoolService
             'created_at' => static::nowStr(),
         ]);
 
-        static::purgeOldAuditLogs();
+        // Old entries are removed at most once a day, not on every single action.
+        if (Cache::add('audit_log_purged_' . static::now()->format('Y-m-d'), true, 86400)) {
+            static::purgeOldAuditLogs();
+        }
+    }
+
+    public static function auditLogRetentionDays(): int
+    {
+        return max(1, (int) config('kisauni.audit_log_retention_days', static::AUDIT_LOG_RETENTION_DAYS));
     }
 
     public static function purgeOldAuditLogs(): void
     {
-        $cutoff = static::now()->subDays(static::AUDIT_LOG_RETENTION_DAYS)->format('Y-m-d H:i:s');
+        $cutoff = static::now()->subDays(static::auditLogRetentionDays())->format('Y-m-d H:i:s');
         AuditLog::where('created_at', '<', $cutoff)->delete();
     }
 
@@ -253,7 +263,12 @@ class SchoolService
             ->get();
     }
 
-    public static function humanizeLogDetails(?string $details): ?string
+    /**
+     * Turns "exam=3 class=7..." into "MID TERM 2026 - Standard One A...".
+     * $exams / $classes are optional look-up tables (id => model) so a long list of log lines
+     * needs two queries in total instead of two queries per line.
+     */
+    public static function humanizeLogDetails(?string $details, ?array $exams = null, ?array $classes = null): ?string
     {
         if (!$details) {
             return $details;
@@ -263,8 +278,8 @@ class SchoolService
             $classId = (int) $matches[2];
             $rest = $matches[3];
 
-            $exam = Examination::find($examId);
-            $cls = SchoolClass::find($classId);
+            $exam = $exams !== null ? ($exams[$examId] ?? null) : Examination::find($examId);
+            $cls = $classes !== null ? ($classes[$classId] ?? null) : SchoolClass::find($classId);
 
             $examLabel = $exam ? "{$exam->exam_type} {$exam->academic_year}" : "Exam #{$examId}";
             $classLabel = $cls ? $cls->name : "Class #{$classId}";
@@ -276,18 +291,69 @@ class SchoolService
 
     public static function humanizeLogs($rows): array
     {
+        $rows = collect($rows)->map(fn ($r) => is_array($r) ? $r : $r->toArray());
+
+        $examIds = [];
+        $classIds = [];
+        foreach ($rows as $arr) {
+            if (preg_match('/^exam=(\d+) class=(\d+)/', (string) ($arr['details'] ?? ''), $m)) {
+                $examIds[(int) $m[1]] = true;
+                $classIds[(int) $m[2]] = true;
+            }
+        }
+        $exams = $examIds ? Examination::whereIn('id', array_keys($examIds))->get()->keyBy('id')->all() : [];
+        $classes = $classIds ? SchoolClass::whereIn('id', array_keys($classIds))->get()->keyBy('id')->all() : [];
+
         $out = [];
-        foreach ($rows as $r) {
-            $arr = is_array($r) ? $r : $r->toArray();
-            $arr['details'] = static::humanizeLogDetails($arr['details'] ?? null);
+        foreach ($rows as $arr) {
+            $arr['details'] = static::humanizeLogDetails($arr['details'] ?? null, $exams, $classes);
             $out[] = $arr;
         }
         return $out;
     }
 
-    public static function classCanPromote($class, $currentAcademicYear): bool
+    /**
+     * The ONE place that links a class teacher and a class. Access to a class is decided by
+     * users.class_id, so both sides must always agree:
+     *  - the class gets $teacherId (or no teacher when null);
+     *  - any OTHER user who still pointed at this class loses it (the old teacher loses access);
+     *  - the teacher leaves the class they had before (that class is left without a teacher).
+     */
+    public static function assignClassTeacher(int $classId, ?int $teacherId): void
     {
-        return true;
+        DB::transaction(function () use ($classId, $teacherId) {
+            User::where('class_id', $classId)
+                ->when($teacherId, fn ($q) => $q->where('id', '!=', $teacherId))
+                ->update(['class_id' => null]);
+            if ($teacherId) {
+                SchoolClass::where('teacher_id', $teacherId)->where('id', '!=', $classId)->update(['teacher_id' => null]);
+            }
+
+            SchoolClass::where('id', $classId)->update(['teacher_id' => $teacherId]);
+            if ($teacherId) {
+                User::where('id', $teacherId)->update(['class_id' => $classId]);
+            }
+        });
+    }
+
+    /** Takes a user away from whatever class they were teaching (both sides). */
+    public static function unassignClassTeacher(int $userId): void
+    {
+        DB::transaction(function () use ($userId) {
+            SchoolClass::where('teacher_id', $userId)->update(['teacher_id' => null]);
+            User::where('id', $userId)->update(['class_id' => null]);
+        });
+    }
+
+    /**
+     * A class is promoted at most once per academic year. $targetYear is the academic year the
+     * pupils are being promoted INTO: the current year, or the new year the Headmaster is
+     * starting in the same step. last_promoted_year records the year of the last promotion
+     * (a newly created class starts with the year it was created in).
+     */
+    public static function classCanPromote($class, $targetYear): bool
+    {
+        return (string) ($class->last_promoted_year ?? '') !== (string) $targetYear;
     }
 
     public static function guessPromotionTarget($class, $allClassesByName)
@@ -673,6 +739,24 @@ class SchoolService
         ];
     }
 
+    /**
+     * The class a pupil's marks for an exam were recorded in (marks.class_id), or $fallback when
+     * there are none. Keeps old results correct after the pupil has been promoted.
+     */
+    public static function classIdForStudentExam(int $studentId, int $examId, int $fallback): int
+    {
+        $classId = DB::table('marks')
+            ->where('student_id', $studentId)
+            ->where('exam_id', $examId)
+            ->whereNotNull('class_id')
+            ->select('class_id', DB::raw('COUNT(*) as n'))
+            ->groupBy('class_id')
+            ->orderByDesc('n')
+            ->value('class_id');
+
+        return $classId ? (int) $classId : $fallback;
+    }
+
     public static function loadStudentReportContext($studentId, $examId, $user): array
     {
         $student = Student::find($studentId);
@@ -695,8 +779,14 @@ class SchoolService
             return [null, 'not_released'];
         }
 
-        $cls = SchoolClass::find($student->class_id);
-        $teacher = $cls && $cls->teacher_id ? User::find($cls->teacher_id) : null;
+        // The report is about the class the pupil was in FOR THAT EXAM (after promotion the pupil
+        // is in a new class, but last year's marks and ranking belong to last year's class).
+        $cls = SchoolClass::find(static::classIdForStudentExam((int) $studentId, (int) $examId, (int) $student->class_id))
+            ?? SchoolClass::find($student->class_id);
+        if (!$cls) {
+            return [null, null];
+        }
+        $teacher = $cls->teacher_id ? User::find($cls->teacher_id) : null;
 
         [$subjects, $results] = static::computeClassResults($cls->id, $examId, $studentId);
 

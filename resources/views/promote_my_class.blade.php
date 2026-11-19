@@ -17,9 +17,10 @@
 @if(!$can_promote)
 <div class="alert alert-warning">
     <i class="bi bi-lock-fill me-1"></i>
-    Promotion is locked for now. The Headmaster needs to change the academic year in
-    <strong>Settings</strong> first (currently <strong>{{ $current_academic_year }}</strong>) before you
-    can promote your class. Please check back once the new academic year has been set.
+    Promotion is locked for now: {{ $my_class->name }} has already been promoted (or was set up) for
+    <strong>{{ $current_academic_year }}</strong>, and a class is promoted once per academic year.
+    When the new year starts, the Headmaster changes the academic year in <strong>Settings</strong>;
+    you can then promote your class.
 </div>
 @elseif($student_count == 0)
 <div class="alert alert-info">There are no students currently enrolled in {{ $my_class->name }}, so there is nothing to move yet.</div>

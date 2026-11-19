@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SchoolClass;
 use App\Models\User;
 use App\Services\SchoolService;
+use App\Support\PasswordPolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -59,6 +60,10 @@ class UserController extends Controller
 
         $classId = ($role === SchoolService::ROLE_CLASS_TEACHER) ? ($request->input('class_id') ?: null) : null;
 
+        if ($error = $this->accountError($username, $fullName, $password, true, $classId)) {
+            return back()->withInput($request->except('password'))->with('danger', $error);
+        }
+
         if (User::usernameTaken($username)) {
             return back()->withInput()->with('danger', 'This username is already taken.');
         }
@@ -76,7 +81,8 @@ class UserController extends Controller
         ]);
 
         if ($role === SchoolService::ROLE_CLASS_TEACHER && $classId) {
-            SchoolClass::where('id', $classId)->update(['teacher_id' => $newUser->id]);
+            // Also takes the class away from its previous teacher, so only one teacher has access.
+            SchoolService::assignClassTeacher((int) $classId, (int) $newUser->id);
         }
 
         SchoolService::logAction($user, 'ADD_USER', "{$username} (" . ($title ?: $role) . ')');
@@ -85,6 +91,37 @@ class UserController extends Controller
             'success',
             "Account for {$fullName} created successfully. Share the username and temporary password with them — they will be asked to set a new password on first login."
         );
+    }
+
+    /**
+     * Checks the account fields. Returns a message when something cannot be used, or null when all is fine.
+     * The password rule is the same one used on the Change Password page (PasswordPolicy).
+     */
+    private function accountError(string $username, string $fullName, string $password, bool $passwordRequired, $classId): ?string
+    {
+        if ($username === '') {
+            return 'Username cannot be empty.';
+        }
+        if (mb_strlen($username) > 191) {
+            return 'Username is too long.';
+        }
+        if ($fullName === '') {
+            return 'Full Name cannot be empty.';
+        }
+        if (mb_strlen($fullName) > 191) {
+            return 'Full Name is too long.';
+        }
+        if ($passwordRequired && $password === '') {
+            return 'Please give a temporary password for the new account.';
+        }
+        if ($password !== '' && ($passwordError = PasswordPolicy::error($password, $username))) {
+            return $passwordError;
+        }
+        if ($classId && !SchoolClass::whereKey($classId)->exists()) {
+            return 'Please choose a valid Class.';
+        }
+
+        return null;
     }
 
     public function showEdit($id)
@@ -125,9 +162,11 @@ class UserController extends Controller
         $fullName = trim($request->input('full_name', ''));
         $roleChoice = $request->input('role');
         $newPassword = trim($request->input('password', ''));
+        $requestedClass = $request->input('class_id') ?: null;
 
-        if (!$username) {
-            return back()->withInput()->with('danger', 'Username cannot be empty.');
+        // Password is optional when editing: empty means "keep the current password".
+        if ($error = $this->accountError($username, $fullName, $newPassword, false, $requestedClass)) {
+            return back()->withInput($request->except('password'))->with('danger', $error);
         }
 
         $duplicate = User::usernameTaken($username, (int) $id);
@@ -147,6 +186,17 @@ class UserController extends Controller
 
         $classId = ($role === SchoolService::ROLE_CLASS_TEACHER) ? ($request->input('class_id') ?: null) : null;
 
+        // Never leave the school without anyone who can manage it.
+        if ($targetUser->isHeadmaster() && $role !== SchoolService::ROLE_HEADMASTER) {
+            if ((int) $targetUser->id === (int) $currentUser->id) {
+                return back()->withInput($request->except('password'))->with('danger', 'You cannot remove Headmaster rights from your own account. Ask another Headmaster/Administrator to do it.');
+            }
+            $otherHeads = User::where('role', SchoolService::ROLE_HEADMASTER)->where('active', 1)->where('id', '!=', $targetUser->id)->count();
+            if ($otherHeads === 0) {
+                return back()->withInput($request->except('password'))->with('danger', 'This is the only active Headmaster/Administrator account, so it must keep that role.');
+            }
+        }
+
         $oldUsername = $targetUser->username;
         $updateData = [
             'username' => $username,
@@ -161,14 +211,23 @@ class UserController extends Controller
             $updateData['must_change_password'] = 1;
         }
 
-        $targetUser->update($updateData);
+        unset($updateData['class_id']); // set below, together with the class side
+        DB::transaction(function () use ($targetUser, $updateData, $role, $classId) {
+            $targetUser->update($updateData);
 
-        SchoolClass::where('teacher_id', $id)->update(['teacher_id' => null]);
-        if ($role === SchoolService::ROLE_CLASS_TEACHER && $classId) {
-            SchoolClass::where('id', $classId)->update(['teacher_id' => $id]);
-        }
+            // Keep users.class_id and classes.teacher_id in step: the previous teacher of the
+            // chosen class loses access, and this user leaves any class they had before.
+            if ($role === SchoolService::ROLE_CLASS_TEACHER && $classId) {
+                SchoolService::assignClassTeacher((int) $classId, (int) $targetUser->id);
+            } else {
+                SchoolService::unassignClassTeacher((int) $targetUser->id);
+            }
+        });
 
         $detail = $oldUsername . ($username !== $oldUsername ? " -> renamed to {$username}" : '');
+        if ($newPassword !== '') {
+            $detail .= ' (password reset; their open sessions are signed out)';
+        }
         SchoolService::logAction($currentUser, 'EDIT_USER', $detail);
 
         return redirect()->route('users')->with('success', 'User details updated successfully.');

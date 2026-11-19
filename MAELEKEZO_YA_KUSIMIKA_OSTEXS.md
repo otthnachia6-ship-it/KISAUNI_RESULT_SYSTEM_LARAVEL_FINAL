@@ -77,7 +77,9 @@ Hakikisha mafolda yafuatayo yana ruhusa ya kuandika (`chmod 775` au `chmod 755`)
 
 - **URL ya Kuingia:** `https://ostexs.com/login`
 - **Username:** `headmaster`
-- **Password:** `admin123`
+- **Password:** hakuna nenosiri la kudumu. `php artisan db:seed` huonyesha nenosiri la muda mara moja
+  kwenye terminal (au hutumia `INITIAL_HEADMASTER_PASSWORD` kutoka `.env` ukiliweka). Ukitumia faili la
+  SQL badala yake, ingia mara moja baada ya kulipakia na ubadilishe nenosiri.
 
 *Kumbuka: Kama ilivyokuwa kwenye mfumo wa awali, mfumo utakutaka ubadilishe nenosiri na kuchagua jina jipya la mtumiaji mara tu unapoingia kwa mara ya kwanza kwa usalama wa shule.*
 

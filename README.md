@@ -167,9 +167,13 @@ php artisan optimize:clear
 
 - **URL**: `https://ostexs.com/login`
 - **Username**: `headmaster`
-- **Password**: `admin123`
+- **Password**: there is no fixed default password. `php artisan db:seed` prints a random temporary
+  password once in the terminal (or uses `INITIAL_HEADMASTER_PASSWORD` from `.env` if you set it).
+  If you import `database/ostexs_school_system_mysql.sql` instead, ask the developer for the
+  temporary password and log in immediately after importing.
 
-*Note: In accordance with the original system security policy, newly seeded accounts require a password change on first login.*
+*The temporary password must be changed (to a different one) at first login. Run `php artisan db:seed`
+only on a new, empty database.*
 
 ---
 

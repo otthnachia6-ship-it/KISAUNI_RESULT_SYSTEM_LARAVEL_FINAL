@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Examination;
 use App\Models\SchoolClass;
+use App\Models\Setting;
 use App\Models\Subject;
 use App\Services\SchoolService;
 use App\Services\Xlsx;
@@ -60,7 +61,7 @@ class MarksExcelController extends Controller
 
         $code = $subject->subject_code ?: '';
         $rows = [
-            [['v' => 'KISAUNI PRIMARY SCHOOL - Marks Sheet', 's' => Xlsx::S_TITLE]],
+            [['v' => strtoupper((string) Setting::get('school_name', SchoolService::DEFAULT_SCHOOL_NAME)) . ' - Marks Sheet', 's' => Xlsx::S_TITLE]],
             [['v' => 'Class', 's' => Xlsx::S_LABEL], $cls->name],
             [['v' => 'Examination', 's' => Xlsx::S_LABEL], "{$exam->exam_type} - {$exam->academic_year}"],
             [['v' => 'Subject', 's' => Xlsx::S_LABEL], $subject->name],

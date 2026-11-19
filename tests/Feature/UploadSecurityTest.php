@@ -91,7 +91,7 @@ class UploadSecurityTest extends TestCase
         $name = 'zz_test_real.png';
         UploadedFile::fake()->image($name, 20, 20)->move($this->dir, $name);
 
-        $r = $this->get('/media/' . $name)->assertOk();
+        $r = $this->actingAs($this->hm)->get('/media/' . $name)->assertOk();
         $this->assertSame('image/png', $r->headers->get('Content-Type'));
         $this->assertSame('nosniff', $r->headers->get('X-Content-Type-Options'));
     }
@@ -101,10 +101,22 @@ class UploadSecurityTest extends TestCase
         File::put($this->dir . '/zz_test_evil.jpg', '<html><script>alert(1)</script></html>');
         File::put($this->dir . '/zz_test_page.html', '<html>hi</html>');
 
-        $r = $this->get('/media/zz_test_evil.jpg')->assertOk();
+        $r = $this->actingAs($this->hm)->get('/media/zz_test_evil.jpg')->assertOk();
         $this->assertSame('image/jpeg', $r->headers->get('Content-Type'), 'type comes from the extension whitelist, never from the content');
         $this->assertSame('nosniff', $r->headers->get('X-Content-Type-Options'));
 
         $this->get('/media/zz_test_page.html')->assertNotFound();
+    }
+    public function test_staff_photos_need_a_login_but_the_school_logo_is_public(): void
+    {
+        UploadedFile::fake()->image('user_99_1.png', 20, 20)->move($this->dir, 'user_99_1.png');
+        UploadedFile::fake()->image('logo_1.png', 20, 20)->move($this->dir, 'logo_1.png');
+        try {
+            $this->get('/media/user_99_1.png')->assertNotFound();
+            $this->get('/media/logo_1.png')->assertOk(); // shown on the login page
+            $this->actingAs($this->hm)->get('/media/user_99_1.png')->assertOk();
+        } finally {
+            File::delete([$this->dir . '/user_99_1.png', $this->dir . '/logo_1.png']);
+        }
     }
 }

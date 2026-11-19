@@ -25,7 +25,7 @@
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <div>
                     <h6 class="mb-0">{{ ucwords(strtolower($h['exam']['exam_type'])) }}</h6>
-                    <span class="text-muted small">Academic Year {{ $h['exam']['academic_year'] }}</span>
+                    <span class="text-muted small">Academic Year {{ $h['exam']['academic_year'] }}@if(!empty($h['class_name'])) &middot; {{ $h['class_name'] }}@endif</span>
                 </div>
                 <span class="grade-badge grade-{{ $h['result']['grade'] }}">{{ $h['result']['grade'] }}</span>
             </div>

@@ -98,6 +98,10 @@ class StudentController extends Controller
             $error = 'This Reg No is already registered in the system.';
         } elseif ($user->isClassTeacher() && (string)$classId !== (string)$user->class_id) {
             $error = 'You can only register students for your own assigned class.';
+        } elseif (!SchoolClass::whereKey($classId)->exists()) {
+            $error = 'Please choose a valid Class.';
+        } elseif (mb_strlen($fullName) > 191) {
+            $error = 'Full Name is too long.';
         }
 
         if ($error) {
@@ -164,11 +168,27 @@ class StudentController extends Controller
         if (!$classId) {
             return back()->with('danger', 'Please select a Class before saving.');
         }
+        if (!SchoolClass::whereKey($classId)->exists()) {
+            return back()->with('danger', 'Please choose a valid Class.');
+        }
+
+        $regNos = is_array($regNos) ? $regNos : [];
+        $fullNames = is_array($fullNames) ? $fullNames : [];
+        $genders = is_array($genders) ? $genders : [];
 
         $rowsOut = [];
         $toInsert = [];
         $seenRegNos = [];
         $errors = [];
+
+        // Which of the typed Reg Nos already exist - ONE query instead of one per row.
+        $typed = array_values(array_filter(array_map(fn ($r) => trim((string) $r), $regNos), fn ($r) => $r !== ''));
+        $alreadyRegistered = [];
+        foreach (array_chunk($typed, 500) as $chunk) {
+            foreach (Student::whereIn('reg_no', $chunk)->pluck('reg_no') as $taken) {
+                $alreadyRegistered[(string) $taken] = true;
+            }
+        }
 
         $count = max(count($regNos), count($fullNames), count($genders));
         for ($i = 0; $i < $count; $i++) {
@@ -188,18 +208,24 @@ class StudentController extends Controller
                 continue;
             }
 
+            // (Messages are plain text: the page escapes them when it shows them.)
             if ($regError = $this->regNoError($regNo)) {
-                $errors[] = "Row {$rowNum}: " . e($regError);
+                $errors[] = "Row {$rowNum}: {$regError}";
+                continue;
+            }
+
+            if (mb_strlen($fullName) > 191) {
+                $errors[] = "Row {$rowNum}: Full Name is too long.";
                 continue;
             }
 
             if (in_array($regNo, $seenRegNos, true)) {
-                $errors[] = "Row {$rowNum}: Reg No '" . e($regNo) . "' is duplicated in this list.";
+                $errors[] = "Row {$rowNum}: Reg No '{$regNo}' is duplicated in this list.";
                 continue;
             }
 
-            if (Student::where('reg_no', $regNo)->exists()) {
-                $errors[] = "Row {$rowNum}: Reg No '" . e($regNo) . "' is already registered in the system.";
+            if (isset($alreadyRegistered[$regNo])) {
+                $errors[] = "Row {$rowNum}: Reg No '{$regNo}' is already registered in the system.";
                 continue;
             }
 
@@ -212,17 +238,19 @@ class StudentController extends Controller
         }
 
         $nowStr = SchoolService::nowStr();
-        foreach ($toInsert as [$regNo, $fullName, $gender]) {
-            Student::create([
-                'reg_no' => $regNo,
-                'full_name' => $fullName,
-                'gender' => $gender,
-                'gender_confirmed' => 1,
-                'class_id' => $classId,
-                'active' => 1,
-                'created_at' => $nowStr,
-            ]);
-        }
+        DB::transaction(function () use ($toInsert, $classId, $nowStr) {
+            foreach ($toInsert as [$regNo, $fullName, $gender]) {
+                Student::create([
+                    'reg_no' => $regNo,
+                    'full_name' => $fullName,
+                    'gender' => $gender,
+                    'gender_confirmed' => 1,
+                    'class_id' => $classId,
+                    'active' => 1,
+                    'created_at' => $nowStr,
+                ]);
+            }
+        });
 
         if (!empty($toInsert)) {
             SchoolService::logAction(
@@ -236,16 +264,20 @@ class StudentController extends Controller
             $savedRegNos = array_column($toInsert, 0);
             $remainingRows = array_values(array_filter($rowsOut, fn($r) => !in_array($r['reg_no'], $savedRegNos, true)));
 
-            $msg = implode('<br>', $errors);
+            $msg = implode("\n", $errors);
             if (!empty($toInsert)) {
-                $msg .= '<br>' . count($toInsert) . ' student(s) saved successfully. Please fix the row(s) above and save again for the rest.';
+                $msg .= "\n" . count($toInsert) . ' student(s) saved successfully. Please fix the row(s) above and save again for the rest.';
             }
+
+            // The page is drawn straight away (not redirected), so the message is put in the
+            // session for THIS page only - otherwise the teacher would never see what went wrong.
+            session()->now('danger', $msg);
 
             return view('student_form_bulk', [
                 'classes' => $classes,
                 'rows' => $remainingRows,
                 'selected_class' => $classId,
-            ])->with('danger', $msg);
+            ]);
         }
 
         return redirect()->route('students')
@@ -299,6 +331,16 @@ class StudentController extends Controller
 
         if ($regNo === '') {
             return back()->withInput()->with('danger', 'Reg No is required.');
+        }
+        if ($fullName === '') {
+            return back()->withInput()->with('danger', 'Full Name is required.');
+        }
+        if (!$classId || !SchoolClass::whereKey($classId)->exists()) {
+            return back()->withInput()->with('danger', 'Please choose a valid Class.');
+        }
+        // A class teacher may edit students of their own class only, and may not move them out of it.
+        if ($user->isClassTeacher() && (int) $classId !== (int) $user->class_id) {
+            return back()->withInput()->with('danger', 'You can only keep students in your own assigned class. Ask the Headmaster to move a student to another class.');
         }
         if ($regError = $this->regNoError($regNo)) {
             return back()->withInput()->with('danger', $regError);
@@ -407,10 +449,17 @@ class StudentController extends Controller
             ->pluck('exam_id')
             ->toArray();
 
+        $exams = Examination::whereIn('id', $examIds)->get()->keyBy('id');
         $history = [];
         foreach ($examIds as $examId) {
-            $exam = Examination::find($examId);
-            [$subjects, $results] = SchoolService::computeClassResults($student->class_id, $examId, $id);
+            $exam = $exams[$examId] ?? null;
+            if (!$exam) {
+                continue;
+            }
+            // Each exam is ranked within the class the pupil was in AT THAT TIME, so a promoted
+            // pupil keeps last year's results (they were recorded under last year's class).
+            $examClassId = SchoolService::classIdForStudentExam((int) $id, (int) $examId, (int) $student->class_id);
+            [$subjects, $results] = SchoolService::computeClassResults($examClassId, $examId, $id);
 
             $myResult = null;
             foreach ($results as $r) {
@@ -423,6 +472,7 @@ class StudentController extends Controller
             if ($myResult && $myResult['subjects_entered'] > 0) {
                 $history[] = [
                     'exam' => $exam->toArray(),
+                    'class_name' => SchoolClass::whereKey($examClassId)->value('name'),
                     'result' => $myResult,
                     'total_students' => count($results),
                 ];

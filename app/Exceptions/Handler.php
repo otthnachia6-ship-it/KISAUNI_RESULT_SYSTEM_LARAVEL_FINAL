@@ -3,6 +3,9 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
+use Illuminate\Session\TokenMismatchException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -45,6 +48,22 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             //
+        });
+
+        // "419 Page Expired" is confusing for teachers. When a form is sent after the
+        // session has expired, send them somewhere sensible with a plain explanation.
+        // (Laravel turns the TokenMismatchException into a 419 HttpException before these callbacks run.)
+        $this->renderable(function (HttpException $e, Request $request) {
+            if (!($e->getPrevious() instanceof TokenMismatchException) || $request->expectsJson()) {
+                return null;
+            }
+            if ($request->routeIs('logout')) {
+                return redirect()->route('login')->with('info', 'You have been logged out.');
+            }
+
+            return redirect()->back()
+                ->withInput($request->except($this->dontFlash))
+                ->with('warning', 'This page had expired, so nothing was saved. Please try again.');
         });
     }
 }

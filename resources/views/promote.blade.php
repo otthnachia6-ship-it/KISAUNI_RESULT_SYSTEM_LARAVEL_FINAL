@@ -43,13 +43,14 @@ all history stays searchable under <a href="{{ route('records') }}">Exam Records
                         <span class="badge bg-success-subtle text-success">Ready to promote</span>
                         @else
                         <span class="badge bg-secondary-subtle text-secondary">Already promoted for {{ $current_academic_year }}</span>
+                        <div class="form-text">Moves only if you enter a new academic year above.</div>
                         @endif
                     </td>
                     <td>
-                        <select name="target_{{ $item['cls']->id }}" class="form-select form-select-sm" @if(!$item['can_promote']) disabled @endif>
+                        <select name="target_{{ $item['cls']->id }}" class="form-select form-select-sm">
                             <option value="">-- Leave unchanged (skip this class) --</option>
-                            @if($item['cls']->standard && $item['cls']->standard >= 7)
-                            <option value="graduate" @if($item['can_promote']) selected @endif>Graduate / Complete school</option>
+                            @if(!$item['cls']->standard || $item['cls']->standard >= 7)
+                            <option value="graduate" selected>Graduate / Complete school</option>
                             @endif
                             @foreach($all_classes as $c)
                             @if($c->id != $item['cls']->id)

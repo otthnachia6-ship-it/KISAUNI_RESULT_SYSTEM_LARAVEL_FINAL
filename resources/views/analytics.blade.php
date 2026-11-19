@@ -217,10 +217,10 @@ document.addEventListener("DOMContentLoaded", function () {
         new Chart(trendCtx, {
             type: "line",
             data: {
-                labels: {!! json_encode(array_column($trend, 'label')) !!},
+                labels: @json(array_column($trend, 'label')),
                 datasets: [{
                     label: "Average",
-                    data: {!! json_encode(array_column($trend, 'average')) !!},
+                    data: @json(array_column($trend, 'average')),
                     borderColor: "#2563eb",
                     backgroundColor: "rgba(37,99,235,0.1)",
                     borderWidth: 2,

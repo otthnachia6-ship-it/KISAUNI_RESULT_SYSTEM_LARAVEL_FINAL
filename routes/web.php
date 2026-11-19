@@ -31,7 +31,8 @@ Route::match(['get', 'post'], '/forgot-password', [AuthController::class, 'forgo
 
 // Authenticated routes
 Route::middleware(['auth', 'no_cache'])->group(function () {
-    Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
+    // POST only (with the CSRF token), so another website cannot sign a teacher out.
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::match(['get', 'post'], '/change-password', [AuthController::class, 'changePassword'])->name('change_password');
     Route::match(['get', 'post'], '/profile', [AuthController::class, 'profile'])->name('profile');
     Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');

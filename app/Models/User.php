@@ -75,6 +75,16 @@ class User extends Authenticatable
             ->contains(fn (self $u) => $u->username === $username);
     }
 
+    /**
+     * A fingerprint of the current password hash, kept in the session at login.
+     * When the password changes (for example the Headmaster resets it), every older
+     * session no longer matches and is signed out. The hash itself never goes into the session.
+     */
+    public function passwordStamp(): string
+    {
+        return hash_hmac('sha256', (string) $this->password, (string) config('app.key'));
+    }
+
     public function isHeadmaster(): bool
     {
         return $this->role === 'headmaster';
