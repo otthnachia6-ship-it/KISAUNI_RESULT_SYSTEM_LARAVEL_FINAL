@@ -1,0 +1,4 @@
+# Shell scripts run on the Linux server: always keep Unix line endings,
+# even when the repository is checked out on Windows.
+*.sh text eol=lf
+artisan text eol=lf
