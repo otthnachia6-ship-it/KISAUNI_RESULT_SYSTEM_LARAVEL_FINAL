@@ -37,6 +37,8 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            // During maintenance only the signed-in Developer passes (not just a browser with the bypass cookie).
+            \App\Http\Middleware\EnforceMaintenanceForSchoolUsers::class,
             \App\Http\Middleware\CheckIdleTimeout::class,
             \App\Http\Middleware\EnforcePasswordChange::class,
         ],
@@ -69,6 +71,7 @@ class Kernel extends HttpKernel
 
         // Custom application middleware
         'headmaster' => \App\Http\Middleware\EnsureHeadmaster::class,
+        'developer' => \App\Http\Middleware\EnsureDeveloper::class,
         'no_cache' => \App\Http\Middleware\NoCacheHeaders::class,
     ];
 }

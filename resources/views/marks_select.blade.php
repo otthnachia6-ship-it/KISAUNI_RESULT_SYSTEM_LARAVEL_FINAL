@@ -11,7 +11,7 @@
 <div class="alert alert-warning" style="max-width:550px;">
     <i class="bi bi-exclamation-triangle me-1"></i>
     No examinations have been added yet for Academic Year <strong>{{ $current_academic_year }}</strong>.
-    @if($session_user->role === $ROLE_HEADMASTER)
+    @if($session_user->hasHeadmasterAccess())
     Go to <a href="{{ route('examinations') }}">Examinations</a> to add one.
     @else
     Please ask the Headmaster to add one.

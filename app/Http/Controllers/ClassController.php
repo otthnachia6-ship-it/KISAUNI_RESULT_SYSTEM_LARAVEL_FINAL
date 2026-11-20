@@ -21,7 +21,7 @@ class ClassController extends Controller
         $user = Auth::user();
 
         if ($request->isMethod('post')) {
-            if (!$user->isHeadmaster()) {
+            if (!$user->hasHeadmasterAccess()) {
                 abort(403);
             }
 
@@ -74,7 +74,7 @@ class ClassController extends Controller
     public function add(Request $request)
     {
         $user = Auth::user();
-        if (!$user->isHeadmaster()) {
+        if (!$user->hasHeadmasterAccess()) {
             abort(403);
         }
 
@@ -142,7 +142,7 @@ class ClassController extends Controller
     public function delete($id)
     {
         $user = Auth::user();
-        if (!$user->isHeadmaster()) {
+        if (!$user->hasHeadmasterAccess()) {
             abort(403);
         }
 
@@ -207,7 +207,7 @@ class ClassController extends Controller
             return $this->promoteMyClass($request, $user, $currentAcademicYear, $allClasses, $allClassesById, $allClassesByName);
         }
 
-        if (!$user->isHeadmaster()) {
+        if (!$user->hasHeadmasterAccess()) {
             abort(403);
         }
 

@@ -13,10 +13,24 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+    /**
+     * A school account that may be managed from the Users pages. Developer accounts
+     * are not school accounts: they are never listed, edited, toggled or deleted
+     * here (they are managed with `php artisan developer:create`), so a school
+     * account can never take over or lock out the Developer.
+     */
+    private function manageableUser($id): ?User
+    {
+        $user = User::find($id);
+
+        return ($user && !$user->isDeveloper()) ? $user : null;
+    }
+
     public function index()
     {
         $users = DB::table('users as u')
             ->leftJoin('classes as c', 'u.class_id', '=', 'c.id')
+            ->where('u.role', '!=', SchoolService::ROLE_DEVELOPER)
             ->select('u.*', 'c.name as class_name')
             ->orderBy('u.role', 'desc')
             ->orderBy('u.full_name')
@@ -126,7 +140,7 @@ class UserController extends Controller
 
     public function showEdit($id)
     {
-        $targetUser = User::find($id);
+        $targetUser = $this->manageableUser($id);
         if (!$targetUser) {
             abort(404);
         }
@@ -153,7 +167,7 @@ class UserController extends Controller
         }
 
         $currentUser = Auth::user();
-        $targetUser = User::find($id);
+        $targetUser = $this->manageableUser($id);
         if (!$targetUser) {
             abort(404);
         }
@@ -236,7 +250,7 @@ class UserController extends Controller
     public function toggle($id)
     {
         $currentUser = Auth::user();
-        $targetUser = User::find($id);
+        $targetUser = $this->manageableUser($id);
         if (!$targetUser) {
             abort(404);
         }
@@ -260,7 +274,7 @@ class UserController extends Controller
     public function delete($id)
     {
         $currentUser = Auth::user();
-        $targetUser = User::find($id);
+        $targetUser = $this->manageableUser($id);
         if (!$targetUser) {
             abort(404);
         }

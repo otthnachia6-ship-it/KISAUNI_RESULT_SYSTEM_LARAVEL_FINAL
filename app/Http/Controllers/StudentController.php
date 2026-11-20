@@ -18,7 +18,7 @@ class StudentController extends Controller
         $user = Auth::user();
         $classFilter = $request->input('class_id', '');
         $search = trim($request->input('q', ''));
-        $showRemoved = $user->isHeadmaster() && $request->input('status') === 'removed';
+        $showRemoved = $user->hasHeadmasterAccess() && $request->input('status') === 'removed';
 
         $query = DB::table('students as s')
             ->join('classes as c', 's.class_id', '=', 'c.id')

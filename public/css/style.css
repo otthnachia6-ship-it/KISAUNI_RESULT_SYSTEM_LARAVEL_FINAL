@@ -1232,3 +1232,29 @@ main .btn:not(.btn-sm):not(.btn-lg) i,
 .marks-fix-name { position: sticky; left: 0; z-index: 1; background: #fff; min-width: 9.5rem; max-width: 13rem; overflow-wrap: anywhere; font-size: .88rem; }
 .marks-fix thead .marks-fix-name { background: #f8fafc; }
 .marks-fix-input { width: 4.6rem; min-width: 4.6rem; text-align: center; margin: 0 auto; }
+
+/* ---------- Developer Control Center: expandable sidebar groups ---------- */
+.sidebar .dev-group-toggle {
+    display: flex; align-items: center;
+    color: rgba(226,232,255,.85); background: none;
+    padding: .55rem .9rem; margin: 2px 10px; width: calc(100% - 20px) !important;
+    border-radius: 8px; font-size: .9rem; font-weight: 600;
+    transition: background .15s ease, color .15s ease;
+}
+.sidebar .dev-group-toggle:hover { background: rgba(255,255,255,.06); color: #fff; }
+.sidebar .dev-group-toggle:not(.collapsed) { color: #fff; }
+.sidebar .dev-group-toggle .dev-chevron { margin-left: auto; font-size: .75rem; transition: transform .2s ease; }
+.sidebar .dev-group-toggle:not(.collapsed) .dev-chevron { transform: rotate(180deg); }
+.sidebar .dev-num {
+    display: inline-flex; align-items: center; justify-content: center; flex: none;
+    width: 18px; height: 18px; margin-right: .45rem; border-radius: 50%;
+    font-size: .62rem; background: rgba(255,255,255,.1); color: rgba(226,232,255,.8);
+}
+.sidebar .dev-submenu { margin-left: 18px; border-left: 1px solid rgba(255,255,255,.1); }
+.sidebar .dev-submenu a.nav-link { font-size: .86rem; padding: .42rem .8rem; margin: 1px 8px; }
+.sidebar .dev-submenu a.nav-link.active { background: rgba(96,165,250,.18); color: #fff; box-shadow: inset 3px 0 0 #60a5fa; }
+.dev-status { display: inline-flex; align-items: center; gap: .3rem; font-size: .78rem; font-weight: 600; padding: .2rem .55rem; border-radius: 999px; }
+.dev-status-healthy { background: #d1fae5; color: #065f46; }
+.dev-status-warning { background: #fef3c7; color: #92400e; }
+.dev-status-critical { background: #fee2e2; color: #991b1b; }
+.dev-status-unavailable, .dev-status-not_configured { background: #e5e7eb; color: #374151; }

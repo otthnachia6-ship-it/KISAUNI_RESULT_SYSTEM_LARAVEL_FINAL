@@ -3,7 +3,7 @@
 @section('content')
 
 @php
-    $isHm = $session_user->role === $ROLE_HEADMASTER;
+    $isHm = $session_user->hasHeadmasterAccess();
     $cbRows = collect($class_breakdown ?? []);
     $shownClasses = $cbRows->filter(fn($r) => (int) (is_array($r) ? ($r['c'] ?? 0) : $r->c) > 0)->values();
     $classesWithStudents = $shownClasses->count();
@@ -220,7 +220,7 @@
                 <a class="qa-row" href="{{ route('marks_upload') }}"><span class="qa-ico"><i class="bi bi-cloud-arrow-up"></i></span>Upload Exam Results<i class="bi bi-chevron-right qa-go"></i></a>
                 @endif
                 <a class="qa-row" href="{{ route('reports') }}"><span class="qa-ico"><i class="bi bi-file-earmark-text"></i></span>Reports<i class="bi bi-chevron-right qa-go"></i></a>
-                @if($session_user->role === $ROLE_HEADMASTER)
+                @if($session_user->hasHeadmasterAccess())
                 <a class="qa-row" href="{{ route('classes') }}"><span class="qa-ico"><i class="bi bi-door-open"></i></span>Add Class<i class="bi bi-chevron-right qa-go"></i></a>
                 <a class="qa-row" href="{{ route('add_user') }}"><span class="qa-ico"><i class="bi bi-person-badge"></i></span>Add User<i class="bi bi-chevron-right qa-go"></i></a>
                 <a class="qa-row" href="{{ route('examinations') }}"><span class="qa-ico"><i class="bi bi-pencil-square"></i></span>Add Exam<i class="bi bi-chevron-right qa-go"></i></a>
@@ -232,7 +232,7 @@
 </div>
 
 <!-- ---------- Recent Activities: real audit log ---------- -->
-@if($session_user->role === $ROLE_HEADMASTER)
+@if($session_user->hasHeadmasterAccess())
 <div class="card p-3 p-md-4 mb-4">
     <div class="panel-head">
         <div>

@@ -19,6 +19,11 @@ class DashboardController extends Controller
 {
     public function dashboard()
     {
+        // The Developer has its own dashboard (Developer Control Center).
+        if (Auth::user()?->isDeveloper()) {
+            return redirect()->route('developer.dashboard');
+        }
+
         $currentAcademicYear = Setting::get('academic_year', SchoolService::DEFAULT_ACADEMIC_YEAR);
 
         $stats = [
@@ -112,7 +117,7 @@ class DashboardController extends Controller
 
         // Headmaster only: the classes whose results are waiting for review, oldest first.
         $pendingReviews = collect();
-        if ($user && $user->role === SchoolService::ROLE_HEADMASTER) {
+        if ($user && $user->hasHeadmasterAccess()) {
             $pendingReviews = DB::table('exam_class_status as ecs')
                 ->join('examinations as e', 'ecs.exam_id', '=', 'e.id')
                 ->join('classes as c', 'ecs.class_id', '=', 'c.id')

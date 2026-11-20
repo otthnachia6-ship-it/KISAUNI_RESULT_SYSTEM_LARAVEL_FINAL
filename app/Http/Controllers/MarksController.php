@@ -43,12 +43,19 @@ class MarksController extends Controller
     public function uploadPage(Request $request)
     {
         $user = Auth::user();
-        if (!$user->isClassTeacher()) {
+        // Class Teacher: own class. Developer (Headmaster + Class Teacher capabilities): chooses the class.
+        $canChooseClass = $user->isDeveloper();
+        if (!$user->isClassTeacher() && !$canChooseClass) {
             return redirect()->route('marks_select')
                 ->with('info', 'Result files are uploaded by the Class Teacher of each class.');
         }
 
-        $cls = $user->class_id ? SchoolClass::find($user->class_id) : null;
+        $classes = $canChooseClass ? SchoolClass::orderBy('sort_order')->get() : collect();
+        if ($canChooseClass) {
+            $cls = $classes->firstWhere('id', (int) $request->query('class', 0));
+        } else {
+            $cls = $user->class_id ? SchoolClass::find($user->class_id) : null;
+        }
         $currentAcademicYear = Setting::get('academic_year', SchoolService::DEFAULT_ACADEMIC_YEAR);
         $exams = Examination::where('academic_year', $currentAcademicYear)->orderBy('id', 'desc')->get();
 
@@ -71,6 +78,8 @@ class MarksController extends Controller
 
         return view('marks_upload', [
             'cls' => $cls,
+            'classes' => $classes,
+            'can_choose_class' => $canChooseClass,
             'exams' => $exams,
             'subjects' => $subjects,
             'selected_exam' => $selectedExam,

@@ -20,7 +20,7 @@
         @endforeach
     </select>
 
-    @if($session_user->role === $ROLE_HEADMASTER)
+    @if($session_user->hasHeadmasterAccess())
     <select name="class_id" class="form-select form-select-sm" style="max-width:220px;" onchange="this.form.submit()">
         <option value="all" @if(!$class_id) selected @endif>All Classes (School-wide)</option>
         @foreach($classes as $c)

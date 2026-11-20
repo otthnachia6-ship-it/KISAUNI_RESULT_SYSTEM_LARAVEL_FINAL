@@ -3,7 +3,7 @@
 @section('content')
 <x-page_header icon="bi-people" :title="$show_removed ? 'Removed Students' : 'Student List'" :subtitle="$show_removed ? 'Students who have left or been withdrawn' : 'Manage students across all classes'">
     <x-slot:actions>
-        @if($session_user->role === $ROLE_HEADMASTER)
+        @if($session_user->hasHeadmasterAccess())
             @if($show_removed)
             <a href="{{ route('students') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back to Active List</a>
             @else
@@ -29,7 +29,7 @@
 
 <div class="card p-3 mb-3">
     <form method="GET" class="row g-2 align-items-end">
-        @if($session_user->role === $ROLE_HEADMASTER)
+        @if($session_user->hasHeadmasterAccess())
         <div class="col-auto">
             <label class="form-label small mb-1">Class</label>
             <select name="class_id" class="form-select form-select-sm" onchange="this.form.submit()">

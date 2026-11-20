@@ -205,11 +205,21 @@ class ReviewFixesTest extends TestCase
             'current_password' => 'Pass#123', 'new_password' => $new, 'confirm_password' => $new, 'new_username' => 'mwalimu',
         ]);
 
-        $change('abc12')->assertSessionHas('danger', fn ($m) => str_contains($m, 'at least 6'));
+        $change('ab1')->assertSessionHas('danger', fn ($m) => str_contains($m, 'at least 4'));
         $change('mwalimu')->assertSessionHas('danger', fn ($m) => str_contains($m, 'same as the username'));
         $change('Pass#123')->assertSessionHas('danger', fn ($m) => str_contains($m, 'different from your current'));
         $change('Kisauni#1')->assertRedirect(route('dashboard'));
         $this->assertTrue(Hash::check('Kisauni#1', $t->fresh()->password));
+    }
+
+    public function test_four_character_passwords_are_accepted(): void
+    {
+        $this->assertSame(4, \App\Support\PasswordPolicy::minLength());
+        $t = $this->teacher('mwalimu4', $this->classA->id);
+        $this->actingAs($t)->post('/change-password', [
+            'current_password' => 'Pass#123', 'new_password' => 'ab12', 'confirm_password' => 'ab12', 'new_username' => 'mwalimu4',
+        ])->assertRedirect(route('dashboard'));
+        $this->assertTrue(Hash::check('ab12', $t->fresh()->password));
     }
 
     // ---- audit log -------------------------------------------------------------

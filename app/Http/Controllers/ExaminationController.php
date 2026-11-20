@@ -17,7 +17,7 @@ class ExaminationController extends Controller
         $user = Auth::user();
         $currentAcademicYear = Setting::get('academic_year', SchoolService::DEFAULT_ACADEMIC_YEAR);
 
-        if ($request->isMethod('post') && $user->isHeadmaster()) {
+        if ($request->isMethod('post') && $user->hasHeadmasterAccess()) {
             $examType = $request->input('exam_type');
             $academicYear = $currentAcademicYear;
 
@@ -61,7 +61,7 @@ class ExaminationController extends Controller
     public function delete($id)
     {
         $user = Auth::user();
-        if (!$user->isHeadmaster()) {
+        if (!$user->hasHeadmasterAccess()) {
             abort(403);
         }
 

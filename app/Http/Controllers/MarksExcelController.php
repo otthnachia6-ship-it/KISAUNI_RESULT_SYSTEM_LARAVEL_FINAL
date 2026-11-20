@@ -23,11 +23,25 @@ class MarksExcelController extends Controller
 {
     private const SESSION_KEY = 'marks_excel';
 
-    private function teacherClass(): ?SchoolClass
+    /**
+     * The class whose marks are uploaded.
+     * Class Teacher: always their own class (any requested class is ignored).
+     * Developer (Headmaster + Class Teacher capabilities): the class chosen on the page.
+     */
+    private function teacherClass(?int $requestedClassId = null): ?SchoolClass
     {
         $user = Auth::user();
+        if (!$user) {
+            return null;
+        }
+        if ($user->isClassTeacher()) {
+            return $user->class_id ? SchoolClass::find($user->class_id) : null;
+        }
+        if ($user->isDeveloper() && $requestedClassId) {
+            return SchoolClass::find($requestedClassId);
+        }
 
-        return $user && $user->isClassTeacher() && $user->class_id ? SchoolClass::find($user->class_id) : null;
+        return null;
     }
 
     private function subjectOfClass(int $subjectId, int $classId): ?object
@@ -43,9 +57,9 @@ class MarksExcelController extends Controller
         return in_array($status, ['submitted', 'under_review', 'approved'], true);
     }
 
-    public function template($examId, $subjectId)
+    public function template(Request $request, $examId, $subjectId)
     {
-        $cls = $this->teacherClass();
+        $cls = $this->teacherClass((int) $request->query('class', 0));
         $exam = Examination::find($examId);
         if (!$cls || !$exam) {
             return redirect()->route('marks_upload')->with('danger', 'Choose the examination and the subject first.');
@@ -101,11 +115,11 @@ class MarksExcelController extends Controller
     public function upload(Request $request)
     {
         $user = Auth::user();
-        $cls = $this->teacherClass();
+        $cls = $this->teacherClass((int) $request->input('class_id', 0));
         if (!$cls) {
             return redirect()->route('marks_upload')->with('info', 'Result files are uploaded by the Class Teacher of each class.');
         }
-        $back = ['exam' => (int) $request->input('exam_id'), 'subject' => (int) $request->input('subject_id')];
+        $back = ['exam' => (int) $request->input('exam_id'), 'subject' => (int) $request->input('subject_id'), 'class' => $cls->id];
 
         $exam = Examination::find($request->input('exam_id'));
         $subject = $this->subjectOfClass((int) $request->input('subject_id'), $cls->id);
@@ -266,11 +280,11 @@ class MarksExcelController extends Controller
     {
         $user = Auth::user();
         $data = $this->pending($request);
-        $cls = $this->teacherClass();
+        $cls = $data ? $this->teacherClass((int) ($data['class_id'] ?? 0)) : null;
         if (!$data || !$cls || (int) $data['class_id'] !== (int) $cls->id) {
             return redirect()->route('marks_upload')->with('warning', 'Nothing to save. Please upload the file again.');
         }
-        $back = ['exam' => $data['exam_id'], 'subject' => $data['subject_id']];
+        $back = ['exam' => $data['exam_id'], 'subject' => $data['subject_id'], 'class' => $cls->id];
         if (array_filter($data['items'], fn($i) => $i['errors'])) {
             return redirect()->route('marks_upload_preview')->with('danger', 'Some rows have problems. Correct the Excel file and upload it again.');
         }

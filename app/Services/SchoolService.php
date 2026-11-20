@@ -39,6 +39,9 @@ class SchoolService
     ];
     public const ROLE_CLASS_TEACHER = 'class_teacher';
 
+    /** Independent Developer account (own login at /developer/login). Not a school role. */
+    public const ROLE_DEVELOPER = 'developer';
+
     public const GRADE_BANDS = [
         ['A', 81, 100, '#198754'], // green
         ['B', 61, 80,  '#0d6efd'], // blue

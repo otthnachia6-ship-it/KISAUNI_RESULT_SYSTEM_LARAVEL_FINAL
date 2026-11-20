@@ -14,7 +14,7 @@ class ClassToolsController extends Controller
 {
     private function classOrFail($id): SchoolClass
     {
-        abort_unless(Auth::user()?->isHeadmaster(), 403);
+        abort_unless(Auth::user()?->hasHeadmasterAccess(), 403);
         return SchoolClass::findOrFail($id);
     }
 

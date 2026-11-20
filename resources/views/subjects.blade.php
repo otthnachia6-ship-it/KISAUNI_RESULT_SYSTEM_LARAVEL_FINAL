@@ -1,7 +1,7 @@
 @extends('base')
 @section('page_title', 'Subjects')
 @section('content')
-@php $isHm = $session_user->role === $ROLE_HEADMASTER; @endphp
+@php $isHm = $session_user->hasHeadmasterAccess(); @endphp
 <x-page_header icon="bi-book" title="Subject Management" subtitle="Manage subjects and the classes that teach them">
     <x-slot:actions>
         @if($isHm)

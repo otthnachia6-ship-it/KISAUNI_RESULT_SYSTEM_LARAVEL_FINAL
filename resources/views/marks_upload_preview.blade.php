@@ -3,7 +3,7 @@
 @section('content')
 <x-page_header title="Check before saving" subtitle="{{ $cls->name }} &mdash; {{ $subject->name }} &mdash; {{ $exam->exam_type }} {{ $exam->academic_year }}">
     <x-slot:actions>
-        <a href="{{ route('marks_upload', ['exam' => $exam->id, 'subject' => $subject->id]) }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Upload another file</a>
+        <a href="{{ route('marks_upload', ['exam' => $exam->id, 'subject' => $subject->id, 'class' => $cls->id]) }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Upload another file</a>
     </x-slot:actions>
 </x-page_header>
 
@@ -44,7 +44,7 @@
 <form method="POST" action="{{ route('marks_upload_confirm') }}" class="mt-3" data-once>
     @csrf
     <button class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i>Save marks</button>
-    <a href="{{ route('marks_upload', ['exam' => $exam->id, 'subject' => $subject->id]) }}" class="btn btn-outline-secondary ms-1">Cancel</a>
+    <a href="{{ route('marks_upload', ['exam' => $exam->id, 'subject' => $subject->id, 'class' => $cls->id]) }}" class="btn btn-outline-secondary ms-1">Cancel</a>
 </form>
 @endif
 @endsection

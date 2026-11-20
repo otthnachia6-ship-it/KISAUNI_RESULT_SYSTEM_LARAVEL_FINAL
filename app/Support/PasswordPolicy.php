@@ -10,7 +10,7 @@ final class PasswordPolicy
 {
     public static function minLength(): int
     {
-        return max(4, (int) config('kisauni.min_password_length', 6));
+        return max(4, (int) config('kisauni.min_password_length', 4));
     }
 
     /** A message explaining why the password cannot be used, or null when it is fine. */

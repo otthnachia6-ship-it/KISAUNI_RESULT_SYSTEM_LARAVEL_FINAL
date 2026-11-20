@@ -9,7 +9,7 @@
     </x-slot:actions>
 </x-page_header>
 
-@if(!$cls)
+@if(!$cls && !$can_choose_class)
 <div class="alert alert-warning" style="max-width:600px;">You are not currently assigned to a class. Contact the Headmaster.</div>
 @elseif($exams->isEmpty())
 <div class="alert alert-warning" style="max-width:600px;">
@@ -19,8 +19,18 @@
 @else
 <div class="card p-4 mb-3" style="max-width:760px;">
     <form method="GET" action="{{ route('marks_upload') }}" class="row g-2">
+        @if($can_choose_class)
+        <div class="col-12"><label class="form-label small mb-1" for="class">Class</label>
+            <select id="class" name="class" class="form-select" onchange="this.form.submit()">
+                <option value="">-- Select Class --</option>
+                @foreach($classes as $c)
+                <option value="{{ $c->id }}" @selected($cls && (int) $c->id === (int) $cls->id)>{{ $c->name }}</option>
+                @endforeach
+            </select></div>
+        @else
         <div class="col-12"><label class="form-label small mb-1">Class</label>
             <input type="text" class="form-control" value="{{ $cls->name }}" disabled></div>
+        @endif
         <div class="col-md-6">
             <label class="form-label small mb-1" for="exam">Examination</label>
             <select id="exam" name="exam" class="form-select" onchange="this.form.submit()">
@@ -42,7 +52,7 @@
     </form>
 </div>
 
-@if($selected_exam && $selected_subject)
+@if($cls && $selected_exam && $selected_subject)
     @if($locked)
     <div class="alert alert-warning" style="max-width:760px;"><i class="bi bi-lock me-1"></i>
         Marks for this class are already <strong>{{ str_replace('_', ' ', $status) }}</strong> and cannot be changed by upload.</div>
@@ -52,7 +62,7 @@
             <div class="card p-4 h-100">
                 <h6><span class="badge bg-primary me-1">1</span> Download the marks template</h6>
                 <p class="text-muted small">It already lists the pupils of your class. Give it to the subject teacher, who only fills the yellow Marks column.</p>
-                <a href="{{ route('marks_template', ['exam_id' => $selected_exam, 'subject_id' => $selected_subject]) }}" class="btn btn-outline-secondary"><i class="bi bi-download me-1"></i>Download template (.xlsx)</a>
+                <a href="{{ route('marks_template', ['exam_id' => $selected_exam, 'subject_id' => $selected_subject, 'class' => $cls->id]) }}" class="btn btn-outline-secondary"><i class="bi bi-download me-1"></i>Download template (.xlsx)</a>
             </div>
         </div>
         <div class="col-md-6">
@@ -62,6 +72,7 @@
                     @csrf
                     <input type="hidden" name="exam_id" value="{{ $selected_exam }}">
                     <input type="hidden" name="subject_id" value="{{ $selected_subject }}">
+                    <input type="hidden" name="class_id" value="{{ $cls->id }}">
                     <label class="form-label small mb-1" for="file">Excel file (.xlsx)</label>
                     <input type="file" id="file" name="file" class="form-control mb-3" accept=".xlsx" required>
                     <button class="btn btn-primary"><i class="bi bi-upload me-1"></i>Upload and check</button>
@@ -72,7 +83,7 @@
     <p class="text-muted small mt-3" style="max-width:760px;">You will see a preview first. After saving, open the marks sheet and press Submit when every subject is complete.</p>
     @endif
 @else
-<p class="text-muted">Choose the examination and the subject to get the template.</p>
+<p class="text-muted">Choose the @if($can_choose_class)class, the @endif examination and the subject to get the template.</p>
 @endif
 @endif
 @endsection

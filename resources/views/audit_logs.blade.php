@@ -23,6 +23,12 @@ $action_labels = [
     'START_REVIEW' => 'Started results review', 'SUBMIT_RESULTS' => 'Submitted results',
     'TOGGLE_USER' => 'Activated/deactivated a user', 'UPDATE_PROFILE' => 'Updated profile',
     'UPDATE_SETTINGS' => 'Updated school settings',
+    'CREATE_BACKUP_FAILED' => 'Backup attempt failed', 'DOWNLOAD_BACKUP_REFUSED' => 'Backup download refused (failed verification)',
+    'CLEAR_CACHE' => 'Cleared a system cache', 'CREATE_DEVELOPER' => 'Created the Developer account',
+    'RESET_DEVELOPER_PASSWORD' => 'Reset the Developer password', 'LOGIN_LOCKED' => 'Locked out after wrong passwords',
+    'IDLE_LOGOUT' => 'Signed out (inactive)',
+    'MAINTENANCE_ON' => 'Switched maintenance mode ON', 'MAINTENANCE_OFF' => 'Switched maintenance mode OFF',
+    'MAINTENANCE_ON_FAILED' => 'Maintenance mode ON failed', 'MAINTENANCE_OFF_FAILED' => 'Maintenance mode OFF failed',
 ];
 @endphp
 <div class="card">

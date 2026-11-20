@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 /**
- * The in-app Backup / Download / Restore feature must be gone for every user.
+ * The old Settings backup / download / restore feature stays gone for every SCHOOL account
+ * (Headmaster, Administrator, Class Teacher). Backups are reachable on the web ONLY in the
+ * Developer Control Center (/developer/..., 'developer' middleware) - see DeveloperBackupTest.
  * (Automatic server-side backup is a cron command and is tested separately.)
  */
 class BackupFeatureRemovedTest extends TestCase
@@ -25,12 +27,17 @@ class BackupFeatureRemovedTest extends TestCase
         $this->hm->update(['must_change_password' => 0]);
     }
 
-    public function test_no_registered_route_mentions_backup(): void
+    public function test_only_developer_only_routes_mention_backup(): void
     {
         foreach (Route::getRoutes() as $route) {
-            $this->assertStringNotContainsStringIgnoringCase('backup', $route->uri(), 'route ' . $route->uri());
-            $this->assertStringNotContainsStringIgnoringCase('backup', (string) $route->getName());
-            $this->assertStringNotContainsStringIgnoringCase('backup', $route->getActionName());
+            $mentions = stripos($route->uri() . ' ' . $route->getName() . ' ' . $route->getActionName(), 'backup') !== false;
+            if (!$mentions) {
+                continue;
+            }
+            $this->assertStringStartsWith('developer/', $route->uri(), 'backup route outside the Developer area: ' . $route->uri());
+            $this->assertContains('developer', $route->gatherMiddleware(), 'backup route without developer middleware: ' . $route->uri());
+            $this->assertStringNotContainsStringIgnoringCase('restore', $route->uri());
+            $this->assertStringNotContainsStringIgnoringCase('delete', $route->uri());
         }
         foreach (['create_backup_route', 'download_backup', 'restore_backup_route', 'upload_restore_backup_route', 'delete_backup_route'] as $name) {
             $this->assertFalse(Route::has($name), "$name still exists");
@@ -40,6 +47,10 @@ class BackupFeatureRemovedTest extends TestCase
     public function test_backup_urls_are_gone_even_for_the_headmaster(): void
     {
         $this->actingAs($this->hm);
+        // the Developer backup pages do not exist for the Headmaster either
+        $this->get('/developer/backups/create')->assertNotFound();
+        $this->get('/developer/backups/download')->assertNotFound();
+        $this->post('/developer/backups/create')->assertNotFound();
         $this->get('/settings/backup/download/kisauni_backup_x.sql')->assertNotFound();
         $this->get('/settings/backup/create')->assertStatus(404);
         foreach (['/settings/backup/create', '/settings/backup/restore/x.sql', '/settings/backup/upload-restore', '/settings/backup/delete/x.sql'] as $uri) {

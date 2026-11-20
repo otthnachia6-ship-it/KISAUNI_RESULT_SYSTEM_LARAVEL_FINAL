@@ -39,6 +39,19 @@ class AuthController extends Controller
             return $this->showLogin();
         }
 
+        return $this->attemptLogin($request, false);
+    }
+
+    /**
+     * One sign-in procedure for both entry points (same throttling, lockout and audit):
+     *  - /login            ($developerPortal = false): school accounts only;
+     *  - /developer/login  ($developerPortal = true):  the Developer account only.
+     * An account used at the wrong entry point is answered exactly like a wrong
+     * password, so neither page reveals that a Developer account exists.
+     */
+    protected function attemptLogin(Request $request, bool $developerPortal)
+    {
+
         $username = trim((string) $request->input('username', ''));
         $password = (string) $request->input('password', '');
 
@@ -56,6 +69,9 @@ class AuthController extends Controller
 
         // Exact-case lookup (damtu and DAMTU are different accounts).
         $user = User::findByUsername($username);
+        if ($user && $user->isDeveloper() !== $developerPortal) {
+            $user = null;
+        }
 
         // 2. Password verification
         $passwordOk = false;
@@ -140,7 +156,7 @@ class AuthController extends Controller
                 ->with('info', 'Welcome! For your security, please set a new password before continuing.');
         }
 
-        return redirect()->route('dashboard');
+        return redirect()->route($developerPortal ? 'developer.dashboard' : 'dashboard');
     }
 
     /** @return array{0:string,1:string} [username+device key, device key] */
@@ -184,7 +200,10 @@ class AuthController extends Controller
         session()->invalidate();
         session()->regenerateToken();
 
-        return redirect()->route('login')->with('info', 'You have been logged out.');
+        // The maintenance bypass cookie belongs to the Developer's session: drop it on sign-out.
+        return redirect()->route($user && $user->isDeveloper() ? 'developer.login' : 'login')
+            ->withoutCookie('laravel_maintenance', config('session.path'), config('session.domain'))
+            ->with('info', 'You have been logged out.');
     }
 
     public function showForgotPassword()

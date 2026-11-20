@@ -19,6 +19,12 @@ use App\Http\Controllers\StudentExcelController;
 use App\Http\Controllers\MarksExcelController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\Developer\BackupController;
+use App\Http\Controllers\Developer\DeveloperAuthController;
+use App\Http\Controllers\Developer\DeveloperDashboardController;
+use App\Http\Controllers\Developer\MaintenanceController;
+use App\Http\Controllers\Developer\MonitoringController;
+use App\Http\Controllers\Developer\SecurityController;
 use Illuminate\Support\Facades\Route;
 
 // Public media serving
@@ -28,6 +34,9 @@ Route::get('/media/{filename}', [MediaController::class, 'serveMedia'])->name('s
 Route::get('/', [AuthController::class, 'index'])->name('index');
 Route::match(['get', 'post'], '/login', [AuthController::class, 'login'])->name('login');
 Route::match(['get', 'post'], '/forgot-password', [AuthController::class, 'forgotPassword'])->name('forgot_password');
+
+// Developer sign-in (independent entry point; school accounts cannot sign in here)
+Route::match(['get', 'post'], '/developer/login', [DeveloperAuthController::class, 'login'])->name('developer.login');
 
 // Authenticated routes
 Route::middleware(['auth', 'no_cache'])->group(function () {
@@ -120,5 +129,41 @@ Route::middleware(['auth', 'no_cache'])->group(function () {
 
         // Audit Logs
         Route::get('/audit-logs', [AuditLogController::class, 'auditLogs'])->name('audit_logs');
+    });
+
+    // Developer Control Center - Developer account only (404 for everyone else).
+    // School functions are reached through the existing routes above.
+    Route::middleware(['developer'])->prefix('developer')->name('developer.')->group(function () {
+        Route::get('/', [DeveloperDashboardController::class, 'dashboard'])->name('dashboard');
+        Route::get('/system-information', [DeveloperDashboardController::class, 'systemInfo'])->name('system_info');
+
+        // System Monitoring
+        Route::get('/monitoring/{section}', [MonitoringController::class, 'show'])
+            ->whereIn('section', ['health', 'database', 'server', 'storage', 'errors', 'performance'])->name('monitoring');
+
+        // Database & Backup (no restore / no delete from the web)
+        Route::get('/database', [BackupController::class, 'database'])->name('backups.database');
+        Route::get('/backups/create', [BackupController::class, 'create'])->name('backups.create');
+        Route::post('/backups/create', [BackupController::class, 'store'])->middleware('throttle:6,1')->name('backups.store');
+        Route::get('/backups/download', [BackupController::class, 'downloads'])->name('backups.downloads');
+        Route::get('/backups/download/{file}', [BackupController::class, 'download'])
+            ->where('file', 'kisauni_db_[0-9]{8}_[0-9]{6}[A-Za-z0-9_\-]*\.sql\.gz')->name('backups.download');
+        Route::get('/backups/history', [BackupController::class, 'history'])->name('backups.history');
+        Route::get('/backups/status', [BackupController::class, 'status'])->name('backups.status');
+
+        // Security
+        Route::get('/security', [SecurityController::class, 'overview'])->name('security.overview');
+        Route::get('/security/login-attempts', [SecurityController::class, 'attempts'])->name('security.attempts');
+        Route::get('/security/sessions', [SecurityController::class, 'sessions'])->name('security.sessions');
+        Route::get('/security/login-activity', [SecurityController::class, 'loginActivity'])->name('security.login_activity');
+
+        // Maintenance
+        Route::get('/maintenance/cache', [MaintenanceController::class, 'cache'])->name('maintenance.cache');
+        Route::post('/maintenance/cache', [MaintenanceController::class, 'clearCache'])->name('maintenance.cache.clear');
+        Route::get('/maintenance/diagnostics', [MaintenanceController::class, 'diagnostics'])->name('maintenance.diagnostics');
+        Route::get('/maintenance/mode', [MaintenanceController::class, 'mode'])->name('maintenance.mode');
+        Route::post('/maintenance/mode/on', [MaintenanceController::class, 'enable'])->name('maintenance.mode.on');
+        Route::post('/maintenance/mode/off', [MaintenanceController::class, 'disable'])->name('maintenance.mode.off');
+        Route::post('/maintenance/mode/bypass', [MaintenanceController::class, 'bypass'])->name('maintenance.mode.bypass');
     });
 });

@@ -63,10 +63,10 @@ php artisan route:cache
 php artisan view:cache
 php artisan up
 ```
-Kabla ya `migrate` kwenye release yenye migration mpya: bonyeza Settings -> Create Backup.
-Release hii HAINA migration mpya.
+Kabla ya `migrate` kwenye release yenye migration mpya: tengeneza backup (`php artisan db:backup`, au ingia `/developer/login` -> Database & Backup -> Create Backup, kisha Download).
+Release hii (Developer Control Center) HAINA migration mpya. Baada ya kupeleka, tengeneza akaunti ya Developer mara moja: `php artisan developer:create JINA`.
 
 ## F. ULINZI WA SIRI NA DATA
 * `.env`, `APP_KEY`, password ya DB: kwenye server tu, `.gitignore` inazuia. Kama zilishawahi kupushwa, zibadilishe.
-* Data za wanafunzi/alama/audit log ziko MySQL tu; backups (`storage/backups`) na uploads vimeigwa kwenye .gitignore.
+* Data za wanafunzi/alama/audit log ziko MySQL tu; backups ziko kwenye folda binafsi nje ya public (`BACKUP_PATH`, chaguomsingi `../kisauni_backups`) na uploads vimeigwa kwenye .gitignore.
 * Repo iwe **Private**. Production: `APP_DEBUG=false`, `APP_ENV=production`, `SESSION_SECURE_COOKIE=true`.

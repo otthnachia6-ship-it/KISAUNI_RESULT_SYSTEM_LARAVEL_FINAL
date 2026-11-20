@@ -11,11 +11,14 @@ return [
     // stops one device from guessing across many usernames.
     'max_login_attempts_per_ip' => (int) env('MAX_LOGIN_ATTEMPTS_PER_IP', 50),
     // Shortest password accepted when a password is set or changed (existing passwords keep working).
-    'min_password_length'   => (int) env('MIN_PASSWORD_LENGTH', 6),
+    'min_password_length'   => (int) env('MIN_PASSWORD_LENGTH', 4),
     // How long audit-log entries are kept. Old entries are removed at most once a day.
+    // Optional contact (phone / e-mail) shown on the maintenance and suspended pages. Empty = not shown.
+    'support_contact' => env('SUPPORT_CONTACT'),
     'audit_log_retention_days' => (int) env('AUDIT_LOG_RETENTION_DAYS', 5),
     // Automatic database backup (php artisan db:backup, run from cron).
-    // Not a user-facing feature: no routes, menus or downloads.
+    // Also available to the Developer account only (Developer Control Center:
+    // create + download). School accounts see no backup pages.
     'backup' => [
         // Private folder OUTSIDE public_html. Empty = ../kisauni_backups next to the project.
         'path'            => env('BACKUP_PATH'),

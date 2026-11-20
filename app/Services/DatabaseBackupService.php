@@ -12,9 +12,12 @@ use Throwable;
 /**
  * System-level automatic database backup (run from cron via `php artisan db:backup`).
  *
- * There is intentionally NO web route, controller, menu or download for this:
- * backups are written to a private directory outside the public web root and
- * are collected from the server (File Manager / SFTP) by an administrator.
+ * Backups are written to a private directory outside the public web root.
+ * Besides cron, the ONLY web access is the Developer Control Center
+ * (/developer/backups, Developer account only): create a backup on demand and
+ * download a re-verified file through an authorised controller. There is no
+ * public URL, no restore and no delete from the web. School accounts
+ * (Headmaster / Administrator / Class Teacher) have no backup pages.
  *
  * Safety properties:
  *  - Read-only against the live database (mysqldump --single-transaction / SELECT).
@@ -498,6 +501,26 @@ class DatabaseBackupService
         }
         usort($out, fn ($a, $b) => [$b['mtime'], $b['name']] <=> [$a['mtime'], $a['name']]);
         return $out;
+    }
+
+    /**
+     * Full path of an existing backup, looked up by its exact file name.
+     * Only names that this class creates (FILE_PATTERN) and that are actually listed
+     * in the backup directory are accepted, so "../.env", absolute paths, status.json
+     * or partial files can never be resolved (path traversal protection).
+     */
+    public static function findBackup(string $name): ?string
+    {
+        if ($name !== basename($name) || !preg_match(static::FILE_PATTERN, $name)) {
+            return null;
+        }
+        foreach (static::listBackupFiles() as $f) {
+            if (hash_equals($f['name'], $name)) {
+                return $f['path'];
+            }
+        }
+
+        return null;
     }
 
     // ---------------------------------------------------------------- status

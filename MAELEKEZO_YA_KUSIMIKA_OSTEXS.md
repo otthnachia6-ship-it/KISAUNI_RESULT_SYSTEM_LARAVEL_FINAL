@@ -13,8 +13,10 @@ Mfumo huu umehama kikamilifu kutoka Python/Flask/SQLite kwenda **PHP/Laravel/MyS
 | `app/Models/` | Eloquent Models 9 (`User`, `SchoolClass`, `Subject`, `Student`, `Examination`, `Mark`, `ExamClassStatus`, `Setting`, `AuditLog`) |
 | `app/Services/SchoolService.php` | Hesabu zote za madaraja (A: 81-100, B: 61-80.9, C: 41-60.9, D: 21-40.9, E: 0-20.9), maneno ya pongezi (`remark_for`), mgawanyo wa masomo (Std 1-3 vs Std 4-7), utambuzi wa jinsia, na logi za ukaguzi |
 | `app/Services/PdfReportService.php` | Huduma ya kutengeneza ripoti za PDF (Ripoti ya mwanafunzi na Class Result Sheet) |
-| `app/Services/BackupService.php` | Mfumo wa kutengeneza na kurejesha backup za database kiotomatiki na mikononi (MySQL/SQLite) |
-| `app/Http/Middleware/` | Ulinzi wa usalama: `EnsureAuthenticated`, `EnsureHeadmaster`, `EnforcePasswordChange`, `CheckIdleTimeout` (dakika 10 za kutotumika), na `NoCacheHeaders` |
+| `app/Services/DatabaseBackupService.php` | Backup ya database iliyohakikiwa (cron: `php artisan db:backup`, na Developer Control Center: kutengeneza na kupakua). Hakuna kurejesha (restore) kupitia wavuti |
+| `app/Services/SystemHealthService.php` | Taarifa halisi za afya ya mfumo kwa Developer (database, seva, hifadhi, makosa, utendaji) |
+| `app/Http/Controllers/Developer/` | Developer Control Center (login ya `/developer/login`, dashibodi, monitoring, backup, usalama, matengenezo) |
+| `app/Http/Middleware/` | Ulinzi wa usalama: `EnsureAuthenticated`, `EnsureHeadmaster` (Headmaster/Administrator/Developer), `EnsureDeveloper`, `EnforcePasswordChange`, `CheckIdleTimeout` (dakika 10 za kutotumika), na `NoCacheHeaders` |
 | `database/migrations/` | Migrations 10 zinazounda majedwali yote rasmi ya mfumo |
 | `database/seeders/DatabaseSeeder.php` | Seeder inayoingiza madarasa 17 (mikondo ya A, B, C), masomo 9 rasmi, mitihani 4, na akaunti chaguomsingi ya Mkuu wa Shule |
 | `database/ostexs_school_system_mysql.sql` | Faili la SQL lililokamilika tayari kuingizwa (import) moja kwa moja kwenye phpMyAdmin ya cPanel |
@@ -107,4 +109,5 @@ Hakikisha mafolda yafuatayo yana ruhusa ya kuandika (`chmod 775` au `chmod 755`)
 6. **Usalama:**
    - Kufunga akaunti baada ya majaribio 5 yasiyo sahihi kwa dakika 5 (`Account lockout`).
    - Kutoka kwenye mfumo kiotomatiki baada ya dakika 10 za kutotumika (`Idle session timeout`).
-   - Backup ya database inaweza kupakuliwa na kurejeshwa wakati wowote kutoka kwenye Mipangilio.
+   - Backup ya database: kiotomatiki kwa cron (`php artisan db:backup`), na akaunti ya **Developer** pekee inaweza kutengeneza na kupakua backup kutoka Developer Control Center (`/developer/login`). Headmaster/Administrator/Class Teacher hawana kurasa za backup, na hakuna kurejesha (restore) kupitia wavuti.
+   - Akaunti ya Developer inatengenezwa kwenye seva tu: `php artisan developer:create JINA` (hakuna nenosiri la chaguomsingi).

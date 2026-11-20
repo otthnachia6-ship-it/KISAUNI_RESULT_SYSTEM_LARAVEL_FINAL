@@ -32,6 +32,9 @@
                 <small style="opacity:.7;">Result System</small>
             </div>
         </div>
+        @if($session_user->isDeveloper())
+        @include('developer.partials.sidebar')
+        @else
         <div class="nav flex-column mt-2">
             <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                 <i class="bi bi-speedometer2 me-2"></i>Dashboard
@@ -101,6 +104,7 @@
                 <button type="submit" class="nav-link nav-logout w-100 text-start border-0"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
             </form>
         </div>
+        @endif
     </nav>
 
     <main class="flex-grow-1 d-flex flex-column" style="min-width:0;">
@@ -112,11 +116,11 @@
                 <strong>@yield('page_title')</strong>
             </nav>
             <div class="d-flex align-items-center gap-2">
-                @if(request()->routeIs('dashboard'))
+                @if(request()->routeIs('dashboard', 'developer.dashboard'))
                 <div class="text-end">
                     <div class="fw-semibold" style="font-size:.9rem;">{{ $session_user->full_name }}</div>
                     <small class="role-pill">
-                        @if($session_user->role == $ROLE_HEADMASTER){{ $session_user->title ?: 'Headmaster' }}@else Class Teacher @endif
+                        @if($session_user->isDeveloper())Developer @elseif($session_user->role == $ROLE_HEADMASTER){{ $session_user->title ?: 'Headmaster' }}@else Class Teacher @endif
                     </small>
                 </div>
                 @endif

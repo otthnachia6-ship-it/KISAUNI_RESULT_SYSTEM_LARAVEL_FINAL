@@ -95,6 +95,26 @@ class User extends Authenticatable
         return $this->role === 'class_teacher';
     }
 
+    /**
+     * The independent Developer account (role 'developer'). It signs in only at
+     * /developer/login and is never treated as a school role by isHeadmaster().
+     */
+    public function isDeveloper(): bool
+    {
+        return $this->role === 'developer';
+    }
+
+    /**
+     * Headmaster-level school powers: the Headmaster/Administrator OR the Developer
+     * (approved model: Developer = Headmaster + Class Teacher capabilities).
+     * Use this for authorization checks; keep isHeadmaster() for rules that are
+     * about the Headmaster ACCOUNT itself (e.g. "cannot delete the Headmaster").
+     */
+    public function hasHeadmasterAccess(): bool
+    {
+        return $this->isHeadmaster() || $this->isDeveloper();
+    }
+
     public function schoolClass()
     {
         return $this->belongsTo(SchoolClass::class, 'class_id');

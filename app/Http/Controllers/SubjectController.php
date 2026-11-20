@@ -16,7 +16,7 @@ class SubjectController extends Controller
     {
         $user = Auth::user();
 
-        if ($request->isMethod('post') && $user->isHeadmaster()) {
+        if ($request->isMethod('post') && $user->hasHeadmasterAccess()) {
             $action = $request->input('action');
 
             if ($action === 'add_subject') {
@@ -276,7 +276,7 @@ class SubjectController extends Controller
     public function delete($id)
     {
         $user = Auth::user();
-        if (!$user->isHeadmaster()) {
+        if (!$user->hasHeadmasterAccess()) {
             abort(403);
         }
 

@@ -35,6 +35,20 @@ class MaintenancePagesTest extends TestCase
         $this->assertStringContainsString('school data is safe', $html);
     }
 
+    public function test_support_contact_is_shown_only_when_configured(): void
+    {
+        foreach (['maintenance.updating', 'maintenance.suspended'] as $name) {
+            config(['kisauni.support_contact' => null]);
+            $this->assertStringNotContainsString('Mawasiliano', view($name)->render());
+
+            config(['kisauni.support_contact' => '+255 700 000 000']);
+            $html = view($name)->render();
+            $this->assertStringContainsString('Mawasiliano', $html);
+            $this->assertStringContainsString('+255 700 000 000', $html);
+        }
+        $this->assertStringContainsString('hosting', view('maintenance.suspended')->render());
+    }
+
     public function test_pages_contain_no_form_or_template_leftovers(): void
     {
         foreach (['maintenance.updating', 'maintenance.suspended'] as $name) {

@@ -7,7 +7,7 @@
     years remain safely stored with all their marks and results, they are just not listed here.
 </p>
 
-@if($session_user->role === $ROLE_HEADMASTER)
+@if($session_user->hasHeadmasterAccess())
 <div class="card p-3 mb-3">
     <form method="POST" action="{{ route('examinations') }}" class="row g-2 align-items-end">
         @csrf
@@ -32,14 +32,14 @@
 <div class="card">
     <div class="table-responsive">
     <table class="table align-middle mb-0 tbl-clean">
-        <thead><tr><th>#</th><th>Examination Type</th><th>Academic Year</th>@if($session_user->role === $ROLE_HEADMASTER)<th class="text-end">Action</th>@endif</tr></thead>
+        <thead><tr><th>#</th><th>Examination Type</th><th>Academic Year</th>@if($session_user->hasHeadmasterAccess())<th class="text-end">Action</th>@endif</tr></thead>
         <tbody>
         @forelse($exams as $e)
         <tr>
             <td class="cell-muted">{{ $loop->iteration }}</td>
             <td class="fw-semibold">{{ $e->exam_type }}</td>
             <td class="cell-muted">{{ $e->academic_year }}</td>
-            @if($session_user->role === $ROLE_HEADMASTER)
+            @if($session_user->hasHeadmasterAccess())
             <td class="text-end"><div class="acts">
                 <form method="POST" action="{{ route('delete_examination', ['exam_id' => $e->id]) }}"
                       onsubmit="return appConfirm(this, 'Delete {{ addslashes($e->exam_type) }} ({{ addslashes($e->academic_year) }})? This only works if no marks/results exist for it yet.', {okText: 'Delete', icon: 'bi-trash'});">
