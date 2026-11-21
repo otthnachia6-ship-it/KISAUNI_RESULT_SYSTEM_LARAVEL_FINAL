@@ -1009,6 +1009,16 @@ a.lp-tab:hover { background: rgba(37,99,235,.08); text-decoration: none; }
     .lp-cards { grid-template-columns: 1fr 1fr; }
 }
 
+/* Developer sign-in (side by side): it has less text than the school login, so its left
+   panel is centred vertically to line up with the sign-in card, and its single info card
+   uses the full width instead of half of a two-column grid. School login is unchanged. */
+@media (min-width: 992px) {
+    .lp--dev .lp-brand { align-items: center; }
+    .lp--dev .lp-hero { margin-top: 2.25rem; }
+    .lp--dev .lp-cards { grid-template-columns: 1fr; max-width: 560px; }
+    .lp--dev .lp-footer { margin-top: 2rem; }
+}
+
 /* A brief, one-time shake on the login card when the page reloads after a
    failed sign-in - a quick, unmistakable "that didn't work" signal instead
    of a static red banner alone. */

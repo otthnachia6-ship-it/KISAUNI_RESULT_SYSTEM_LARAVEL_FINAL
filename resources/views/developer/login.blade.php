@@ -1,7 +1,7 @@
 @extends('base')
 @section('title', 'Developer Login')
 @section('guest_content')
-<div class="lp page-enter">
+<div class="lp lp--dev page-enter">
     <section class="lp-brand">
         <div class="lp-brand-inner">
             <div class="lp-top">
