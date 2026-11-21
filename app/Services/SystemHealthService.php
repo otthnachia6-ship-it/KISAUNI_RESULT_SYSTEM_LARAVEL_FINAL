@@ -186,7 +186,7 @@ class SystemHealthService
             $ran = DB::table('migrations')->count();
             $files = count(glob(database_path('migrations/*.php')) ?: []);
             $checks[] = static::check('Migrations', "{$ran} run / {$files} files", $ran >= $files ? self::HEALTHY : self::WARNING,
-                $ran >= $files ? null : 'Some migrations have not been run on this database.');
+                $ran >= $files ? null : 'Some migrations have not been run on this database. Run them from Database & Backup → Database Overview.');
         } catch (Throwable) {
             $checks[] = static::check('Migrations', '-', self::UNAVAILABLE);
         }
@@ -430,9 +430,14 @@ class SystemHealthService
             static::check('This page: time so far', $start ? round((microtime(true) - $start) * 1000) . ' ms' : '-', $start ? self::HEALTHY : self::UNAVAILABLE),
             static::check('This page: peak memory', static::bytes(memory_get_peak_usage(true)), self::HEALTHY),
             static::check('Database round trip', $ping['ok'] ? $ping['ms'] . ' ms' : 'Failed', $ping['ok'] ? ($ping['ms'] > 500 ? self::WARNING : self::HEALTHY) : self::CRITICAL),
+            // Optional, not a problem: on a server that pulls new code from GitHub automatically,
+            // a cached copy would hide new pages/settings until someone rebuilds it by hand.
             static::check('Configuration cache', app()->configurationIsCached() ? 'Cached' : 'Not cached',
-                app()->configurationIsCached() ? self::HEALTHY : self::WARNING, app()->configurationIsCached() ? null : 'php artisan config:cache speeds up the live site.'),
-            static::check('Route cache', app()->routesAreCached() ? 'Cached' : 'Not cached', app()->routesAreCached() ? self::HEALTHY : self::WARNING),
+                app()->configurationIsCached() ? self::HEALTHY : self::NOT_CONFIGURED,
+                app()->configurationIsCached() ? 'Run php artisan config:cache again after every update.' : 'Optional. Keep it off while the server takes updates from GitHub automatically.'),
+            static::check('Route cache', app()->routesAreCached() ? 'Cached' : 'Not cached',
+                app()->routesAreCached() ? self::HEALTHY : self::NOT_CONFIGURED,
+                app()->routesAreCached() ? 'Run php artisan route:cache again after every update.' : 'Optional. Keep it off while the server takes updates from GitHub automatically.'),
             static::check('Cache driver', (string) config('cache.default'), self::HEALTHY),
             static::check('Session driver', (string) config('session.driver'), self::HEALTHY),
         ];

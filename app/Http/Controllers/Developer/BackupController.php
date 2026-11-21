@@ -47,12 +47,75 @@ class BackupController extends Controller
         return preg_match('/^kisauni_db_\d{8}_\d{6}_([A-Za-z0-9\-]+)\.sql\.gz$/', $name, $m) ? $m[1] : 'automatic (cron)';
     }
 
+    /** Names of migration files that have not been run on this database yet. */
+    public static function pendingMigrations(): array
+    {
+        try {
+            $migrator = app('migrator');
+            if (!$migrator->repositoryExists()) {
+                return [];
+            }
+            $files = $migrator->getMigrationFiles([database_path('migrations')]);
+            $ran = $migrator->getRepository()->getRan();
+
+            return array_values(array_diff(array_keys($files), $ran));
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
     public function database()
     {
         return view('developer.backups.database', [
             'checks' => SystemHealthService::database(),
             'tables' => SystemHealthService::tableCounts(),
+            'pending' => self::pendingMigrations(),
         ]);
+    }
+
+    /**
+     * Run pending migrations from the web (for servers without a terminal).
+     * A verified backup is made FIRST; if it fails, nothing is run.
+     */
+    public function migrate()
+    {
+        $user = Auth::user();
+        $pending = self::pendingMigrations();
+        if (!$pending) {
+            return redirect()->route('developer.backups.database')->with('info', 'There are no pending migrations. Nothing was changed.');
+        }
+
+        try {
+            $backup = DatabaseBackupService::run('before-migrate', false);
+        } catch (Throwable $e) {
+            SchoolService::logAction($user, 'RUN_MIGRATIONS_FAILED', 'Safety backup failed, migrations NOT run: ' . mb_substr($e->getMessage(), 0, 200));
+
+            return redirect()->route('developer.backups.database')
+                ->with('danger', 'Migrations were NOT run, because the safety backup could not be made: ' . $e->getMessage());
+        }
+
+        try {
+            $code = \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            $output = trim(\Illuminate\Support\Facades\Artisan::output());
+        } catch (Throwable $e) {
+            $code = 1;
+            $output = $e->getMessage();
+        }
+
+        $left = self::pendingMigrations();
+        $ok = $code === 0 && !$left;
+        SchoolService::logAction(
+            $user,
+            $ok ? 'RUN_MIGRATIONS' : 'RUN_MIGRATIONS_FAILED',
+            implode(', ', $pending) . " (safety backup {$backup['file']})" . ($ok ? '' : ' - ' . mb_substr(SystemHealthService::mask($output), 0, 300))
+        );
+
+        return redirect()->route('developer.backups.database')->with(
+            $ok ? 'success' : 'danger',
+            $ok
+                ? count($pending) . " migration(s) run successfully. A safety backup was made first: {$backup['file']}."
+                : "Running migrations did not finish (safety backup {$backup['file']} is available under Download Backup). Details: " . mb_substr(SystemHealthService::mask($output), 0, 300)
+        );
     }
 
     public function create()

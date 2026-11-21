@@ -9,6 +9,26 @@
 
 @include('developer.partials.checks', ['checks' => $checks])
 
+@if($pending)
+<div class="card border-warning mb-3">
+    <div class="card-header fw-semibold"><i class="bi bi-exclamation-triangle text-warning me-1"></i>Pending migrations ({{ count($pending) }})</div>
+    <div class="card-body">
+        <p class="small text-muted mb-2">These database updates are in the code but have not been applied to this database yet:</p>
+        <ul class="small mb-3">
+            @foreach($pending as $m)<li><code>{{ $m }}</code></li>@endforeach
+        </ul>
+        <p class="small text-muted mb-3">Pressing the button first makes a verified backup of the whole database. If that backup fails, nothing is run.</p>
+        <form method="POST" action="{{ route('developer.backups.migrate') }}" data-once
+              onsubmit="return appConfirm(this, 'Apply {{ count($pending) }} pending database update(s) now? A verified backup is made first.', {okClass: 'btn-warning', okText: 'Backup and run', icon: 'bi-database-gear', title: 'Run pending migrations'});">
+            @csrf
+            <button class="btn btn-warning"><i class="bi bi-database-gear me-1"></i>Back up, then run pending migrations</button>
+        </form>
+    </div>
+</div>
+@else
+<p class="small text-muted mb-3"><i class="bi bi-check-circle text-success me-1"></i>All database migrations have been applied.</p>
+@endif
+
 <div class="card">
     <div class="card-header fw-semibold">School tables</div>
     <div class="table-responsive">
