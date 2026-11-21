@@ -30,17 +30,17 @@
 <div class="card">
     <div class="card-header fw-semibold">Latest log entries <small class="text-muted fw-normal">(newest first, last part of the log file, one line each, secrets masked)</small></div>
     <div class="table-responsive">
-    <table class="table table-sm align-middle mb-0">
+    <table class="table table-sm mb-0 dev-log">
         <thead><tr><th>Time</th><th>Level</th><th>Message</th></tr></thead>
         <tbody>
         @forelse($log_entries as $e)
         <tr>
-            <td class="text-nowrap text-muted">{{ $e['time'] }}</td>
-            <td><span class="badge {{ in_array($e['level'], ['ERROR','CRITICAL','ALERT','EMERGENCY']) ? 'bg-danger' : ($e['level'] === 'WARNING' ? 'bg-warning text-dark' : 'bg-secondary') }}">{{ $e['level'] }}</span></td>
-            <td class="small" style="word-break:break-word;">{{ $e['message'] }}</td>
+            <td class="text-muted dev-time" data-label="Time">{{ $e['time'] }}</td>
+            <td data-label="Level"><span class="badge {{ in_array($e['level'], ['ERROR','CRITICAL','ALERT','EMERGENCY']) ? 'bg-danger' : ($e['level'] === 'WARNING' ? 'bg-warning text-dark' : 'bg-secondary') }}">{{ $e['level'] }}</span></td>
+            <td class="small dev-msg" data-label="Message">{{ $e['message'] }}</td>
         </tr>
         @empty
-        <tr><td colspan="3" class="text-center text-muted">No log entries.</td></tr>
+        <tr><td colspan="3" class="text-center text-muted dev-empty">No log entries.</td></tr>
         @endforelse
         </tbody>
     </table>

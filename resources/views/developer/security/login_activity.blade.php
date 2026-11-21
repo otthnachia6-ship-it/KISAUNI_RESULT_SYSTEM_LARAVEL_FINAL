@@ -8,15 +8,15 @@
 @endphp
 <div class="card">
     <div class="table-responsive">
-    <table class="table table-sm align-middle mb-0">
+    <table class="table table-sm mb-0 dev-log">
         <thead><tr><th>Time</th><th>User</th><th>Event</th><th>Details</th></tr></thead>
         <tbody>
         @forelse($logs as $e)
-        <tr><td class="text-nowrap text-muted">{{ $e->created_at }}</td><td>{{ $e->username }}</td>
-            <td><span class="badge {{ $e->action === 'LOGIN_LOCKED' ? 'bg-danger' : 'bg-light text-dark border' }}">{{ $labels[$e->action] ?? $e->action }}</span></td>
-            <td class="small text-muted">{{ $e->details }}</td></tr>
+        <tr><td class="text-muted dev-time" data-label="Time">{{ $e->created_at }}</td><td data-label="User">{{ $e->username }}</td>
+            <td data-label="Event"><span class="badge {{ $e->action === 'LOGIN_LOCKED' ? 'bg-danger' : 'bg-light text-dark border' }}">{{ $labels[$e->action] ?? $e->action }}</span></td>
+            <td class="small text-muted dev-msg" data-label="Details">{{ $e->details }}</td></tr>
         @empty
-        <tr><td colspan="4" class="text-center text-muted">No login activity recorded.</td></tr>
+        <tr><td colspan="4" class="text-center text-muted dev-empty">No login activity recorded.</td></tr>
         @endforelse
         </tbody>
     </table>

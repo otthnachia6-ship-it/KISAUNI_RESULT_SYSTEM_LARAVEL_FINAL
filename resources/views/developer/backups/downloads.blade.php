@@ -16,19 +16,19 @@
 
 <div class="card">
     <div class="table-responsive">
-    <table class="table table-sm align-middle mb-0">
+    <table class="table table-sm mb-0 dev-log">
         <thead><tr><th>File</th><th>Created</th><th>Type</th><th class="text-end">Size</th><th></th></tr></thead>
         <tbody>
         @forelse($files as $f)
         <tr>
-            <td><code>{{ $f['name'] }}</code></td>
-            <td class="text-nowrap">{{ date('Y-m-d H:i:s', $f['mtime']) }}</td>
-            <td>{{ \App\Http\Controllers\Developer\BackupController::labelOf($f['name']) }}</td>
-            <td class="text-end text-nowrap">{{ \App\Services\SystemHealthService::bytes($f['size']) }}</td>
-            <td class="text-end"><a href="{{ route('developer.backups.download', $f['name']) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download me-1"></i>Download</a></td>
+            <td data-label="File" style="overflow-wrap:anywhere;"><code>{{ $f['name'] }}</code></td>
+            <td class="dev-time" data-label="Created">{{ date('Y-m-d H:i:s', $f['mtime']) }}</td>
+            <td data-label="Type">{{ \App\Http\Controllers\Developer\BackupController::labelOf($f['name']) }}</td>
+            <td class="text-end text-nowrap" data-label="Size">{{ \App\Services\SystemHealthService::bytes($f['size']) }}</td>
+            <td class="text-end dev-empty pt-2"><a href="{{ route('developer.backups.download', $f['name']) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download me-1"></i>Download</a></td>
         </tr>
         @empty
-        <tr><td colspan="5" class="text-center text-muted">No backup files yet. <a href="{{ route('developer.backups.create') }}">Create one</a>.</td></tr>
+        <tr><td colspan="5" class="text-center text-muted dev-empty">No backup files yet. <a href="{{ route('developer.backups.create') }}">Create one</a>.</td></tr>
         @endforelse
         </tbody>
     </table>

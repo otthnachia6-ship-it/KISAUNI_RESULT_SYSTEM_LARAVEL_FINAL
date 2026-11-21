@@ -16,14 +16,14 @@
 <div class="card">
     <div class="card-header fw-semibold">Recent sign-ins and sign-outs</div>
     <div class="table-responsive">
-    <table class="table table-sm align-middle mb-0">
+    <table class="table table-sm mb-0 dev-log">
         <thead><tr><th>Time</th><th>User</th><th>Event</th></tr></thead>
         <tbody>
         @forelse($recent as $e)
-        <tr><td class="text-nowrap text-muted">{{ $e->created_at }}</td><td>{{ $e->username }}</td>
-            <td>{{ ['LOGIN' => 'Signed in', 'LOGOUT' => 'Signed out', 'IDLE_LOGOUT' => 'Signed out (inactive)'][$e->action] ?? $e->action }}</td></tr>
+        <tr><td class="text-muted dev-time" data-label="Time">{{ $e->created_at }}</td><td data-label="User">{{ $e->username }}</td>
+            <td data-label="Event">{{ ['LOGIN' => 'Signed in', 'LOGOUT' => 'Signed out', 'IDLE_LOGOUT' => 'Signed out (inactive)'][$e->action] ?? $e->action }}</td></tr>
         @empty
-        <tr><td colspan="3" class="text-center text-muted">No sign-ins recorded.</td></tr>
+        <tr><td colspan="3" class="text-center text-muted dev-empty">No sign-ins recorded.</td></tr>
         @endforelse
         </tbody>
     </table>

@@ -40,7 +40,7 @@
     <div class="col-lg-5">
         <div class="card p-3 p-md-4 h-100">
             <div class="panel-head"><div><div class="panel-eyebrow">Shortcuts</div><h2 class="panel-title">Quick actions</h2></div></div>
-            <div class="qa-list">
+            <div class="qa-list qa-list--single">
                 <a class="qa-row" href="{{ route('developer.backups.create') }}"><span class="qa-ico"><i class="bi bi-database-add"></i></span>Create a database backup<i class="bi bi-chevron-right qa-go"></i></a>
                 <a class="qa-row" href="{{ route('add_student') }}"><span class="qa-ico"><i class="bi bi-person-plus"></i></span>Add student<i class="bi bi-chevron-right qa-go"></i></a>
                 <a class="qa-row" href="{{ route('promote_students') }}"><span class="qa-ico"><i class="bi bi-arrow-up-circle"></i></span>Promote students<i class="bi bi-chevron-right qa-go"></i></a>
@@ -58,14 +58,14 @@
         <a href="{{ route('audit_logs') }}" class="btn btn-sm btn-outline-secondary">All audit logs</a>
     </div>
     <div class="table-responsive">
-    <table class="table table-sm align-middle mb-0">
+    <table class="table table-sm mb-0 dev-log">
         <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
         <tbody>
         @forelse($recent as $log)
             @php $log = (array) $log; @endphp
-            <tr><td class="text-muted text-nowrap">{{ $log['created_at'] ?? '' }}</td><td>{{ $log['username'] ?? '' }}</td><td><span class="badge bg-light text-dark border">{{ $log['action'] ?? '' }}</span></td><td class="text-muted">{{ $log['details'] ?? '' }}</td></tr>
+            <tr><td class="text-muted dev-time" data-label="Time">{{ $log['created_at'] ?? '' }}</td><td data-label="User">{{ $log['username'] ?? '' }}</td><td data-label="Action"><span class="badge bg-light text-dark border">{{ $log['action'] ?? '' }}</span></td><td class="text-muted dev-msg" data-label="Details">{{ $log['details'] ?? '' }}</td></tr>
         @empty
-            <tr><td colspan="4" class="text-center text-muted">No activity recorded in the last days.</td></tr>
+            <tr><td colspan="4" class="text-center text-muted dev-empty">No activity recorded in the last days.</td></tr>
         @endforelse
         </tbody>
     </table>
