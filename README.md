@@ -220,6 +220,12 @@ php artisan developer:create devuser --reset   # set a new password later
 
 Then sign in at `https://YOUR-DOMAIN/developer/login`.
 
+**No terminal on the server?** A signed-in Headmaster or Administrator can create the **first** Developer account
+once at `https://YOUR-DOMAIN/developer-setup`:
+choose the Developer username and password, confirm with the Headmaster's own password. The page exists only
+while no Developer account exists; afterwards it returns 404 for everyone. The action is in the audit log.
+Later password changes still use `php artisan developer:create USERNAME --reset`.
+
 ## 11. Developer Control Center
 
 The Developer sees an expandable sidebar (main menus with nested submenus). School pages are the existing

@@ -22,6 +22,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\Developer\BackupController;
 use App\Http\Controllers\Developer\DeveloperAuthController;
 use App\Http\Controllers\Developer\DeveloperDashboardController;
+use App\Http\Controllers\Developer\DeveloperSetupController;
 use App\Http\Controllers\Developer\MaintenanceController;
 use App\Http\Controllers\Developer\MonitoringController;
 use App\Http\Controllers\Developer\SecurityController;
@@ -45,6 +46,11 @@ Route::middleware(['auth', 'no_cache'])->group(function () {
     Route::match(['get', 'post'], '/change-password', [AuthController::class, 'changePassword'])->name('change_password');
     Route::match(['get', 'post'], '/profile', [AuthController::class, 'profile'])->name('profile');
     Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
+
+    // One-time creation of the first Developer account by a signed-in Headmaster.
+    // 404 for everyone else, and for everyone once any Developer account exists.
+    Route::match(['get', 'post'], '/developer-setup', [DeveloperSetupController::class, 'setup'])
+        ->middleware('throttle:10,1')->name('developer_setup');
 
     // Students
     Route::get('/students', [StudentController::class, 'index'])->name('students');
