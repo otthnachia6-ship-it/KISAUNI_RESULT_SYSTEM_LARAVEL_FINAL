@@ -19,8 +19,16 @@ class DeveloperAuthController extends AuthController
     {
         if ($request->isMethod('GET')) {
             $user = Auth::user();
+            if ($user?->isDeveloper()) {
+                return redirect()->route('developer.dashboard');
+            }
             if ($user) {
-                return redirect()->route($user->isDeveloper() ? 'developer.dashboard' : 'dashboard');
+                // A school account is signed in on this browser. It is not signed out by simply
+                // opening a link (sign-out is POST-only); explain what to do instead.
+                return redirect()->route('dashboard')->with(
+                    'info',
+                    "You are signed in as {$user->username}. To use the Developer sign-in, press Logout first, then open /developer/login."
+                );
             }
 
             return view('developer.login');

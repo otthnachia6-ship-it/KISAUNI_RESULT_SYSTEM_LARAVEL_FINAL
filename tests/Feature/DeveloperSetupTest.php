@@ -39,6 +39,7 @@ class DeveloperSetupTest extends TestCase
 
         $this->actingAs($this->hm)->post('/developer-setup', $this->form())
             ->assertRedirect(route('developer.login'))->assertSessionHas('success');
+        $this->assertGuest(); // the Headmaster is signed out, so the Developer sign-in opens directly
 
         $dev = User::findByUsername('devuser');
         $this->assertTrue($dev->isDeveloper());
@@ -77,6 +78,28 @@ class DeveloperSetupTest extends TestCase
         $this->post('/developer-setup', $this->form(['password_confirmation' => 'Other-99']))->assertSessionHas('danger', fn ($m) => str_contains($m, 'do not match'));
         $this->post('/developer-setup', $this->form(['username' => 'headmaster']))->assertSessionHas('danger', fn ($m) => str_contains($m, 'already used'));
         $this->assertFalse(User::where('role', 'developer')->exists());
+    }
+
+    public function test_developer_can_sign_in_on_a_browser_where_the_headmaster_is_signed_in(): void
+    {
+        $dev = User::create(['username' => 'devkisauni', 'password' => Hash::make('Dev-Secret-99'), 'full_name' => 'System Developer',
+            'role' => 'developer', 'active' => 1, 'must_change_password' => 0]);
+
+        // a signed-in school account is told to log out first (opening a link never signs anyone out)
+        $this->actingAs($this->hm)->get('/developer/login')
+            ->assertRedirect(route('dashboard'))->assertSessionHas('info', fn ($m) => str_contains($m, 'press Logout first'));
+        $this->assertAuthenticatedAs($this->hm);
+
+        // after logging out, the Developer signs in normally
+        $this->actingAs($this->hm)->post('/logout');
+        $this->assertGuest();
+        $this->get('/developer/login')->assertOk()->assertSee('Developer sign in');
+        $this->post('/developer/login', ['username' => 'devkisauni', 'password' => 'Dev-Secret-99'])
+            ->assertRedirect(route('developer.dashboard'));
+        $this->assertAuthenticatedAs($dev);
+
+        // profile shows the right role
+        $this->actingAs($dev)->get('/profile')->assertOk()->assertSee('Developer')->assertDontSee('Class Teacher');
     }
 
     public function test_page_is_closed_when_a_developer_already_exists(): void

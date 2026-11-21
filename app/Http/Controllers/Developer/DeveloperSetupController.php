@@ -92,6 +92,11 @@ class DeveloperSetupController extends Controller
 
         SchoolService::logAction($user, 'CREATE_DEVELOPER', "{$username} (one-time web setup by {$user->username})");
 
+        // Sign the Headmaster out so the Developer sign-in page opens directly.
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         return redirect()->route('developer.login')->with(
             'success',
             "Developer account '{$username}' created. Sign in here with it. The setup page is now closed."

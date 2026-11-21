@@ -11,7 +11,7 @@
         <i class="bi bi-person-circle" style="font-size:4rem; color:#2563eb;"></i>
         @endif
         <h5 class="mt-2 mb-0">{{ $user->full_name }}</h5>
-        <span class="badge bg-secondary">{{ $user->role === 'headmaster' ? ($user->title ?: 'Headmaster') : 'Class Teacher' }}</span>
+        <span class="badge bg-secondary">{{ $user->isDeveloper() ? 'Developer' : ($user->role === 'headmaster' ? ($user->title ?: 'Headmaster') : 'Class Teacher') }}</span>
     </div>
 
     <form method="POST" action="{{ route('profile') }}" enctype="multipart/form-data" class="mb-3">
