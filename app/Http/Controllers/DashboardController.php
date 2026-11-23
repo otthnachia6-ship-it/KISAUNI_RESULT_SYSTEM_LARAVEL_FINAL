@@ -110,8 +110,10 @@ class DashboardController extends Controller
         }
 
         // Routine sign-ins and sign-outs are left out of this short list (the Audit Log page still shows everything).
+        // This is the school dashboard (Headmaster / Administrator), so the Developer's own actions are not shown.
         $recentLogs = SchoolService::humanizeLogs(
-            AuditLog::whereNotIn('action', ['LOGIN', 'LOGOUT', 'IDLE_LOGOUT', 'PASSWORD_HASH_UPGRADED'])
+            AuditLog::schoolVisible()
+                ->whereNotIn('action', ['LOGIN', 'LOGOUT', 'IDLE_LOGOUT', 'PASSWORD_HASH_UPGRADED'])
                 ->orderBy('id', 'desc')->limit(8)->get()
         );
 
