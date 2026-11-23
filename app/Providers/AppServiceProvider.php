@@ -39,6 +39,10 @@ class AppServiceProvider extends ServiceProvider
                     return asset('images/logo.png');
                 }
                 if (str_starts_with($path, 'uploads/')) {
+                    // If the uploaded file is missing (e.g. after a move), fall back to the bundled logo.
+                    if (!is_file(storage_path('app/uploads/' . basename(substr($path, 8))))) {
+                        return asset('images/logo.png');
+                    }
                     return route('serve_media', ['filename' => substr($path, 8)]);
                 }
                 return asset($path);
@@ -49,6 +53,10 @@ class AppServiceProvider extends ServiceProvider
                     return null;
                 }
                 if (str_starts_with($path, 'uploads/')) {
+                    // Missing uploaded photo (e.g. after a move): show the initials avatar instead of a broken image.
+                    if (!is_file(storage_path('app/uploads/' . basename(substr($path, 8))))) {
+                        return null;
+                    }
                     return route('serve_media', ['filename' => substr($path, 8)]);
                 }
                 return asset($path);

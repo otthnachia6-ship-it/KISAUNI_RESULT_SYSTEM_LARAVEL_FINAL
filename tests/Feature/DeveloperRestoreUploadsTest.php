@@ -74,17 +74,35 @@ class DeveloperRestoreUploadsTest extends TestCase
         $this->actingAs($this->dev)->get('/developer/database')->assertOk()->assertSee('All uploaded files');
     }
 
-    public function test_a_file_missing_on_the_old_server_is_reported_not_written(): void
+    public function test_a_file_gone_from_the_old_server_has_its_reference_cleared(): void
     {
         [$logo, $photo] = $this->referenceFiles();
         Http::fake([
-            "https://203.0.113.9/media/{$logo}" => Http::response('x', 404),
+            "https://203.0.113.9/media/{$logo}" => Http::response('not found', 404),
             "https://203.0.113.9/media/{$photo}" => Http::response("\x89PNG" . str_repeat('ok-photo-bytes-', 6), 200, ['Content-Type' => 'image/png']),
         ]);
 
-        $this->actingAs($this->dev)->post('/developer/database/copy-uploads')->assertSessionHas('warning');
+        // logo gone (404) -> cleared; photo present (200) -> copied; nothing unreachable -> success
+        $this->actingAs($this->dev)->post('/developer/database/copy-uploads')->assertSessionHas('success');
         $this->assertFileExists("{$this->dir}/{$photo}");
         $this->assertFileDoesNotExist("{$this->dir}/{$logo}");
+        // the dangling logo reference is reset to the bundled logo
+        $this->assertSame('images/logo.png', Setting::get('logo_path'));
+        // the teacher's photo now exists, so its reference is kept
+        $this->assertSame("uploads/{$photo}", User::where('username', 'tch1')->value('photo_path'));
+    }
+
+    public function test_a_user_photo_gone_from_the_old_server_clears_that_users_photo(): void
+    {
+        [$logo, $photo] = $this->referenceFiles();
+        Http::fake([
+            "https://203.0.113.9/media/{$logo}" => Http::response("\xFF\xD8\xFF" . str_repeat('logo-bytes-', 6), 200, ['Content-Type' => 'image/jpeg']),
+            "https://203.0.113.9/media/{$photo}" => Http::response('not found', 404),
+        ]);
+
+        $this->actingAs($this->dev)->post('/developer/database/copy-uploads')->assertSessionHas('success');
+        $this->assertNull(User::where('username', 'tch1')->value('photo_path'));
+        $this->assertFileExists("{$this->dir}/{$logo}");
     }
 
     public function test_non_image_response_is_rejected(): void

@@ -142,7 +142,8 @@ class BackupController extends Controller
         }
 
         $copied = 0;
-        $failed = [];
+        $gone = [];     // the source says this file no longer exists (HTTP 404) -> the reference is dangling
+        $failed = [];   // could not be reached (network/other) -> worth trying again later
         foreach ($missing as $file) {
             // $file is a bare basename (validated in uploadFiles): no path traversal.
             try {
@@ -161,19 +162,41 @@ class BackupController extends Controller
                     $copied++;
                     continue;
                 }
+                $failed[] = $file;
+            } elseif ($resp->status() === 404) {
+                $gone[] = $file;
+            } else {
+                $failed[] = $file;
             }
-            $failed[] = $file;
         }
 
-        SchoolService::logAction($user, 'COPY_UPLOADS', "copied={$copied} failed=" . count($failed) . ' from ' . $host);
+        // Dangling references: the file exists nowhere, so clear the pointer. No image is lost
+        // (it was already gone); the account can upload a new photo from its Profile page.
+        $cleared = 0;
+        foreach ($gone as $file) {
+            $cleared += User::where('photo_path', 'uploads/' . $file)->update(['photo_path' => null]);
+            if (basename((string) Setting::get('logo_path')) === $file) {
+                Setting::set('logo_path', 'images/logo.png');
+            }
+        }
 
-        $msg = "{$copied} file(s) copied from the old server.";
+        SchoolService::logAction($user, 'COPY_UPLOADS', "copied={$copied} cleared={$cleared} unreachable=" . count($failed) . ' from ' . $host);
+
+        $parts = [];
+        if ($copied) {
+            $parts[] = "{$copied} file(s) copied";
+        }
+        if ($gone) {
+            $parts[] = count($gone) . ' missing file(s) no longer on the old server were cleared (those accounts can upload a new photo in Profile)';
+        }
+        $summary = $parts ? ucfirst(implode('; ', $parts)) . '.' : 'Nothing to copy.';
+
         if ($failed !== []) {
             return redirect()->route('developer.backups.database')
-                ->with($copied > 0 ? 'warning' : 'danger', $msg . ' ' . count($failed) . ' could not be copied: ' . implode(', ', array_slice($failed, 0, 8)) . (count($failed) > 8 ? '…' : ''));
+                ->with($copied || $gone ? 'warning' : 'danger', $summary . ' ' . count($failed) . ' could not be reached: ' . implode(', ', array_slice($failed, 0, 8)) . (count($failed) > 8 ? '…' : '') . ' (try again).');
         }
 
-        return redirect()->route('developer.backups.database')->with('success', $msg . ' Logos and profile photos should now appear.');
+        return redirect()->route('developer.backups.database')->with('success', $summary . ' Logos and profile photos should now appear.');
     }
 
     /**
