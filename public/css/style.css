@@ -987,11 +987,20 @@ a.lp-tab:hover { background: rgba(37,99,235,.08); text-decoration: none; }
         min-height: 100vh; min-height: 100dvh; display: grid;
         grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); grid-template-rows: 1fr auto;
         grid-template-areas: "brand form" "brand credit";
+        /* Two tones: dark navy brand side on the left, soft light-blue sign-in side on the
+           right. The hard colour stop (56.52%) is exactly the column boundary = the divider. */
+        background:
+            linear-gradient(to right, transparent 0 56.52%, #e8f0fd 56.52% 100%),
+            radial-gradient(circle 360px at 15% 0, rgba(56, 189, 248, .16), transparent 70%),
+            linear-gradient(135deg, var(--brand-navy), var(--brand-dark) 55%, var(--brand));
     }
     /* A clean vertical divider between the brand (left) and the sign-in form (right).
        brand spans both grid rows, so the line runs the full height. Only here (>= 992px);
        phones stack the panels, so no divider there. */
-    .lp-brand { grid-area: brand; display: flex; padding: 2.25rem 2.25rem 1.75rem; border-right: 1px solid rgba(255, 255, 255, .15); }
+    .lp-brand { grid-area: brand; display: flex; padding: 2.25rem 2.25rem 1.75rem; border-right: 1px solid rgba(255, 255, 255, .22); box-shadow: 1px 0 0 rgba(15, 23, 42, .06); }
+    /* The copyright line sits on the light side now, so it needs dark text. */
+    .lp-credit { color: #64748b; }
+    .lp-credit a { color: #475569; }
     .lp-brand-inner { display: flex; flex-direction: column; width: 100%; max-width: 860px; }
     .lp-top { display: flex; align-items: center; gap: 1.1rem; }
     .lp-logo { width: 84px; height: 84px; }
