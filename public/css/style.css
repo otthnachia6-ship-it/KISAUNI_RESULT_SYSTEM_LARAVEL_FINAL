@@ -1306,5 +1306,3 @@ main .btn:not(.btn-sm):not(.btn-lg) i,
 @media (min-width: 576px) {
     .dev-checks .dev-status-inline { display: none; }
 }
-
-/* autodeploy-check-1795466556 */
