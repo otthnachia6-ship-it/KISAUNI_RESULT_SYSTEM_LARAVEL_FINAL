@@ -15,6 +15,11 @@ return [
     // How long audit-log entries are kept. Old entries are removed at most once a day.
     // Optional contact (phone / e-mail) shown on the maintenance and suspended pages. Empty = not shown.
     'support_contact' => env('SUPPORT_CONTACT'),
+    // One-time migration helper: copy uploaded files (logo, profile photos) that are referenced in
+    // the database but missing on this server, by fetching them from the old server over HTTPS.
+    // 'host' is the old server's IP; 'domain' is the Host header it answers on. Empty host = disabled.
+    'uploads_restore_host'   => env('UPLOADS_RESTORE_HOST', '151.242.3.80'),
+    'uploads_restore_domain' => env('UPLOADS_RESTORE_DOMAIN', 'kisaunips.ostexs.com'),
     'audit_log_retention_days' => (int) env('AUDIT_LOG_RETENTION_DAYS', 5),
     // Automatic database backup (php artisan db:backup, run from cron).
     // Also available to the Developer account only (Developer Control Center:

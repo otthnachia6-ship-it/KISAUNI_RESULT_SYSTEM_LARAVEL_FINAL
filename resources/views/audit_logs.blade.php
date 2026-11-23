@@ -30,6 +30,7 @@ $action_labels = [
     'MAINTENANCE_ON' => 'Switched maintenance mode ON', 'MAINTENANCE_OFF' => 'Switched maintenance mode OFF',
     'MAINTENANCE_ON_FAILED' => 'Maintenance mode ON failed', 'MAINTENANCE_OFF_FAILED' => 'Maintenance mode OFF failed',
     'RUN_MIGRATIONS' => 'Applied database updates (migrations)', 'RUN_MIGRATIONS_FAILED' => 'Database update (migration) failed',
+    'COPY_UPLOADS' => 'Copied uploaded files from the old server',
 ];
 @endphp
 <div class="card">

@@ -29,6 +29,27 @@
 <p class="small text-muted mb-3"><i class="bi bi-check-circle text-success me-1"></i>All database migrations have been applied.</p>
 @endif
 
+@if($uploads && count($uploads['missing']) > 0)
+<div class="card border-warning mb-3">
+    <div class="card-header fw-semibold"><i class="bi bi-image text-warning me-1"></i>Missing uploaded files ({{ count($uploads['missing']) }})</div>
+    <div class="card-body">
+        <p class="small text-muted mb-2">The school logo and staff profile photos are recorded in the database, but {{ count($uploads['missing']) }} image file(s) are not on this server yet (so they show broken). This happens after a move where the files were not copied.</p>
+        @if($restore_host)
+        <p class="small text-muted mb-3">The button copies the missing files from the old server (<code>{{ $restore_host }}</code>) into this server. It only adds image files; it does not touch the database.</p>
+        <form method="POST" action="{{ route('developer.backups.copy_uploads') }}" data-once
+              onsubmit="return appConfirm(this, 'Copy {{ count($uploads['missing']) }} missing image file(s) from the old server now?', {okClass: 'btn-warning', okText: 'Copy files', icon: 'bi-images', title: 'Restore uploaded files'});">
+            @csrf
+            <button class="btn btn-warning"><i class="bi bi-images me-1"></i>Copy missing files from the old server</button>
+        </form>
+        @else
+        <p class="small text-danger mb-0">No source server is configured (UPLOADS_RESTORE_HOST).</p>
+        @endif
+    </div>
+</div>
+@elseif($uploads)
+<p class="small text-muted mb-3"><i class="bi bi-check-circle text-success me-1"></i>All uploaded files (logo and photos) are present on this server.</p>
+@endif
+
 <div class="card">
     <div class="card-header fw-semibold">School tables</div>
     <div class="table-responsive">

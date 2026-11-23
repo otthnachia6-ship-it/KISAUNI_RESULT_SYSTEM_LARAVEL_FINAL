@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Developer;
 use App\Http\Controllers\Controller;
 use App\Services\DatabaseBackupService;
 use App\Services\SchoolService;
+use App\Models\Setting;
+use App\Models\User;
 use App\Services\SystemHealthService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Throwable;
 
 /**
@@ -64,13 +67,113 @@ class BackupController extends Controller
         }
     }
 
+    /**
+     * Uploaded files (school logo + staff profile photos) referenced in the database,
+     * and which of them are present on this server. Used by the "restore uploads" tool
+     * after a move where the database was imported but storage/app/uploads was not.
+     *
+     * @return array{referenced:string[],present:string[],missing:string[]}
+     */
+    public static function uploadFiles(): array
+    {
+        $names = collect(User::whereNotNull('photo_path')->pluck('photo_path'))
+            ->push(Setting::get('logo_path'))
+            ->filter(fn ($p) => is_string($p) && str_starts_with($p, 'uploads/'))
+            ->map(fn ($p) => basename($p))
+            ->filter(fn ($n) => $n !== '' && $n === basename($n))
+            ->unique()->values()->all();
+
+        $dir = storage_path('app/uploads');
+        $present = [];
+        $missing = [];
+        foreach ($names as $n) {
+            is_file($dir . DIRECTORY_SEPARATOR . $n) ? $present[] = $n : $missing[] = $n;
+        }
+
+        return ['referenced' => $names, 'present' => $present, 'missing' => $missing];
+    }
+
     public function database()
     {
+        $uploads = null;
+        try {
+            $uploads = self::uploadFiles();
+        } catch (Throwable) {
+            // database unreachable for this read: the page still renders without the uploads card
+        }
+
         return view('developer.backups.database', [
             'checks' => SystemHealthService::database(),
             'tables' => SystemHealthService::tableCounts(),
             'pending' => self::pendingMigrations(),
+            'uploads' => $uploads,
+            'restore_host' => (string) config('kisauni.uploads_restore_host'),
         ]);
+    }
+
+    /**
+     * Copy uploaded files (logo, profile photos) that are referenced in the database but
+     * missing here, by fetching each from the old server over HTTPS. One-time migration aid,
+     * Developer only. Only writes into storage/app/uploads; never touches the database.
+     */
+    public function copyUploads()
+    {
+        $user = Auth::user();
+        $host = trim((string) config('kisauni.uploads_restore_host'));
+        $domain = trim((string) config('kisauni.uploads_restore_domain')) ?: 'kisaunips.ostexs.com';
+        if ($host === '') {
+            return redirect()->route('developer.backups.database')
+                ->with('danger', 'No source server is set (UPLOADS_RESTORE_HOST). Cannot copy files.');
+        }
+
+        try {
+            $missing = self::uploadFiles()['missing'];
+        } catch (Throwable $e) {
+            return redirect()->route('developer.backups.database')
+                ->with('danger', 'The database could not be read, so the file list is unknown. Try again in a moment.');
+        }
+        if ($missing === []) {
+            return redirect()->route('developer.backups.database')->with('info', 'No uploaded files are missing. Nothing to copy.');
+        }
+
+        $dir = storage_path('app/uploads');
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+
+        $copied = 0;
+        $failed = [];
+        foreach ($missing as $file) {
+            // $file is a bare basename (validated in uploadFiles): no path traversal.
+            try {
+                $resp = Http::withOptions(['verify' => false])
+                    ->withHeaders(['Host' => $domain])
+                    ->timeout(25)
+                    ->get("https://{$host}/media/{$file}");
+            } catch (Throwable) {
+                $failed[] = $file;
+                continue;
+            }
+            $body = $resp->body();
+            if ($resp->successful() && strlen($body) > 50 && str_starts_with((string) $resp->header('Content-Type'), 'image/')) {
+                if (@file_put_contents($dir . DIRECTORY_SEPARATOR . $file, $body) !== false) {
+                    @chmod($dir . DIRECTORY_SEPARATOR . $file, 0644);
+                    $copied++;
+                    continue;
+                }
+            }
+            $failed[] = $file;
+        }
+
+        SchoolService::logAction($user, 'COPY_UPLOADS', "copied={$copied} failed=" . count($failed) . ' from ' . $host);
+
+        $msg = "{$copied} file(s) copied from the old server.";
+        if ($failed !== []) {
+            return redirect()->route('developer.backups.database')
+                ->with($copied > 0 ? 'warning' : 'danger', $msg . ' ' . count($failed) . ' could not be copied: ' . implode(', ', array_slice($failed, 0, 8)) . (count($failed) > 8 ? '…' : ''));
+        }
+
+        return redirect()->route('developer.backups.database')->with('success', $msg . ' Logos and profile photos should now appear.');
     }
 
     /**

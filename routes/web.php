@@ -150,6 +150,7 @@ Route::middleware(['auth', 'no_cache'])->group(function () {
         // Database & Backup (no restore / no delete from the web)
         Route::get('/database', [BackupController::class, 'database'])->name('backups.database');
         Route::post('/database/migrate', [BackupController::class, 'migrate'])->middleware('throttle:3,1')->name('backups.migrate');
+        Route::post('/database/copy-uploads', [BackupController::class, 'copyUploads'])->middleware('throttle:6,1')->name('backups.copy_uploads');
         Route::get('/backups/create', [BackupController::class, 'create'])->name('backups.create');
         Route::post('/backups/create', [BackupController::class, 'store'])->middleware('throttle:6,1')->name('backups.store');
         Route::get('/backups/download', [BackupController::class, 'downloads'])->name('backups.downloads');
