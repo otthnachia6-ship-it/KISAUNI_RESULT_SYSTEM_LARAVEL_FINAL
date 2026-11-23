@@ -988,7 +988,10 @@ a.lp-tab:hover { background: rgba(37,99,235,.08); text-decoration: none; }
         grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); grid-template-rows: 1fr auto;
         grid-template-areas: "brand form" "brand credit";
     }
-    .lp-brand { grid-area: brand; display: flex; padding: 2.25rem 2.25rem 1.75rem; }
+    /* A clean vertical divider between the brand (left) and the sign-in form (right).
+       brand spans both grid rows, so the line runs the full height. Only here (>= 992px);
+       phones stack the panels, so no divider there. */
+    .lp-brand { grid-area: brand; display: flex; padding: 2.25rem 2.25rem 1.75rem; border-right: 1px solid rgba(255, 255, 255, .15); }
     .lp-brand-inner { display: flex; flex-direction: column; width: 100%; max-width: 860px; }
     .lp-top { display: flex; align-items: center; gap: 1.1rem; }
     .lp-logo { width: 84px; height: 84px; }
