@@ -42,3 +42,6 @@ _deployment_archive/
 *.sql.gz
 /kisauni_backups/
 /storage/backups/
+.deployed_sha
+.deploy.lock/
+/.src/
