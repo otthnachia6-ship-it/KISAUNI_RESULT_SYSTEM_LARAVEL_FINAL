@@ -17,6 +17,32 @@ class MaintenancePagesTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_pages_embed_the_real_uploaded_school_logo(): void
+    {
+        // The live school logo is an upload (uploads/logo_<time>.jpeg) served by the app,
+        // which is down during maintenance: the page must carry the image inside itself.
+        $dir = storage_path('app/uploads');
+        @mkdir($dir, 0755, true);
+        $name = 'logo_test_' . uniqid() . '.jpeg';
+        $bytes = "\xFF\xD8\xFF\xE0" . str_repeat('kisauni-logo-bytes', 20) . "\xFF\xD9";
+        file_put_contents("{$dir}/{$name}", $bytes);
+        \App\Models\Setting::set('logo_path', "uploads/{$name}");
+
+        try {
+            foreach (['maintenance.updating', 'maintenance.suspended'] as $view) {
+                $html = view($view)->render();
+                $this->assertStringContainsString('src="data:image/jpeg;base64,' . base64_encode($bytes) . '"', $html, $view);
+                $this->assertStringNotContainsString('/media/', $html, $view);
+            }
+        } finally {
+            @unlink("{$dir}/{$name}");
+        }
+
+        // Missing upload: falls back to the bundled logo, still embedded.
+        \App\Models\Setting::set('logo_path', 'uploads/does-not-exist.png');
+        $this->assertStringContainsString('src="data:image/png;base64,', view('maintenance.updating')->render());
+    }
+
     public function test_updating_page_renders_in_english_and_swahili(): void
     {
         $html = view('maintenance.updating')->render();
