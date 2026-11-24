@@ -931,7 +931,10 @@ a.lp-tab:hover { background: rgba(37,99,235,.08); text-decoration: none; }
 .lp-divider span { position: relative; display: inline-block; padding: 0 .9rem; background: #fff; font-size: .82rem; color: #64748b; }
 
 /* 2) Stacked layout: phones and tablets in portrait */
-@media (max-width: 899.98px) {
+/* Stacked when the screen is narrow OR tall (portrait) - this also covers a phone on
+   "Desktop site" (~980px wide but very tall), where a two-column split would leave big
+   empty areas. The side-by-side split is reserved for landscape (computers). */
+@media (max-width: 899.98px), (orientation: portrait) {
     .lp {
         min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center;
         justify-content: center; padding: 1.25rem 1rem 1.5rem;
@@ -955,7 +958,7 @@ a.lp-tab:hover { background: rgba(37,99,235,.08); text-decoration: none; }
    only the SIZE of existing elements is raised (about 1.3x); order, colours and content are untouched. A mouse
    on a narrow window, every viewport >= 900px (which now splits, including a phone on "Desktop site" ~980px),
    and a phone held sideways (short viewport) are not affected. */
-@media screen and (pointer: coarse) and (min-width: 700px) and (max-width: 899.98px) and (min-height: 640px) {
+@media screen and (pointer: coarse) and (min-width: 700px) and (min-height: 640px) and (orientation: portrait) {
     .lp { padding: 1.5rem 1.5rem 2rem; }
     .lp-top, .lp-hero, .lp-glass, .lp-formside, .lp-footer, .lp-credit { max-width: 680px; }
     .lp-logo { width: 76px; height: 76px; }
@@ -982,8 +985,9 @@ a.lp-tab:hover { background: rgba(37,99,235,.08); text-decoration: none; }
     .lp-credit { font-size: 1rem; }
 }
 
-/* 3) Side-by-side layout: computers, and a phone on "Desktop site" (>= 900px) */
-@media (min-width: 900px) {
+/* 3) Side-by-side layout: computers only (>= 900px AND landscape). A portrait screen
+   - including a phone on "Desktop site" - keeps the stacked layout above. */
+@media (min-width: 900px) and (orientation: landscape) {
     .lp {
         min-height: 100vh; min-height: 100dvh; display: grid;
         grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); grid-template-rows: 1fr auto;
@@ -1016,7 +1020,7 @@ a.lp-tab:hover { background: rgba(37,99,235,.08); text-decoration: none; }
     .lp-card-title { font-size: 1.5rem; }
     .lp-credit { grid-area: credit; padding: 1rem 1.5rem 1.4rem; text-align: center; }
 }
-@media (min-width: 900px) and (max-width: 1199.98px) {
+@media (min-width: 900px) and (max-width: 1199.98px) and (orientation: landscape) {
     .lp-pill { display: none; }
     .lp-formside { padding: 2rem 2rem; }
 }
@@ -1027,7 +1031,7 @@ a.lp-tab:hover { background: rgba(37,99,235,.08); text-decoration: none; }
 /* Developer sign-in (side by side): it has less text than the school login, so its left
    panel is centred vertically to line up with the sign-in card, and its single info card
    uses the full width instead of half of a two-column grid. School login is unchanged. */
-@media (min-width: 900px) {
+@media (min-width: 900px) and (orientation: landscape) {
     .lp--dev .lp-brand { align-items: center; }
     .lp--dev .lp-hero { margin-top: 2.25rem; }
     .lp--dev .lp-cards { grid-template-columns: 1fr; max-width: 560px; }
